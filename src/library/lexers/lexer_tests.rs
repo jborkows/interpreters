@@ -1,71 +1,50 @@
 use std::cell::RefCell;
 
-use crate::lexers::base::*;
-use crate::lexers::tokens::{Token, TokenKind};
+use super::{
+    base::{ColumnNumber, LineNumber},
+    lexer::{read, ReadingStatus, SourceCharecter},
+    tokens::{Token, TokenKind},
+};
 
-use super::tokens::NextToken;
-
-struct StringLexable {
-    text: String,
-    called: RefCell<bool>,
+struct Lines {
+    lines: Vec<String>,
+    current_line: LineNumber,
+    current_column: ColumnNumber,
 }
 
-impl StringLexable {
-    fn new(text: String) -> Self {
+impl Lines {
+    fn new(lines: Vec<String>) -> Self {
         Self {
-            text,
-            called: RefCell::new(false),
-        }
-    }
-}
-impl Lexable for StringLexable {
-    fn next_line(&self) -> Option<(LineNumber, String)> {
-        if self.called.borrow().clone() {
-            return None;
-        } else {
-            self.called.replace_with(|_any| true);
-            return Some((LineNumber(1), self.text.clone()));
+            lines,
+            current_line: LineNumber(0),
+            current_column: ColumnNumber(0),
         }
     }
 }
 
-struct StringsLexable {
-    texts: Vec<String>,
-    current_line: RefCell<usize>,
-}
-impl StringsLexable {
-    fn new(texts: Vec<String>) -> Self {
-        Self {
-            texts,
-            current_line: RefCell::new(0),
-        }
-    }
-}
-impl Lexable for StringsLexable {
-    fn next_line(&self) -> Option<(LineNumber, String)> {
-        let current_line = self.current_line.borrow().clone();
-        if current_line >= self.texts.len() {
+impl Iterator for Lines {
+    type Item = SourceCharecter;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.current_line.0 >= self.lines.len() as u16 {
             return None;
-        } else {
-            let current_line_value = self.current_line.borrow().clone();
-            self.current_line
-                .replace_with(|value| value.wrapping_add(1));
-            return Some((
-                LineNumber(current_line_value as u16 + 1),
-                self.texts[current_line_value].clone(),
-            ));
         }
+        let line = &self.lines[self.current_line.0 as usize];
+        if self.current_column.0 >= line.len() as u16 {
+            self.current_line.0 += 1;
+            self.current_column.0 = 0;
+            return self.next();
+        }
+        let ch = line.chars().nth((self.current_column.0) as usize).unwrap();
+        let charecter = SourceCharecter::new(ch, self.current_column + 1, self.current_line + 1);
+        self.current_column.0 += 1;
+        Some(charecter)
     }
 }
 
 #[test]
-fn it_works() {
-    assert_eq!(4, 4);
-}
-
-// #[test]
-fn next_token_test() {
-    let input = StringLexable::new(String::from("=+(){},;"));
+fn next_sign() {
+    let input = Lines::new(vec![String::from("=+(){},;")]);
     let expected = vec![
         (LineNumber(1), ColumnNumber(1), TokenKind::Assign()),
         (LineNumber(1), ColumnNumber(2), TokenKind::Plus()),
@@ -77,8 +56,16 @@ fn next_token_test() {
         (LineNumber(1), ColumnNumber(8), TokenKind::Semicolon()),
         (LineNumber(2), ColumnNumber(1), TokenKind::EOF()),
     ];
-    let next_token = NextToken::new(&input);
-    for (i, tok) in next_token.enumerate() {
+
+    let tokens: RefCell<Vec<Token>> = RefCell::new(Vec::new());
+    read(input, |status| match status {
+        ReadingStatus::Read(new_tokens) => {
+            tokens.borrow_mut().extend(new_tokens);
+        }
+        ReadingStatus::Finished => {}
+    });
+
+    for (i, tok) in tokens.into_inner().into_iter().enumerate() {
         assert_eq!(
             tok,
             Token(expected[i].0, expected[i].1, expected[i].2.clone())
@@ -88,7 +75,7 @@ fn next_token_test() {
 
 #[test]
 fn more_complex_text() {
-    let input = StringsLexable::new(vec![
+    let input = Lines::new(vec![
         String::from("let five = 5;"),
         String::from("let ten = 10;"),
         String::from(""),
@@ -125,20 +112,20 @@ fn more_complex_text() {
         ),
         (LineNumber(4), ColumnNumber(9), TokenKind::Assign()),
         (LineNumber(4), ColumnNumber(11), TokenKind::Function()),
-        (LineNumber(4), ColumnNumber(14), TokenKind::LeftParen()),
+        (LineNumber(4), ColumnNumber(13), TokenKind::LeftParen()),
         (
             LineNumber(4),
-            ColumnNumber(15),
+            ColumnNumber(14),
             TokenKind::Identifier(String::from("x")),
         ),
-        (LineNumber(4), ColumnNumber(16), TokenKind::Comma()),
+        (LineNumber(4), ColumnNumber(15), TokenKind::Comma()),
         (
             LineNumber(4),
-            ColumnNumber(18),
+            ColumnNumber(17),
             TokenKind::Identifier(String::from("y")),
         ),
-        (LineNumber(4), ColumnNumber(19), TokenKind::RightParen()),
-        (LineNumber(4), ColumnNumber(21), TokenKind::LeftBrace()),
+        (LineNumber(4), ColumnNumber(18), TokenKind::RightParen()),
+        (LineNumber(4), ColumnNumber(20), TokenKind::LeftBrace()),
         (
             LineNumber(5),
             ColumnNumber(3),
@@ -151,8 +138,8 @@ fn more_complex_text() {
             TokenKind::Identifier(String::from("y")),
         ),
         (LineNumber(5), ColumnNumber(8), TokenKind::Semicolon()),
-        (LineNumber(6), ColumnNumber(2), TokenKind::RightBrace()),
-        (LineNumber(6), ColumnNumber(3), TokenKind::Semicolon()),
+        (LineNumber(6), ColumnNumber(1), TokenKind::RightBrace()),
+        (LineNumber(6), ColumnNumber(2), TokenKind::Semicolon()),
         (LineNumber(8), ColumnNumber(1), TokenKind::Let()),
         (
             LineNumber(8),
@@ -182,8 +169,15 @@ fn more_complex_text() {
         (LineNumber(9), ColumnNumber(1), TokenKind::EOF()),
     ];
 
-    let next_token = NextToken::new(&input);
-    for (i, tok) in next_token.enumerate() {
+    let tokens: RefCell<Vec<Token>> = RefCell::new(Vec::new());
+    read(input, |status| match status {
+        ReadingStatus::Read(new_tokens) => {
+            tokens.borrow_mut().extend(new_tokens);
+        }
+        ReadingStatus::Finished => {}
+    });
+
+    for (i, tok) in tokens.into_inner().into_iter().enumerate() {
         assert_eq!(
             tok,
             Token(expected[i].0, expected[i].1, expected[i].2.clone())

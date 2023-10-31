@@ -1,4 +1,6 @@
 mod base;
-#[cfg(test)]
-mod tests;
+mod lexer;
 mod tokens;
+
+#[cfg(test)]
+mod lexer_tests;

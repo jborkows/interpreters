@@ -1,7 +1,27 @@
-use super::base::{ColumnNumber, Lexable, LineNumber};
+use super::{
+    base::{ColumnNumber, Lexable, LineNumber},
+    lexer::SourceCharecter,
+};
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct Token(pub LineNumber, pub ColumnNumber, pub TokenKind);
+
+impl Token {
+    pub fn new(source_charecter: &SourceCharecter, token_kind: TokenKind) -> Self {
+        Self(
+            source_charecter.line_number,
+            source_charecter.column_number,
+            token_kind,
+        )
+    }
+    pub fn full(
+        line_number: LineNumber,
+        column_number: ColumnNumber,
+        token_kind: TokenKind,
+    ) -> Self {
+        Self(line_number, column_number, token_kind)
+    }
+}
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum TokenKind {
