@@ -1,7 +1,7 @@
 use super::{
-    base::{SourceCharecter, State, StateLineContext},
+    base::{SourceCharecter, State},
     processors::{operator, sign},
-    tokens::{Token, TokenKind},
+    tokens::Token,
 };
 
 pub(crate) fn read_idle(charecter: &SourceCharecter) -> (State, Vec<Token>) {

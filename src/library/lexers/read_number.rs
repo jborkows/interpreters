@@ -1,7 +1,7 @@
 use super::{
     base::{SourceCharecter, State, StateLineContext},
     processors::{operator, sign},
-    tokens::{Token, TokenKind},
+    tokens::Token,
 };
 
 pub(crate) fn read_number(
