@@ -1,8 +1,8 @@
 use std::cell::RefCell;
 
 use super::{
-    base::{ColumnNumber, LineNumber},
-    lexer::{read, ReadingStatus, SourceCharecter},
+    base::{ColumnNumber, LineNumber, SourceCharecter},
+    lexer::{read, ReadingStatus},
     tokens::{Token, TokenKind},
 };
 

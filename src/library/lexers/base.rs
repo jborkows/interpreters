@@ -31,3 +31,38 @@ pub trait Collector {
 pub trait Lexable {
     fn next_line(&self) -> Option<(LineNumber, String)>;
 }
+
+#[derive(Debug, PartialEq, Eq)]
+pub struct SourceCharecter {
+    pub(crate) ch: char,
+    pub column_number: ColumnNumber,
+    pub line_number: LineNumber,
+}
+
+impl SourceCharecter {
+    pub fn new(ch: char, column_number: ColumnNumber, line_number: LineNumber) -> Self {
+        Self {
+            ch,
+            column_number,
+            line_number,
+        }
+    }
+    pub fn is_whitespace(&self) -> bool {
+        self.ch.is_whitespace()
+    }
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub(crate) struct StateLineContext {
+    pub(crate) text: String,
+    pub(crate) line: LineNumber,
+    pub(crate) column: ColumnNumber,
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub(crate) enum State {
+    Idle,
+    ReadingText(StateLineContext),
+    ReadingNumber(StateLineContext),
+    ReadingOperator(StateLineContext),
+}
