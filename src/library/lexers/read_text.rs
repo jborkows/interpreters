@@ -11,7 +11,7 @@ pub(crate) fn read_text(
     if charecter.is_whitespace() || charecter.ch == '\0' {
         return (
             State::Idle,
-            vec![context.full_token(IdentifierString(&context.text).as_kind())],
+            vec![context.full_token(classify_identifier(&context.text))],
         );
     }
 
@@ -19,7 +19,7 @@ pub(crate) fn read_text(
     if operator.is_some() {
         return (
             charecter.as_reading_operator(),
-            vec![context.full_token(IdentifierString(&context.text).as_kind())],
+            vec![context.full_token(classify_identifier(&context.text))],
         );
     }
 
@@ -28,7 +28,7 @@ pub(crate) fn read_text(
         return (
             State::Idle,
             vec![
-                context.full_token(IdentifierString(&context.text).as_kind()),
+                context.full_token(classify_identifier(&context.text)),
                 Token::new(&charecter, sign.unwrap()),
             ],
         );
@@ -42,18 +42,10 @@ pub(crate) fn read_text(
     );
 }
 
-struct IdentifierString<'a>(&'a String);
-impl IdentifierString<'_> {
-    fn as_kind(&self) -> TokenKind {
-        match self.0.as_str() {
-            "let" => TokenKind::Let(),
-            "fn" => TokenKind::Function(),
-            // "true" => TokenKind::True(),
-            // "false" => TokenKind::False(),
-            // "if" => TokenKind::If(),
-            // "else" => TokenKind::Else(),
-            // "return" => TokenKind::Return(),
-            _ => TokenKind::Identifier(self.0.clone()),
-        }
+fn classify_identifier(identifier: &String) -> TokenKind {
+    match identifier.as_str() {
+        "let" => TokenKind::Let(),
+        "fn" => TokenKind::Function(),
+        _ => TokenKind::Identifier(identifier.clone()),
     }
 }
