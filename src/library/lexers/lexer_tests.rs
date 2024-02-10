@@ -57,6 +57,10 @@ fn next_sign() {
         (LineNumber(2), ColumnNumber(1), TokenKind::EOF()),
     ];
 
+    perform_test(input, expected);
+}
+
+fn perform_test(input: Lines, expected: Vec<(LineNumber, ColumnNumber, TokenKind)>) {
     let tokens: RefCell<Vec<Token>> = RefCell::new(Vec::new());
     read(input, |status| match status {
         ReadingStatus::Read(new_tokens) => {
@@ -169,18 +173,5 @@ fn more_complex_text() {
         (LineNumber(9), ColumnNumber(1), TokenKind::EOF()),
     ];
 
-    let tokens: RefCell<Vec<Token>> = RefCell::new(Vec::new());
-    read(input, |status| match status {
-        ReadingStatus::Read(new_tokens) => {
-            tokens.borrow_mut().extend(new_tokens);
-        }
-        ReadingStatus::Finished => {}
-    });
-
-    for (i, tok) in tokens.into_inner().into_iter().enumerate() {
-        assert_eq!(
-            tok,
-            Token(expected[i].0, expected[i].1, expected[i].2.clone())
-        );
-    }
+    perform_test(input, expected);
 }
