@@ -43,6 +43,10 @@ pub enum TokenKind {
     Equality(),
     Inequality(),
     Negation(),
+    LessThen(),
+    GreaterThen(),
+    Slash(),
+    Asterisk(),
 }
 
 impl StateLineContext {

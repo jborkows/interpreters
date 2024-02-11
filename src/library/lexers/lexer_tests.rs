@@ -44,7 +44,7 @@ impl Iterator for Lines {
 
 #[test]
 fn next_sign() {
-    let input = Lines::new(vec![String::from("=+(){},;")]);
+    let input = Lines::new(vec![String::from("=+(){},;*<;>/;")]);
     let expected = vec![
         (LineNumber(1), ColumnNumber(1), TokenKind::Assign()),
         (LineNumber(1), ColumnNumber(2), TokenKind::Plus()),
@@ -54,6 +54,12 @@ fn next_sign() {
         (LineNumber(1), ColumnNumber(6), TokenKind::RightBrace()),
         (LineNumber(1), ColumnNumber(7), TokenKind::Comma()),
         (LineNumber(1), ColumnNumber(8), TokenKind::Semicolon()),
+        (LineNumber(1), ColumnNumber(9), TokenKind::Asterisk()),
+        (LineNumber(1), ColumnNumber(10), TokenKind::LessThen()),
+        (LineNumber(1), ColumnNumber(11), TokenKind::Semicolon()),
+        (LineNumber(1), ColumnNumber(12), TokenKind::GreaterThen()),
+        (LineNumber(1), ColumnNumber(13), TokenKind::Slash()),
+        (LineNumber(1), ColumnNumber(14), TokenKind::Semicolon()),
         (LineNumber(2), ColumnNumber(1), TokenKind::EOF()),
     ];
 

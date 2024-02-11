@@ -8,6 +8,10 @@ pub(crate) fn operator(charecter: &SourceCharecter) -> Option<TokenKind> {
         '=' => Some(TokenKind::Assign()),
         '+' => Some(TokenKind::Plus()),
         '!' => Some(TokenKind::Negation()),
+        '<' => Some(TokenKind::LessThen()),
+        '>' => Some(TokenKind::GreaterThen()),
+        '/' => Some(TokenKind::Slash()),
+        '*' => Some(TokenKind::Asterisk()),
         _ => None,
     }
 }
@@ -38,6 +42,14 @@ pub(crate) fn operator_token_from_text(text: &str) -> TokenKind {
         "=" => TokenKind::Assign(),
         "+" => TokenKind::Plus(),
         "!" => TokenKind::Negation(),
+        "<" => TokenKind::LessThen(),
+        ">" => TokenKind::GreaterThen(),
+        "/" => TokenKind::Slash(),
+        "*" => TokenKind::Asterisk(),
+        "==" => TokenKind::Equality(),
+
+        "!=" => TokenKind::Inequality(),
+
         _ => TokenKind::Illegal(format!("Unknown operator: {}", text)),
     };
     token
