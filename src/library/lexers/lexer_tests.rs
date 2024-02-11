@@ -58,7 +58,6 @@ fn next_sign() {
         (LineNumber(1), ColumnNumber(12), TokenKind::GreaterThen()),
         (LineNumber(1), ColumnNumber(13), TokenKind::Slash()),
         (LineNumber(1), ColumnNumber(14), TokenKind::Semicolon()),
-        (LineNumber(2), ColumnNumber(1), TokenKind::EOF()),
     ];
 
     perform_test(input, expected);
@@ -72,7 +71,6 @@ fn euqality_negation() {
         (LineNumber(1), ColumnNumber(3), TokenKind::Inequality()),
         (LineNumber(1), ColumnNumber(5), TokenKind::Negation()),
         (LineNumber(1), ColumnNumber(6), TokenKind::Semicolon()),
-        (LineNumber(2), ColumnNumber(1), TokenKind::EOF()),
     ];
 
     perform_test(input, expected);
@@ -94,7 +92,6 @@ fn true_false() {
             ColumnNumber(18),
             TokenKind::Identifier(String::from("falses")),
         ),
-        (LineNumber(2), ColumnNumber(1), TokenKind::EOF()),
     ];
 
     perform_test(input, expected);
@@ -122,7 +119,6 @@ fn if_else_return() {
             ColumnNumber(26),
             TokenKind::Identifier(String::from("returns")),
         ),
-        (LineNumber(2), ColumnNumber(1), TokenKind::EOF()),
     ];
 
     perform_test(input, expected);
@@ -229,7 +225,6 @@ fn more_complex_text() {
         ),
         (LineNumber(8), ColumnNumber(27), TokenKind::RightParen()),
         (LineNumber(8), ColumnNumber(28), TokenKind::Semicolon()),
-        (LineNumber(9), ColumnNumber(1), TokenKind::EOF()),
     ];
 
     perform_test(input, expected);

@@ -23,7 +23,6 @@ impl Token {
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum TokenKind {
     Illegal(String),
-    EOF(),
     Identifier(String),
     Integer(i32),
 
