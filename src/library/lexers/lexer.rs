@@ -20,8 +20,8 @@ where
 {
     let mut state = State::Idle;
     for charecter in source {
-        let (newState, tokens) = next(charecter, state);
-        state = newState;
+        let (new_state, tokens) = next(charecter, state);
+        state = new_state;
         output(ReadingStatus::Read(tokens));
     }
     output(ReadingStatus::Finished);
