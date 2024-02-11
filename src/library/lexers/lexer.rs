@@ -27,8 +27,22 @@ where
     output(ReadingStatus::Finished);
 }
 
+pub fn read_all<T>(source: T) -> Vec<Token>
+where
+    T: Iterator<Item = SourceCharecter>,
+{
+    let mut state = State::Idle;
+    let mut tokens = Vec::new();
+    for charecter in source {
+        let (new_state, new_tokens) = next(charecter, state);
+        state = new_state;
+        tokens.extend(new_tokens);
+    }
+    tokens
+}
+
 fn next(charecter: SourceCharecter, state: State) -> (State, Vec<Token>) {
-    println!("current: {:?} -> incoming {:?}", state, charecter);
+    // println!("current: {:?} -> incoming {:?}", state, charecter);
     match state {
         State::Idle => read_idle(&charecter),
         State::ReadingText(context) => read_text(charecter, context),
