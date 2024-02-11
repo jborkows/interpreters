@@ -50,6 +50,9 @@ pub enum TokenKind {
 
     True(),
     False(),
+    If(),
+    Else(),
+    Return(),
 }
 
 impl StateLineContext {

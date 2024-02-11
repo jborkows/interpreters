@@ -102,6 +102,34 @@ fn true_false() {
     perform_test(input, expected);
 }
 
+#[test]
+fn if_else_return() {
+    let input = Lines::new(vec![String::from("if ifs else elses return returns")]);
+    let expected = vec![
+        (LineNumber(1), ColumnNumber(1), TokenKind::If()),
+        (
+            LineNumber(1),
+            ColumnNumber(4),
+            TokenKind::Identifier(String::from("ifs")),
+        ),
+        (LineNumber(1), ColumnNumber(8), TokenKind::Else()),
+        (
+            LineNumber(1),
+            ColumnNumber(13),
+            TokenKind::Identifier(String::from("elses")),
+        ),
+        (LineNumber(1), ColumnNumber(19), TokenKind::Return()),
+        (
+            LineNumber(1),
+            ColumnNumber(26),
+            TokenKind::Identifier(String::from("returns")),
+        ),
+        (LineNumber(2), ColumnNumber(1), TokenKind::EOF()),
+    ];
+
+    perform_test(input, expected);
+}
+
 fn perform_test(input: Lines, expected: Vec<(LineNumber, ColumnNumber, TokenKind)>) {
     let tokens: RefCell<Vec<Token>> = RefCell::new(Vec::new());
     read(input, |status| match status {
