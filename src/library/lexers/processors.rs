@@ -55,15 +55,12 @@ pub(crate) fn operator_token_from_text(text: &str) -> TokenKind {
 
 impl SourceCharecter {
     pub(crate) fn as_reading_operator(&self) -> State {
-        let charecter = self;
         State::ReadingOperator(self.as_state_line_context())
     }
     pub(crate) fn as_reading_text(&self) -> State {
-        let charecter = self;
         State::ReadingText(self.as_state_line_context())
     }
     pub(crate) fn as_reading_number(&self) -> State {
-        let charecter = self;
         State::ReadingNumber(self.as_state_line_context())
     }
     pub(crate) fn as_state_line_context(&self) -> StateLineContext {

@@ -24,7 +24,6 @@ impl Token {
 pub enum TokenKind {
     Illegal(String),
     EOF(),
-    EndOfLine(),
     Identifier(String),
     Integer(i32),
 

@@ -6,33 +6,6 @@ use std::{
     usize,
 };
 
-struct BufferedReaderLines<R: Read> {
-    reader: BufReader<R>,
-    position: usize,
-}
-impl<R: Read> BufferedReaderLines<R> {
-    fn new(reader: BufReader<R>) -> Self {
-        BufferedReaderLines {
-            reader,
-            position: 0,
-        }
-    }
-}
-//having BufferedReaderLines implement Iterator return iterator which will return list of lines
-//with line number
-impl<R: Read> Iterator for BufferedReaderLines<R> {
-    type Item = (usize, String);
-    fn next(&mut self) -> Option<Self::Item> {
-        let mut line = String::new();
-        self.position += 1;
-        match self.reader.read_line(&mut line) {
-            Ok(0) => None,
-            Ok(_) => Some((self.position, line)),
-            Err(e) => panic!("Error reading line: {}", e),
-        }
-    }
-}
-
 pub fn start<R, W>(input: &mut R, output: &mut W) -> io::Result<()>
 where
     R: Read,
