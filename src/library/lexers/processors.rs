@@ -47,9 +47,7 @@ pub(crate) fn operator_token_from_text(text: &str) -> TokenKind {
         "/" => TokenKind::Slash(),
         "*" => TokenKind::Asterisk(),
         "==" => TokenKind::Equality(),
-
         "!=" => TokenKind::Inequality(),
-
         _ => TokenKind::Illegal(format!("Unknown operator: {}", text)),
     };
     token
