@@ -60,6 +60,20 @@ fn next_sign() {
     perform_test(input, expected);
 }
 
+#[test]
+fn euqality_negation() {
+    let input = Lines::new(vec![String::from("==!=!;")]);
+    let expected = vec![
+        (LineNumber(1), ColumnNumber(1), TokenKind::Equality()),
+        (LineNumber(1), ColumnNumber(3), TokenKind::Inequality()),
+        (LineNumber(1), ColumnNumber(5), TokenKind::Negation()),
+        (LineNumber(1), ColumnNumber(6), TokenKind::Semicolon()),
+        (LineNumber(2), ColumnNumber(1), TokenKind::EOF()),
+    ];
+
+    perform_test(input, expected);
+}
+
 fn perform_test(input: Lines, expected: Vec<(LineNumber, ColumnNumber, TokenKind)>) {
     let tokens: RefCell<Vec<Token>> = RefCell::new(Vec::new());
     read(input, |status| match status {

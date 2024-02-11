@@ -7,6 +7,7 @@ pub(crate) fn operator(charecter: &SourceCharecter) -> Option<TokenKind> {
     match charecter.ch {
         '=' => Some(TokenKind::Assign()),
         '+' => Some(TokenKind::Plus()),
+        '!' => Some(TokenKind::Negation()),
         _ => None,
     }
 }
@@ -36,6 +37,7 @@ pub(crate) fn operator_token_from_text(text: &str) -> TokenKind {
     let token = match text {
         "=" => TokenKind::Assign(),
         "+" => TokenKind::Plus(),
+        "!" => TokenKind::Negation(),
         _ => TokenKind::Illegal(format!("Unknown operator: {}", text)),
     };
     token

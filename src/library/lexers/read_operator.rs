@@ -1,6 +1,9 @@
 use crate::lexers::{base::State, processors::operator, processors::sign, tokens::Token};
 
-use super::base::{SourceCharecter, StateLineContext};
+use super::{
+    base::{SourceCharecter, StateLineContext},
+    tokens::TokenKind,
+};
 
 pub(crate) fn read_operator(
     charecter: SourceCharecter,
@@ -14,14 +17,7 @@ pub(crate) fn read_operator(
     }
     let operator = operator(&charecter);
     if operator.is_some() {
-        return (
-            State::ReadingOperator(StateLineContext {
-                text: String::from(charecter.ch),
-                line: charecter.line_number,
-                column: charecter.column_number,
-            }),
-            vec![state.full_token(state.read_text_as_operator())],
-        );
+        return fetch_operator(&charecter, &state);
     }
     let sign = sign(&charecter);
     if sign.is_some() {
@@ -46,4 +42,19 @@ pub(crate) fn read_operator(
         );
     }
     todo!()
+}
+
+fn fetch_operator(charecter: &SourceCharecter, state: &StateLineContext) -> (State, Vec<Token>) {
+    match format!("{}{}", state.text, &charecter.ch.to_string()).as_str() {
+        "==" => (State::Idle, vec![state.full_token(TokenKind::Equality())]),
+        "!=" => (State::Idle, vec![state.full_token(TokenKind::Inequality())]),
+        _ => (
+            State::ReadingOperator(StateLineContext {
+                text: String::from(charecter.ch),
+                line: charecter.line_number,
+                column: charecter.column_number,
+            }),
+            vec![state.full_token(state.read_text_as_operator())],
+        ),
+    }
 }

@@ -28,9 +28,6 @@ pub enum TokenKind {
     Identifier(String),
     Integer(i32),
 
-    Assign(),
-    Plus(),
-
     Comma(),
     Semicolon(),
     LeftParen(),
@@ -40,6 +37,12 @@ pub enum TokenKind {
 
     Function(),
     Let(),
+
+    Assign(),
+    Plus(),
+    Equality(),
+    Inequality(),
+    Negation(),
 }
 
 impl StateLineContext {
