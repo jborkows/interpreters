@@ -27,19 +27,21 @@ where
     output(ReadingStatus::Finished);
 }
 
-pub fn read_all<T>(source: T) -> Vec<Token>
+pub fn read_all<T>(source: T) -> impl Iterator<Item = Token>
 where
-    T: Iterator<Item = SourceCharecter>,
+    T: IntoIterator<Item = SourceCharecter>,
 {
     let mut state = State::Idle;
     let mut tokens = Vec::new();
-    for charecter in source {
-        let (new_state, new_tokens) = next(charecter, state);
+    for character in source.into_iter() {
+        let (new_state, new_tokens) = next(character, state);
         state = new_state;
         tokens.extend(new_tokens);
     }
-    tokens
+    tokens.into_iter()
 }
+
+//write read_all function but returning Iterator
 
 fn next(charecter: SourceCharecter, state: State) -> (State, Vec<Token>) {
     // println!("current: {:?} -> incoming {:?}", state, charecter);

@@ -40,7 +40,7 @@ where
 {
     let buffered = BufReader::new(input);
     let mut line_count: usize = 0;
-    let readData = buffered.lines().flat_map(move |line| {
+    let read_data = buffered.lines().flat_map(move |line| {
         line_count += 1;
         let line_number = LineNumber(line_count as u16);
         let aaa = line
@@ -53,35 +53,14 @@ where
             .collect::<Vec<SourceCharecter>>();
         return aaa.into_iter();
     });
-    read_all(readData).into_iter().for_each(|token| {
+
+    read_all(read_data).for_each(|token| {
         let line = format!(
-            "Line: {}, Column: {}, Token: {:?}",
+            "=> Line: {}, Column: {}, Token: {:?} \n",
             token.0 .0, token.1 .0, token.2
         );
         output.write_all(line.as_bytes()).unwrap();
     });
 
-    // fun_name(readData, output);
-
     Ok(())
-}
-
-fn fun_name<R, W>(readData: R, output: &W)
-where
-    R: Iterator<Item = SourceCharecter>,
-    W: Write,
-{
-    read(readData, |status| match status {
-        ReadingStatus::Read(new_tokens) => {
-            new_tokens.iter().for_each(|token| {
-                let value = format!(
-                    "Line: {}, Column: {}, Token: {:?}",
-                    token.0 .0, token.1 .0, token.2
-                );
-                println!("{}", value);
-                // output.write_all(value.as_bytes()).unwrap();
-            });
-        }
-        ReadingStatus::Finished => {}
-    });
 }
