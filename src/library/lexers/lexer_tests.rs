@@ -80,6 +80,28 @@ fn euqality_negation() {
     perform_test(input, expected);
 }
 
+#[test]
+fn true_false() {
+    let input = Lines::new(vec![String::from("true false trues falses")]);
+    let expected = vec![
+        (LineNumber(1), ColumnNumber(1), TokenKind::True()),
+        (LineNumber(1), ColumnNumber(6), TokenKind::False()),
+        (
+            LineNumber(1),
+            ColumnNumber(12),
+            TokenKind::Identifier(String::from("trues")),
+        ),
+        (
+            LineNumber(1),
+            ColumnNumber(18),
+            TokenKind::Identifier(String::from("falses")),
+        ),
+        (LineNumber(2), ColumnNumber(1), TokenKind::EOF()),
+    ];
+
+    perform_test(input, expected);
+}
+
 fn perform_test(input: Lines, expected: Vec<(LineNumber, ColumnNumber, TokenKind)>) {
     let tokens: RefCell<Vec<Token>> = RefCell::new(Vec::new());
     read(input, |status| match status {

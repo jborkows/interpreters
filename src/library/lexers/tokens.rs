@@ -47,6 +47,9 @@ pub enum TokenKind {
     GreaterThen(),
     Slash(),
     Asterisk(),
+
+    True(),
+    False(),
 }
 
 impl StateLineContext {

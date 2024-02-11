@@ -46,6 +46,8 @@ fn classify_identifier(identifier: &String) -> TokenKind {
     match identifier.as_str() {
         "let" => TokenKind::Let(),
         "fn" => TokenKind::Function(),
+        "true" => TokenKind::True(),
+        "false" => TokenKind::False(),
         _ => TokenKind::Identifier(identifier.clone()),
     }
 }
