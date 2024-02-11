@@ -1,5 +1,5 @@
 //import SourceCharecter from lexers base
-use crate::lexers::{read, read_all, ColumnNumber, LineNumber, ReadingStatus, SourceCharecter};
+use crate::lexers::{read_all, ColumnNumber, LineNumber, SourceCharecter};
 
 use std::{
     io::{self, BufRead, BufReader, Read, Write},

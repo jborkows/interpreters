@@ -8,25 +8,6 @@ use super::{
     tokens::Token,
 };
 
-pub enum ReadingStatus {
-    Read(Vec<Token>),
-    Finished,
-}
-
-pub fn read<T, F>(source: T, output: F)
-where
-    T: Iterator<Item = SourceCharecter>,
-    F: Fn(ReadingStatus) -> (),
-{
-    let mut state = State::Idle;
-    for charecter in source {
-        let (new_state, tokens) = next(charecter, state);
-        state = new_state;
-        output(ReadingStatus::Read(tokens));
-    }
-    output(ReadingStatus::Finished);
-}
-
 pub fn read_all<T>(source: T) -> impl Iterator<Item = Token>
 where
     T: IntoIterator<Item = SourceCharecter>,

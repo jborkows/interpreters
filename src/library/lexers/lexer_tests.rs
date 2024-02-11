@@ -1,8 +1,6 @@
-use std::cell::RefCell;
-
 use super::{
     base::{ColumnNumber, LineNumber, SourceCharecter},
-    lexer::{read, ReadingStatus},
+    lexer::read_all,
     tokens::{Token, TokenKind},
 };
 
@@ -131,20 +129,11 @@ fn if_else_return() {
 }
 
 fn perform_test(input: Lines, expected: Vec<(LineNumber, ColumnNumber, TokenKind)>) {
-    let tokens: RefCell<Vec<Token>> = RefCell::new(Vec::new());
-    read(input, |status| match status {
-        ReadingStatus::Read(new_tokens) => {
-            tokens.borrow_mut().extend(new_tokens);
-        }
-        ReadingStatus::Finished => {}
-    });
-
-    for (i, tok) in tokens.into_inner().into_iter().enumerate() {
-        assert_eq!(
-            tok,
-            Token(expected[i].0, expected[i].1, expected[i].2.clone())
-        );
-    }
+    read_all(input)
+        .zip(expected.iter())
+        .for_each(|(token, expected)| {
+            assert_eq!(token, Token(expected.0, expected.1, expected.2.clone()));
+        });
 }
 
 #[test]
