@@ -52,14 +52,14 @@ impl SourceCharecter {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub(crate) struct StateLineContext {
     pub(crate) text: String,
     pub(crate) line: LineNumber,
     pub(crate) column: ColumnNumber,
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub(crate) enum State {
     Idle,
     ReadingText(StateLineContext),

@@ -32,13 +32,11 @@ where
     T: IntoIterator<Item = SourceCharecter>,
 {
     let mut state = State::Idle;
-    let mut tokens = Vec::new();
-    for character in source.into_iter() {
-        let (new_state, new_tokens) = next(character, state);
+    source.into_iter().flat_map(move |character| {
+        let (new_state, new_tokens) = next(character, state.clone());
         state = new_state;
-        tokens.extend(new_tokens);
-    }
-    tokens.into_iter()
+        new_tokens.into_iter()
+    })
 }
 
 //write read_all function but returning Iterator
