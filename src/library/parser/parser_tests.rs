@@ -1,11 +1,11 @@
-use crate::parser::parser::ParsingError;
-use crate::parser::parser::ParsingErrorKind::*;
+use super::types::ParsingErrorKind::*;
+use super::types::{ParsingError, ParsingErrorKind, Program, Statement};
 use crate::{fake_source::Lines, lexers::read_all};
 
 use crate::lexers::{ColumnNumber, LineNumber, Token, TokenKind::*};
 
 use super::parser::parse;
-use super::parser::Statement::*;
+use super::types::Statement::*;
 
 #[test]
 fn parse_assigment() {
