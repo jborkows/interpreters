@@ -41,5 +41,5 @@ pub(crate) fn read_number(
             vec![],
         );
     }
-    return (charecter.as_reading_text(), vec![]);
+    (charecter.as_reading_text(), vec![])
 }

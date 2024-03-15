@@ -105,8 +105,8 @@ where
         }
         Some(Token(line, column, kind)) => Result::Err(ParsingError {
             message: ParsingErrorKind::ExpectedAssign(Some(kind)),
-            line: line,
-            column: column,
+            line,
+            column,
         }),
         _ => Result::Err(ParsingError {
             message: ParsingErrorKind::ExpectedAssign(None),
@@ -152,8 +152,8 @@ where
         }),
         Some(Token(line, column, _)) => Result::Err(ParsingError {
             message: ParsingErrorKind::ExpectedInteger,
-            line: line,
-            column: column,
+            line,
+            column,
         }),
         _ => Result::Err(ParsingError {
             message: ParsingErrorKind::ExpectedInteger,

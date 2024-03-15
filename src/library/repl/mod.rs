@@ -21,10 +21,10 @@ where
             .chars()
             .map(move |ch| {
                 let column_number = ColumnNumber(line_count as u16);
-                return SourceCharecter::new(ch, column_number, line_number);
+                SourceCharecter::new(ch, column_number, line_number)
             })
             .collect::<Vec<SourceCharecter>>();
-        return aaa.into_iter();
+        aaa.into_iter()
     });
 
     read_all(read_data).for_each(|token| {

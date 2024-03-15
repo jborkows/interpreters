@@ -8,11 +8,11 @@ pub(crate) fn read_idle(charecter: &SourceCharecter) -> (State, Vec<Token>) {
     if charecter.is_whitespace() || charecter.ch == '\0' {
         return (State::Idle, vec![]);
     }
-    let operator = operator(&charecter);
+    let operator = operator(charecter);
     if operator.is_some() {
         return (charecter.as_reading_operator(), vec![]);
     }
-    let sign = sign(&charecter);
+    let sign = sign(charecter);
     if sign.is_some() {
         return (State::Idle, vec![Token::new(charecter, sign.unwrap())]);
     }

@@ -33,13 +33,13 @@ pub(crate) fn read_text(
             ],
         );
     }
-    return (
+    (
         State::ReadingText(StateLineContext {
             text: context.text + &charecter.ch.to_string(),
             ..context
         }),
         vec![],
-    );
+    )
 }
 
 fn classify_identifier(identifier: &String) -> TokenKind {

@@ -38,7 +38,7 @@ impl StateLineContext {
 }
 
 pub(crate) fn operator_token_from_text(text: &str) -> TokenKind {
-    let token = match text {
+    match text {
         "=" => TokenKind::Assign(),
         "+" => TokenKind::Plus(),
         "!" => TokenKind::Negation(),
@@ -49,8 +49,7 @@ pub(crate) fn operator_token_from_text(text: &str) -> TokenKind {
         "==" => TokenKind::Equality(),
         "!=" => TokenKind::Inequality(),
         _ => TokenKind::Illegal(format!("Unknown operator: {}", text)),
-    };
-    token
+    }
 }
 
 impl SourceCharecter {
