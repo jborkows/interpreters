@@ -1,3 +1,5 @@
+use crate::parser::parser::ParsingError;
+use crate::parser::parser::ParsingErrorKind::*;
 use crate::{fake_source::Lines, lexers::read_all};
 
 use crate::lexers::{ColumnNumber, LineNumber, Token, TokenKind::*};
@@ -50,4 +52,39 @@ fn parse_assigment() {
         .for_each(|(expected, statement)| {
             assert_eq!(statement, &expected);
         });
+}
+
+#[test]
+fn parse_assigment_with_errors() {
+    let input = Lines::new(vec![
+        String::from("let x = 5;"),
+        String::from("let  = 5;"),
+        String::from("let x  5;"),
+        String::from("let x = ;"),
+    ]);
+    let program = parse(read_all(input));
+    let expected_errors = vec![
+        ParsingError {
+            message: ExpectedIdentifier,
+            line: LineNumber(2),
+            column: ColumnNumber(6),
+        },
+        ParsingError {
+            message: ExpectedAssign(Some(Integer(5))),
+            line: LineNumber(3),
+            column: ColumnNumber(8),
+        },
+        ParsingError {
+            message: ExpectedInteger,
+            line: LineNumber(4),
+            column: ColumnNumber(9),
+        },
+    ];
+
+    program.errors().iter().for_each(|error| {
+        println!("{:?}", error);
+    });
+    expected_errors.iter().for_each(|expected| {
+        assert!(program.errors().contains(expected));
+    });
 }
