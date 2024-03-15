@@ -1,5 +1,5 @@
 //import SourceCharecter from lexers base
-use crate::lexers::{read_all, ColumnNumber, LineNumber, SourceCharecter};
+use crate::lexers::{read_all, SourceCharecter};
 
 use std::{
     io::{self, BufRead, BufReader, Read, Write},
@@ -15,12 +15,12 @@ where
     let mut line_count: usize = 0;
     let read_data = buffered.lines().flat_map(move |line| {
         line_count += 1;
-        let line_number = LineNumber(line_count as u16);
+        let line_number = line_count.into();
         let aaa = line
             .unwrap()
             .chars()
             .map(move |ch| {
-                let column_number = ColumnNumber(line_count as u16);
+                let column_number = line_count.into();
                 SourceCharecter::new(ch, column_number, line_number)
             })
             .collect::<Vec<SourceCharecter>>();

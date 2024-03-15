@@ -32,6 +32,17 @@ pub trait Lexable {
     fn next_line(&self) -> Option<(LineNumber, String)>;
 }
 
+impl Into<LineNumber> for usize {
+    fn into(self) -> LineNumber {
+        LineNumber(self as u16)
+    }
+}
+impl Into<ColumnNumber> for usize {
+    fn into(self) -> ColumnNumber {
+        ColumnNumber(self as u16)
+    }
+}
+
 #[derive(Debug, PartialEq, Eq)]
 pub struct SourceCharecter {
     pub(crate) ch: char,
