@@ -1,4 +1,4 @@
-.PHONY: all format clippy test check
+.PHONY: all format clippy test check clippy-fix
 
 format:
 	@echo "Formatting code"
@@ -7,9 +7,12 @@ format:
 clippy:
 	@echo "Running clippy"
 	cargo clippy
-
+ 
+clippy-fix:
+	@echo "Running clippy"
+	cargo clippy --fix
 test:
 	@echo "Running tests"
 	cargo test
 check: clippy test format
-	@echo "All checks passed"
+	@echo "All checks passed" 
