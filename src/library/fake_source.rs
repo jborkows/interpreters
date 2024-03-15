@@ -14,6 +14,16 @@ impl Lines {
             current_column: ColumnNumber(0),
         }
     }
+    pub fn m<T>(lines: Vec<T>) -> Self
+    where
+        T: Into<String>,
+    {
+        Self {
+            lines: lines.into_iter().map(|l| l.into()).collect(),
+            current_line: LineNumber(0),
+            current_column: ColumnNumber(0),
+        }
+    }
 }
 
 impl Iterator for Lines {

@@ -23,6 +23,7 @@ pub enum ParsingErrorKind {
     ExpectedAssign(Option<TokenKind>),
     ExpectedInteger,
     UnexpectedToken(TokenKind),
+    NotImplementedYet,
 }
 
 impl IntoIterator for Program {
@@ -43,6 +44,10 @@ pub enum Statement {
     LetStatement {
         token: Token,
         name: Box<Statement>,
+        value: Box<Statement>,
+    },
+    ReturnStatement {
+        token: Token,
         value: Box<Statement>,
     },
     LiteralInt {
@@ -78,6 +83,10 @@ where
                 let statement = parse_let_statement(&mut tokens, token);
                 program.push(statement);
             }
+            Return() => {
+                let statement = parse_return_statement(&mut tokens, token);
+                program.push(statement);
+            }
             Semicolon() => {}
             _ => program.push(Result::Err(ParsingError {
                 message: ParsingErrorKind::UnexpectedToken(token.kind().clone()),
@@ -87,6 +96,32 @@ where
         }
     }
     program
+}
+
+fn parse_return_statement<T>(tokens: &mut T, token: Token) -> Result<Statement, ParsingError>
+where
+    T: Iterator<Item = Token>,
+{
+    match tokens.next() {
+        Some(Token(line, column, Identifier(x))) => Ok(ReturnStatement {
+            token,
+            value: Box::new(IdentifierExpression {
+                token: Token(line, column, Identifier(x)),
+            }),
+        }),
+        Some(Token(line, column, Integer(x))) => Ok(ReturnStatement {
+            token,
+            value: Box::new(LiteralInt {
+                value: x,
+                token: Token(line, column, Integer(x)),
+            }),
+        }),
+        _ => Result::Err(ParsingError {
+            message: ParsingErrorKind::NotImplementedYet,
+            line: token.line(),
+            column: token.column(),
+        }),
+    }
 }
 
 fn parse_let_statement<T>(tokens: &mut T, token: Token) -> Result<Statement, ParsingError>

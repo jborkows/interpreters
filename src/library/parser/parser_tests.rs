@@ -81,10 +81,36 @@ fn parse_assigment_with_errors() {
         },
     ];
 
-    program.errors().iter().for_each(|error| {
-        println!("{:?}", error);
-    });
     expected_errors.iter().for_each(|expected| {
         assert!(program.errors().contains(expected));
     });
+}
+#[test]
+fn parse_return() {
+    let input = Lines::m(vec!["return 5;", "return 10;"]);
+
+    let expected = vec![
+        ReturnStatement {
+            token: Token(LineNumber(1), ColumnNumber(1), Return()),
+            value: Box::new(LiteralInt {
+                token: Token(LineNumber(1), ColumnNumber(8), Integer(5)),
+                value: 5,
+            }),
+        },
+        ReturnStatement {
+            token: Token(LineNumber(2), ColumnNumber(1), Return()),
+            value: Box::new(LiteralInt {
+                token: Token(LineNumber(2), ColumnNumber(8), Integer(10)),
+                value: 10,
+            }),
+        },
+    ];
+    let statements = parse(read_all(input)).into_iter().collect::<Vec<_>>();
+    assert_eq!(&statements.len(), &expected.len());
+    expected
+        .into_iter()
+        .zip(statements.iter())
+        .for_each(|(expected, statement)| {
+            assert_eq!(statement, &expected);
+        });
 }
