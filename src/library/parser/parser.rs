@@ -1,7 +1,7 @@
 use crate::lexers::Token;
 use crate::lexers::TokenKind::*;
 
-use super::{ParsingError, ParsingErrorKind, Program, Statement, Statement::*};
+use super::{ParsingError, ParsingErrorKind, Program};
 
 use super::parse_let::parse_let_statement;
 use super::parse_return::parse_return_statement;

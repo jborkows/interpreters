@@ -3,7 +3,6 @@ use crate::lexers::TokenKind::*;
 
 use super::{ParsingError, ParsingErrorKind, Statement};
 
-use super::types::Statement::*;
 pub(crate) fn expect_indetifier<T>(
     tokens: &mut T,
     parent_token: &Token,

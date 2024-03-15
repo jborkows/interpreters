@@ -32,14 +32,14 @@ pub trait Lexable {
     fn next_line(&self) -> Option<(LineNumber, String)>;
 }
 
-impl Into<LineNumber> for usize {
-    fn into(self) -> LineNumber {
-        LineNumber(self as u16)
+impl From<usize> for LineNumber {
+    fn from(val: usize) -> Self {
+        LineNumber(val as u16)
     }
 }
-impl Into<ColumnNumber> for usize {
-    fn into(self) -> ColumnNumber {
-        ColumnNumber(self as u16)
+impl From<usize> for ColumnNumber {
+    fn from(val: usize) -> Self {
+        ColumnNumber(val as u16)
     }
 }
 

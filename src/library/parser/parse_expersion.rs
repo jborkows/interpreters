@@ -3,8 +3,6 @@ use crate::lexers::TokenKind::*;
 
 use super::{ParsingError, ParsingErrorKind, Statement};
 
-use super::types::Statement::*;
-
 pub(crate) fn parse_expression<'a, T>(
     tokens: &mut T,
     parent_token: &Token,

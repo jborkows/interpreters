@@ -1,5 +1,5 @@
+use super::types::ParsingError;
 use super::types::ParsingErrorKind::*;
-use super::types::{ParsingError, ParsingErrorKind, Program, Statement};
 use crate::{fake_source::Lines, lexers::read_all};
 
 use crate::lexers::{ColumnNumber, LineNumber, Token, TokenKind::*};
