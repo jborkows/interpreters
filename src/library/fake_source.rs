@@ -7,7 +7,7 @@ pub struct Lines {
 }
 
 impl Lines {
-    pub fn m<T>(lines: Vec<T>) -> Self
+    pub fn new<T>(lines: Vec<T>) -> Self
     where
         T: Into<String>,
     {

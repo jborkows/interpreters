@@ -7,7 +7,7 @@ use crate::fake_source::Lines;
 
 #[test]
 fn next_sign() {
-    let input = Lines::m(vec!["=+(){},;*<;>/;"]);
+    let input = Lines::new(vec!["=+(){},;*<;>/;"]);
     let expected = vec![
         (LineNumber(1), ColumnNumber(1), TokenKind::Assign()),
         (LineNumber(1), ColumnNumber(2), TokenKind::Plus()),
@@ -30,7 +30,7 @@ fn next_sign() {
 
 #[test]
 fn euqality_negation() {
-    let input = Lines::m(vec!["==!=!;"]);
+    let input = Lines::new(vec!["==!=!;"]);
     let expected = vec![
         (LineNumber(1), ColumnNumber(1), TokenKind::Equality()),
         (LineNumber(1), ColumnNumber(3), TokenKind::Inequality()),
@@ -43,7 +43,7 @@ fn euqality_negation() {
 
 #[test]
 fn true_false() {
-    let input = Lines::m(vec!["true false trues falses"]);
+    let input = Lines::new(vec!["true false trues falses"]);
     let expected = vec![
         (LineNumber(1), ColumnNumber(1), TokenKind::True()),
         (LineNumber(1), ColumnNumber(6), TokenKind::False()),
@@ -64,7 +64,7 @@ fn true_false() {
 
 #[test]
 fn if_else_return() {
-    let input = Lines::m(vec!["if ifs else elses return returns"]);
+    let input = Lines::new(vec!["if ifs else elses return returns"]);
     let expected = vec![
         (LineNumber(1), ColumnNumber(1), TokenKind::If()),
         (
@@ -99,7 +99,7 @@ fn perform_test(input: Lines, expected: Vec<(LineNumber, ColumnNumber, TokenKind
 
 #[test]
 fn more_complex_text() {
-    let input = Lines::m(vec![
+    let input = Lines::new(vec![
         "let five = 5;",
         "let ten = 10;",
         "",

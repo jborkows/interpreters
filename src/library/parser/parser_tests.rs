@@ -10,7 +10,7 @@ use super::types::Statement::*;
 
 #[test]
 fn parse_assigment() {
-    let input = Lines::m(vec!["let x = 5;", "let y = 10;"]);
+    let input = Lines::new(vec!["let x = 5;", "let y = 10;"]);
 
     let expected = vec![
         LetStatement {
@@ -68,7 +68,7 @@ fn pase_input(input: Lines) -> super::Program {
 
 #[test]
 fn parse_assigment_with_errors() {
-    let input = Lines::m(vec!["let x = 5;", "let  = 5;", "let x  5;", "let x = ;"]);
+    let input = Lines::new(vec!["let x = 5;", "let  = 5;", "let x  5;", "let x = ;"]);
     let program = parse(read_all(input));
     let expected_errors = vec![
         ParsingError {
@@ -94,7 +94,7 @@ fn parse_assigment_with_errors() {
 }
 #[test]
 fn parse_return() {
-    let input = Lines::m(vec!["return 5;", "return 10;"]);
+    let input = Lines::new(vec!["return 5;", "return 10;"]);
 
     let expected = vec![
         ReturnStatement {
