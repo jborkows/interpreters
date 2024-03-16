@@ -1,5 +1,6 @@
 use super::types::ParsingError;
 use super::types::ParsingErrorKind::*;
+use crate::parser::types::Expression;
 use crate::{fake_source::Lines, lexers::read_all};
 
 use crate::lexers::{ColumnNumber, LineNumber, Token, TokenKind::*};
@@ -24,9 +25,9 @@ fn parse_assigment() {
                     Identifier(String::from("x")),
                 ),
             }),
-            value: Box::new(LiteralInt {
+            value: Box::new(ExpressionStatement {
                 token: Token(LineNumber(1), ColumnNumber(9), Integer(5)),
-                value: 5,
+                expression: Box::new(Expression::LiteralInt { value: 5 }),
             }),
         },
         LetStatement {
@@ -38,9 +39,9 @@ fn parse_assigment() {
                     Identifier(String::from("y")),
                 ),
             }),
-            value: Box::new(LiteralInt {
+            value: Box::new(ExpressionStatement {
                 token: Token(LineNumber(2), ColumnNumber(9), Integer(10)),
-                value: 10,
+                expression: Box::new(Expression::LiteralInt { value: 10 }),
             }),
         },
     ];
@@ -92,16 +93,16 @@ fn parse_return() {
     let expected = vec![
         ReturnStatement {
             token: Token(LineNumber(1), ColumnNumber(1), Return()),
-            value: Box::new(LiteralInt {
+            value: Box::new(ExpressionStatement {
                 token: Token(LineNumber(1), ColumnNumber(8), Integer(5)),
-                value: 5,
+                expression: Box::new(Expression::LiteralInt { value: 5 }),
             }),
         },
         ReturnStatement {
             token: Token(LineNumber(2), ColumnNumber(1), Return()),
-            value: Box::new(LiteralInt {
+            value: Box::new(ExpressionStatement {
                 token: Token(LineNumber(2), ColumnNumber(8), Integer(10)),
-                value: 10,
+                expression: Box::new(Expression::LiteralInt { value: 10 }),
             }),
         },
     ];

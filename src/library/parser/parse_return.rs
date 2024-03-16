@@ -1,6 +1,7 @@
 use crate::lexers::Token;
 use crate::lexers::TokenKind::*;
 
+use super::types::Expression;
 use super::{ParsingError, ParsingErrorKind, Statement};
 
 use super::types::Statement::*;
@@ -20,8 +21,8 @@ where
         }),
         Some(Token(line, column, Integer(x))) => Ok(Statement::ReturnStatement {
             token,
-            value: Box::new(Statement::LiteralInt {
-                value: x,
+            value: Box::new(Statement::ExpressionStatement {
+                expression: Box::new(Expression::LiteralInt { value: x }),
                 token: Token(line, column, Integer(x)),
             }),
         }),

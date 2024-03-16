@@ -37,13 +37,14 @@ impl IntoIterator for Program {
         self.statements.into_iter().collect::<Vec<_>>().into_iter()
     }
 }
+#[derive(Debug, PartialEq)]
+pub enum Expression {
+    IdentifierExpression { name: String },
+    LiteralInt { value: i32 },
+}
 
 #[derive(Debug, PartialEq)]
 pub enum Statement {
-    IdentifierExpression {
-        token: Token,
-    },
-
     LetStatement {
         token: Token,
         name: Box<Statement>,
@@ -53,9 +54,13 @@ pub enum Statement {
         token: Token,
         value: Box<Statement>,
     },
-    LiteralInt {
+    ExpressionStatement {
         token: Token,
-        value: i32,
+        expression: Box<Expression>,
+    },
+
+    IdentifierExpression {
+        token: Token,
     },
 }
 
