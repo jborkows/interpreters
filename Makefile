@@ -1,4 +1,4 @@
-.PHONY: all format clippy test check clippy-fix run
+.PHONY: all format clippy test check clippy-fix run test-verbose
 
 format:
 	@echo "Formatting code"
@@ -14,6 +14,9 @@ clippy-fix:
 test:
 	@echo "Running tests"
 	cargo test
+test-verbose:
+	@echo "Running tests"
+	cargo test -- --nocapture
 check: clippy test format
 	@echo "All checks passed" 
 

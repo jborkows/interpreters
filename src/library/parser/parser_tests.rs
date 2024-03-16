@@ -10,10 +10,7 @@ use super::types::Statement::*;
 
 #[test]
 fn parse_assigment() {
-    let input = Lines::new(vec![
-        String::from("let x = 5;"),
-        String::from("let y = 10;"),
-    ]);
+    let input = Lines::m(vec!["let x = 5;", "let y = 10;"]);
 
     let expected = vec![
         LetStatement {
@@ -51,7 +48,9 @@ fn parse_assigment() {
             }),
         },
     ];
-    let statements = parse(read_all(input)).into_iter().collect::<Vec<_>>();
+
+    let program = pase_input(input);
+    let statements = program.into_iter().collect::<Vec<_>>();
     assert_eq!(&statements.len(), &expected.len());
     expected
         .into_iter()
@@ -61,14 +60,15 @@ fn parse_assigment() {
         });
 }
 
+fn pase_input(input: Lines) -> super::Program {
+    let program = parse(read_all(input));
+    println!("\nProgram: \n{}\nEnd\n", program.to_string());
+    program
+}
+
 #[test]
 fn parse_assigment_with_errors() {
-    let input = Lines::new(vec![
-        String::from("let x = 5;"),
-        String::from("let  = 5;"),
-        String::from("let x  5;"),
-        String::from("let x = ;"),
-    ]);
+    let input = Lines::m(vec!["let x = 5;", "let  = 5;", "let x  5;", "let x = ;"]);
     let program = parse(read_all(input));
     let expected_errors = vec![
         ParsingError {
@@ -112,7 +112,8 @@ fn parse_return() {
             }),
         },
     ];
-    let statements = parse(read_all(input)).into_iter().collect::<Vec<_>>();
+    let program = pase_input(input);
+    let statements = program.into_iter().collect::<Vec<_>>();
     assert_eq!(&statements.len(), &expected.len());
     expected
         .into_iter()

@@ -7,13 +7,6 @@ pub struct Lines {
 }
 
 impl Lines {
-    pub fn new(lines: Vec<String>) -> Self {
-        Self {
-            lines,
-            current_line: LineNumber(0),
-            current_column: ColumnNumber(0),
-        }
-    }
     pub fn m<T>(lines: Vec<T>) -> Self
     where
         T: Into<String>,

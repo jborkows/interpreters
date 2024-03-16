@@ -42,6 +42,14 @@ pub enum Expression {
     IdentifierExpression { name: String },
     LiteralInt { value: i32 },
 }
+impl ToString for Expression {
+    fn to_string(&self) -> String {
+        match self {
+            Expression::IdentifierExpression { name } => name.to_string(),
+            Expression::LiteralInt { value } => value.to_string(),
+        }
+    }
+}
 
 #[derive(Debug, PartialEq)]
 pub enum Statement {
@@ -60,6 +68,26 @@ pub enum Statement {
     },
 }
 
+impl ToString for Statement {
+    fn to_string(&self) -> String {
+        match self {
+            Statement::LetStatement {
+                token: _,
+                name,
+                value,
+            } => {
+                format!("let {} = {};", name.to_string(), value.to_string())
+            }
+            Statement::ReturnStatement { token: _, value } => {
+                format!("return {};", value.to_string())
+            }
+            Statement::ExpressionStatement {
+                token: _,
+                expression,
+            } => expression.to_string(),
+        }
+    }
+}
 impl Program {
     pub(super) fn push(&mut self, statement: Result<Statement, ParsingError>) {
         match statement {
@@ -69,5 +97,14 @@ impl Program {
     }
     pub fn errors(&self) -> &Vec<ParsingError> {
         self.parsing_errors.as_ref()
+    }
+}
+impl ToString for Program {
+    fn to_string(&self) -> String {
+        self.statements
+            .iter()
+            .map(|statement| statement.to_string())
+            .collect::<Vec<_>>()
+            .join("\n")
     }
 }
