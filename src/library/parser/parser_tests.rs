@@ -18,12 +18,15 @@ fn parse_assigment() {
     let expected = vec![
         LetStatement {
             token: Token(LineNumber(1), ColumnNumber(1), Let()),
-            name: Box::new(IdentifierExpression {
+            name: Box::new(ExpressionStatement {
                 token: Token(
                     LineNumber(1),
                     ColumnNumber(5),
                     Identifier(String::from("x")),
                 ),
+                expression: Box::new(Expression::IdentifierExpression {
+                    name: String::from("x"),
+                }),
             }),
             value: Box::new(ExpressionStatement {
                 token: Token(LineNumber(1), ColumnNumber(9), Integer(5)),
@@ -32,12 +35,15 @@ fn parse_assigment() {
         },
         LetStatement {
             token: Token(LineNumber(2), ColumnNumber(1), Let()),
-            name: Box::new(IdentifierExpression {
+            name: Box::new(ExpressionStatement {
                 token: Token(
                     LineNumber(2),
                     ColumnNumber(5),
                     Identifier(String::from("y")),
                 ),
+                expression: Box::new(Expression::IdentifierExpression {
+                    name: String::from("y"),
+                }),
             }),
             value: Box::new(ExpressionStatement {
                 token: Token(LineNumber(2), ColumnNumber(9), Integer(10)),

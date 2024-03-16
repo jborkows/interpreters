@@ -13,12 +13,6 @@ where
     T: Iterator<Item = Token>,
 {
     match tokens.next() {
-        Some(Token(line, column, Identifier(x))) => Ok(Statement::ReturnStatement {
-            token,
-            value: Box::new(IdentifierExpression {
-                token: Token(line, column, Identifier(x)),
-            }),
-        }),
         Some(Token(line, column, Integer(x))) => Ok(Statement::ReturnStatement {
             token,
             value: Box::new(Statement::ExpressionStatement {

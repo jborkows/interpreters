@@ -58,10 +58,6 @@ pub enum Statement {
         token: Token,
         expression: Box<Expression>,
     },
-
-    IdentifierExpression {
-        token: Token,
-    },
 }
 
 impl Program {

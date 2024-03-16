@@ -1,6 +1,7 @@
 use crate::lexers::Token;
 use crate::lexers::TokenKind::*;
 
+use super::types::Expression;
 use super::{ParsingError, ParsingErrorKind, Statement};
 
 pub(crate) fn expect_indetifier<T>(
@@ -13,7 +14,13 @@ where
     let token = tokens.next();
     match token {
         Some(aaa) => {
-            if let Identifier(_) = aaa.kind() {
+            if let Identifier(name) = aaa.kind() {
+                Ok(Statement::ExpressionStatement {
+                    token: aaa.clone(),
+                    expression: Box::new(Expression::IdentifierExpression {
+                        name: name.to_string(),
+                    }),
+                })
             } else {
                 return Result::Err(ParsingError {
                     message: ParsingErrorKind::ExpectedIdentifier,
@@ -21,7 +28,6 @@ where
                     column: aaa.column(),
                 });
             }
-            Ok(Statement::IdentifierExpression { token: aaa })
         }
         _ => Result::Err(ParsingError {
             message: ParsingErrorKind::ExpectedIdentifier,
