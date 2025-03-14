@@ -22,7 +22,13 @@ pub enum ParsingErrorKind {
 }
 
 impl Program {
-    pub(super) fn new() -> Self {
+    pub(super) fn new(statements: Vec<Statement>) -> Self {
+        Self {
+            statements,
+            parsing_errors: vec![],
+        }
+    }
+    pub(super) fn empty() -> Self {
         Self {
             statements: vec![],
             parsing_errors: vec![],
@@ -66,6 +72,10 @@ pub enum Statement {
         token: Token,
         expression: Box<Expression>,
     },
+    IdentifierStatement {
+        token: Token,
+        name: String,
+    },
 }
 
 impl ToString for Statement {
@@ -85,6 +95,7 @@ impl ToString for Statement {
                 token: _,
                 expression,
             } => expression.to_string(),
+            Statement::IdentifierStatement { token: _, name } => name.to_string(),
         }
     }
 }

@@ -4,7 +4,6 @@ use crate::lexers::TokenKind::*;
 use super::types::Expression;
 use super::{ParsingError, ParsingErrorKind, Statement};
 
-use super::types::Statement::*;
 pub(crate) fn parse_return_statement<T>(
     tokens: &mut T,
     token: Token,

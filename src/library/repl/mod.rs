@@ -1,5 +1,4 @@
-//import SourceCharecter from lexers base
-use crate::lexers::{read_all, SourceCharecter};
+use crate::lexers::{SourceCharecter, read_all};
 
 use std::{
     io::{self, BufRead, BufReader, Read, Write},
@@ -30,7 +29,7 @@ where
     read_all(read_data).for_each(|token| {
         let line = format!(
             "=> Line: {}, Column: {}, Token: {:?} \n",
-            token.0 .0, token.1 .0, token.2
+            token.0.0, token.1.0, token.2
         );
         output.write_all(line.as_bytes()).unwrap();
     });

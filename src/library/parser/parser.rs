@@ -10,7 +10,7 @@ pub fn parse<T>(mut tokens: T) -> Program
 where
     T: Iterator<Item = Token>,
 {
-    let mut program = Program::new();
+    let mut program = Program::empty();
 
     while let Some(token) = tokens.next() {
         match token.kind() {

@@ -7,3 +7,5 @@ mod parser;
 mod parser_tests;
 mod types;
 pub use types::{ParsingError, ParsingErrorKind, Program, Statement};
+#[cfg(test)]
+mod types_test;
