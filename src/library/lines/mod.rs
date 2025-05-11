@@ -38,10 +38,25 @@ impl From<usize> for ColumnNumber {
     }
 }
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq, Clone, Copy)]
 pub struct TextPosition {
     pub line_number: LineNumber,
     pub column_number: ColumnNumber,
+}
+
+impl TextPosition {
+    pub fn new(line_number: u16, column_number: u16) -> Self {
+        Self {
+            line_number: LineNumber(line_number),
+            column_number: ColumnNumber(column_number),
+        }
+    }
+    pub fn from_line(line_number: LineNumber) -> Self {
+        Self {
+            line_number,
+            column_number: ColumnNumber(0),
+        }
+    }
 }
 
 #[derive(Debug, Eq, PartialEq)]
@@ -63,6 +78,18 @@ impl TokenPosition {
             end: TextPosition {
                 line_number: LineNumber(end_line),
                 column_number: ColumnNumber(end_column),
+            },
+        }
+    }
+    pub fn single(line_number: u16, column_number: u16) -> Self {
+        Self {
+            start: TextPosition {
+                line_number: LineNumber(line_number),
+                column_number: ColumnNumber(column_number),
+            },
+            end: TextPosition {
+                line_number: LineNumber(line_number),
+                column_number: ColumnNumber(column_number),
             },
         }
     }
