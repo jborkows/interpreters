@@ -17,12 +17,7 @@ pub(super) fn reading_equality(
                 return (
                     LexerState::Idle,
                     vec![Token::new(
-                        crate::lines::TokenPosition::from_range(
-                            starting_position.line_number.0,
-                            starting_position.column_number.0,
-                            line_number,
-                            column_number,
-                        ),
+                        starting_position.token_ends_with(line_number, column_number),
                         crate::tokens::TokenKind::Equal,
                     )],
                 );
@@ -42,6 +37,22 @@ pub(super) fn reading_equality(
                 return (result.0, tokens);
             }
         },
+        _ => unreachable!(),
+    }
+}
+
+pub(super) fn finish_equality(state: &LexerState) -> Option<Token> {
+    match state {
+        LexerState::ReadingEquality { starting_position } => {
+            let token = Token::new(
+                crate::lines::TokenPosition::single_character(
+                    starting_position.line_number,
+                    starting_position.column_number,
+                ),
+                TokenKind::Assign,
+            );
+            return Some(token);
+        }
         _ => unreachable!(),
     }
 }

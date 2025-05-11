@@ -16,3 +16,7 @@ pub(super) fn read_special_character(c: char) -> Option<TokenKind> {
         _ => None,
     }
 }
+
+pub(super) fn acceptable_separator(c: &char) -> bool {
+    return *c == ';' || c.is_whitespace() || *c == '\n' || *c == '\r';
+}

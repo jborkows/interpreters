@@ -25,6 +25,24 @@ pub(super) fn idle_parsing(
                 vec![],
             );
         }
+        ch if ch.is_numeric() => {
+            return (
+                LexerState::ReadingNumber {
+                    starting_position: TextPosition::new(line_number, column_number),
+                    value: ch.to_digit(10).unwrap() as i32,
+                    negative: false,
+                },
+                vec![],
+            );
+        }
+        '-' => {
+            return (
+                LexerState::ReadingMinus {
+                    starting_position: TextPosition::new(line_number, column_number),
+                },
+                vec![],
+            );
+        }
 
         _ => {}
     }

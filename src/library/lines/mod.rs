@@ -57,6 +57,10 @@ impl TextPosition {
             column_number: ColumnNumber(0),
         }
     }
+
+    pub fn token_ends_with(&self, line_number: u16, column_number: u16) -> TokenPosition {
+        TokenPosition::new(*self, TextPosition::new(line_number, column_number))
+    }
 }
 
 #[derive(Debug, Eq, PartialEq)]

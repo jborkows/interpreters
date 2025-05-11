@@ -107,6 +107,28 @@ fn true_false() {
 }
 
 #[test]
+fn numbers_and_false_numbers() {
+    let input = vec!["0 123 123a -1"];
+    let expected = vec![
+        (TokenPosition::from_range(1, 1, 1, 1), TokenKind::Integer(0)),
+        (
+            TokenPosition::from_range(1, 3, 1, 5),
+            TokenKind::Integer(123),
+        ),
+        (
+            TokenPosition::from_range(1, 7, 1, 10),
+            TokenKind::Invalid(String::from("Unexpected character 'a' in number")),
+        ),
+        (
+            TokenPosition::from_range(1, 12, 1, 13),
+            TokenKind::Integer(-1),
+        ),
+    ];
+
+    perform_test(input, expected);
+}
+
+#[test]
 fn if_else_return() {
     let input = vec!["if ifs else elses"];
     let expected = vec![
@@ -149,7 +171,7 @@ fn invalid_multiline_string() {
     let input = vec!["\" first", "line"];
     let expected = vec![(
         TokenPosition::from_range(1, 1, 2, 4),
-        TokenKind::Invalid(String::from(" first\nline")),
+        TokenKind::Invalid(String::from("Unclosed string literal")),
     )];
     perform_test(input, expected);
 }
@@ -302,6 +324,10 @@ fn perform_test(input: Vec<&str>, expected: Vec<(TokenPosition, TokenKind)>) {
         .for_each(|(token, expected)| {
             assert_eq!(token.kind, expected.1);
             let position = token.context.unwrap();
-            assert_eq!(position, expected.0);
+            assert_eq!(
+                position, expected.0,
+                "Position mismatch for token {:?}",
+                token.kind
+            );
         });
 }
