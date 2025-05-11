@@ -23,3 +23,7 @@ check: clippy test format
 run:
 	@echo "Running the program"
 	cargo run
+
+run-verbose:
+	@echo "Running the program"
+	RUST_BACKTRACE=1 cargo run 

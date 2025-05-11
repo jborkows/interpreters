@@ -1,28 +1,68 @@
-use super::{
-    base::{ColumnNumber, LineNumber},
-    lexer::read_all,
-    tokens::{Token, TokenKind},
-};
-use crate::fake_source::Lines;
+use super::lexer::Lexer;
+use crate::lines::{ColumnNumber, LineNumber, TokenPosition};
+use crate::tokens::TokenKind;
 
 #[test]
 fn next_sign() {
-    let input = Lines::new(vec!["=+(){},;*<;>/;"]);
+    let input = vec!["=+(){},;*<;>/;"];
+
     let expected = vec![
-        (LineNumber(1), ColumnNumber(1), TokenKind::Assign()),
-        (LineNumber(1), ColumnNumber(2), TokenKind::Plus()),
-        (LineNumber(1), ColumnNumber(3), TokenKind::LeftParen()),
-        (LineNumber(1), ColumnNumber(4), TokenKind::RightParen()),
-        (LineNumber(1), ColumnNumber(5), TokenKind::LeftBrace()),
-        (LineNumber(1), ColumnNumber(6), TokenKind::RightBrace()),
-        (LineNumber(1), ColumnNumber(7), TokenKind::Comma()),
-        (LineNumber(1), ColumnNumber(8), TokenKind::Semicolon()),
-        (LineNumber(1), ColumnNumber(9), TokenKind::Asterisk()),
-        (LineNumber(1), ColumnNumber(10), TokenKind::LessThen()),
-        (LineNumber(1), ColumnNumber(11), TokenKind::Semicolon()),
-        (LineNumber(1), ColumnNumber(12), TokenKind::GreaterThen()),
-        (LineNumber(1), ColumnNumber(13), TokenKind::Slash()),
-        (LineNumber(1), ColumnNumber(14), TokenKind::Semicolon()),
+        (
+            TokenPosition::single_character(LineNumber(1), ColumnNumber(1)),
+            TokenKind::Assign(),
+        ),
+        (
+            TokenPosition::single_character(LineNumber(1), ColumnNumber(2)),
+            TokenKind::Plus(),
+        ),
+        (
+            TokenPosition::single_character(LineNumber(1), ColumnNumber(3)),
+            TokenKind::LeftParen(),
+        ),
+        (
+            TokenPosition::single_character(LineNumber(1), ColumnNumber(4)),
+            TokenKind::RightParen(),
+        ),
+        (
+            TokenPosition::single_character(LineNumber(1), ColumnNumber(5)),
+            TokenKind::LeftBrace(),
+        ),
+        (
+            TokenPosition::single_character(LineNumber(1), ColumnNumber(6)),
+            TokenKind::RightBrace(),
+        ),
+        (
+            TokenPosition::single_character(LineNumber(1), ColumnNumber(7)),
+            TokenKind::Comma(),
+        ),
+        (
+            TokenPosition::single_character(LineNumber(1), ColumnNumber(8)),
+            TokenKind::Semicolon(),
+        ),
+        (
+            TokenPosition::single_character(LineNumber(1), ColumnNumber(9)),
+            TokenKind::Asterisk(),
+        ),
+        (
+            TokenPosition::single_character(LineNumber(1), ColumnNumber(10)),
+            TokenKind::LessThen(),
+        ),
+        (
+            TokenPosition::single_character(LineNumber(1), ColumnNumber(11)),
+            TokenKind::Semicolon(),
+        ),
+        (
+            TokenPosition::single_character(LineNumber(1), ColumnNumber(12)),
+            TokenKind::GreaterThen(),
+        ),
+        (
+            TokenPosition::single_character(LineNumber(1), ColumnNumber(13)),
+            TokenKind::Slash(),
+        ),
+        (
+            TokenPosition::single_character(LineNumber(1), ColumnNumber(14)),
+            TokenKind::Semicolon(),
+        ),
     ];
 
     perform_test(input, expected);
@@ -30,12 +70,18 @@ fn next_sign() {
 
 #[test]
 fn euqality_negation() {
-    let input = Lines::new(vec!["==!=!;"]);
+    let input = vec!["==!=!;"];
     let expected = vec![
-        (LineNumber(1), ColumnNumber(1), TokenKind::Equality()),
-        (LineNumber(1), ColumnNumber(3), TokenKind::Inequality()),
-        (LineNumber(1), ColumnNumber(5), TokenKind::Negation()),
-        (LineNumber(1), ColumnNumber(6), TokenKind::Semicolon()),
+        (TokenPosition::from_range(1, 1, 1, 2), TokenKind::Equal()),
+        (TokenPosition::from_range(1, 3, 1, 4), TokenKind::Inequal()),
+        (
+            TokenPosition::single_character(LineNumber(1), ColumnNumber(5)),
+            TokenKind::Negation(),
+        ),
+        (
+            TokenPosition::single_character(LineNumber(1), ColumnNumber(6)),
+            TokenKind::Semicolon(),
+        ),
     ];
 
     perform_test(input, expected);
@@ -43,18 +89,16 @@ fn euqality_negation() {
 
 #[test]
 fn true_false() {
-    let input = Lines::new(vec!["true false trues falses"]);
+    let input = vec!["true false trues falses"];
     let expected = vec![
-        (LineNumber(1), ColumnNumber(1), TokenKind::True()),
-        (LineNumber(1), ColumnNumber(6), TokenKind::False()),
+        (TokenPosition::from_range(1, 1, 1, 4), TokenKind::True()),
+        (TokenPosition::from_range(1, 6, 1, 10), TokenKind::False()),
         (
-            LineNumber(1),
-            ColumnNumber(12),
+            TokenPosition::from_range(1, 12, 1, 16),
             TokenKind::Identifier(String::from("trues")),
         ),
         (
-            LineNumber(1),
-            ColumnNumber(18),
+            TokenPosition::from_range(1, 18, 1, 23),
             TokenKind::Identifier(String::from("falses")),
         ),
     ];
@@ -64,42 +108,73 @@ fn true_false() {
 
 #[test]
 fn if_else_return() {
-    let input = Lines::new(vec!["if ifs else elses return returns"]);
+    let input = vec!["if ifs else elses"];
     let expected = vec![
-        (LineNumber(1), ColumnNumber(1), TokenKind::If()),
+        (TokenPosition::from_range(1, 1, 1, 2), TokenKind::If()),
         (
-            LineNumber(1),
-            ColumnNumber(4),
+            TokenPosition::from_range(1, 4, 1, 6),
             TokenKind::Identifier(String::from("ifs")),
         ),
-        (LineNumber(1), ColumnNumber(8), TokenKind::Else()),
+        (TokenPosition::from_range(1, 8, 1, 11), TokenKind::Else()),
         (
-            LineNumber(1),
-            ColumnNumber(13),
+            TokenPosition::from_range(1, 13, 1, 17),
             TokenKind::Identifier(String::from("elses")),
-        ),
-        (LineNumber(1), ColumnNumber(19), TokenKind::Return()),
-        (
-            LineNumber(1),
-            ColumnNumber(26),
-            TokenKind::Identifier(String::from("returns")),
         ),
     ];
 
     perform_test(input, expected);
+    let input = vec!["return returns"];
+    let expected = vec![
+        (TokenPosition::from_range(1, 1, 1, 6), TokenKind::Return()),
+        (
+            TokenPosition::from_range(1, 8, 1, 14),
+            TokenKind::Identifier(String::from("returns")),
+        ),
+    ];
+    perform_test(input, expected);
 }
 
-fn perform_test(input: Lines, expected: Vec<(LineNumber, ColumnNumber, TokenKind)>) {
-    read_all(input)
-        .zip(expected.iter())
-        .for_each(|(token, expected)| {
-            assert_eq!(token, Token(expected.0, expected.1, expected.2.clone()));
-        });
+#[test]
+fn multiline_string() {
+    let input = vec!["\" first", "line\""];
+    let expected = vec![(
+        TokenPosition::from_range(1, 1, 2, 5),
+        TokenKind::StringLiteral(String::from(" first\nline")),
+    )];
+    perform_test(input, expected);
+}
+
+#[test]
+fn invalid_multiline_string() {
+    let input = vec!["\" first", "line"];
+    let expected = vec![(
+        TokenPosition::from_range(1, 1, 2, 4),
+        TokenKind::Invalid(String::from(" first\nline")),
+    )];
+    perform_test(input, expected);
+}
+
+fn perform_test(input: Vec<&str>, expected: Vec<(TokenPosition, TokenKind)>) {
+    println!("Expected:");
+    for exp in expected.iter() {
+        println!("{:?}", exp);
+    }
+
+    let mut lexer = Lexer::new();
+    for line in input.iter() {
+        lexer.process(line);
+    }
+
+    lexer.zip(expected.iter()).for_each(|(token, expected)| {
+        assert_eq!(token.kind, expected.1);
+        let position = token.context.unwrap();
+        assert_eq!(position, expected.0);
+    });
 }
 
 #[test]
 fn more_complex_text() {
-    let input = Lines::new(vec![
+    let input = vec![
         "let five = 5;",
         "let ten = 10;",
         "",
@@ -108,88 +183,120 @@ fn more_complex_text() {
         "};",
         "",
         "let result = add(five, ten);",
-    ]);
+    ];
     let expected = vec![
-        (LineNumber(1), ColumnNumber(1), TokenKind::Let()),
+        (TokenPosition::from_range(1, 1, 1, 4), TokenKind::Let()),
         (
-            LineNumber(1),
-            ColumnNumber(5),
+            TokenPosition::from_range(1, 5, 1, 9),
             TokenKind::Identifier(String::from("five")),
         ),
-        (LineNumber(1), ColumnNumber(10), TokenKind::Assign()),
-        (LineNumber(1), ColumnNumber(12), TokenKind::Integer(5)),
-        (LineNumber(1), ColumnNumber(13), TokenKind::Semicolon()),
-        (LineNumber(2), ColumnNumber(1), TokenKind::Let()),
+        (TokenPosition::from_range(1, 10, 1, 10), TokenKind::Assign()),
         (
-            LineNumber(2),
-            ColumnNumber(5),
+            TokenPosition::from_range(1, 12, 1, 12),
+            TokenKind::Integer(5),
+        ),
+        (
+            TokenPosition::from_range(1, 13, 1, 13),
+            TokenKind::Semicolon(),
+        ),
+        (TokenPosition::from_range(2, 1, 2, 4), TokenKind::Let()),
+        (
+            TokenPosition::from_range(2, 5, 2, 9),
             TokenKind::Identifier(String::from("ten")),
         ),
-        (LineNumber(2), ColumnNumber(9), TokenKind::Assign()),
-        (LineNumber(2), ColumnNumber(11), TokenKind::Integer(10)),
-        (LineNumber(2), ColumnNumber(13), TokenKind::Semicolon()),
-        (LineNumber(4), ColumnNumber(1), TokenKind::Let()),
+        (TokenPosition::from_range(2, 10, 2, 10), TokenKind::Assign()),
         (
-            LineNumber(4),
-            ColumnNumber(5),
+            TokenPosition::from_range(2, 12, 2, 12),
+            TokenKind::Integer(10),
+        ),
+        (
+            TokenPosition::from_range(2, 13, 2, 13),
+            TokenKind::Semicolon(),
+        ),
+        (TokenPosition::from_range(3, 1, 3, 1), TokenKind::Let()),
+        (
+            TokenPosition::from_range(3, 5, 3, 8),
             TokenKind::Identifier(String::from("add")),
         ),
-        (LineNumber(4), ColumnNumber(9), TokenKind::Assign()),
-        (LineNumber(4), ColumnNumber(11), TokenKind::Function()),
-        (LineNumber(4), ColumnNumber(13), TokenKind::LeftParen()),
+        (TokenPosition::from_range(3, 9, 3, 9), TokenKind::Assign()),
         (
-            LineNumber(4),
-            ColumnNumber(14),
+            TokenPosition::from_range(3, 11, 3, 11),
+            TokenKind::Function(),
+        ),
+        (
+            TokenPosition::from_range(3, 13, 3, 13),
+            TokenKind::LeftParen(),
+        ),
+        (
+            TokenPosition::from_range(3, 14, 3, 14),
             TokenKind::Identifier(String::from("x")),
         ),
-        (LineNumber(4), ColumnNumber(15), TokenKind::Comma()),
+        (TokenPosition::from_range(3, 15, 3, 15), TokenKind::Comma()),
         (
-            LineNumber(4),
-            ColumnNumber(17),
+            TokenPosition::from_range(3, 17, 3, 17),
             TokenKind::Identifier(String::from("y")),
         ),
-        (LineNumber(4), ColumnNumber(18), TokenKind::RightParen()),
-        (LineNumber(4), ColumnNumber(20), TokenKind::LeftBrace()),
         (
-            LineNumber(5),
-            ColumnNumber(3),
+            TokenPosition::from_range(3, 18, 3, 18),
+            TokenKind::RightParen(),
+        ),
+        (
+            TokenPosition::from_range(3, 19, 3, 19),
+            TokenKind::LeftBrace(),
+        ),
+        (
+            TokenPosition::from_range(4, 3, 4, 3),
             TokenKind::Identifier(String::from("x")),
         ),
-        (LineNumber(5), ColumnNumber(5), TokenKind::Plus()),
+        (TokenPosition::from_range(4, 5, 4, 5), TokenKind::Plus()),
         (
-            LineNumber(5),
-            ColumnNumber(7),
+            TokenPosition::from_range(4, 7, 4, 7),
             TokenKind::Identifier(String::from("y")),
         ),
-        (LineNumber(5), ColumnNumber(8), TokenKind::Semicolon()),
-        (LineNumber(6), ColumnNumber(1), TokenKind::RightBrace()),
-        (LineNumber(6), ColumnNumber(2), TokenKind::Semicolon()),
-        (LineNumber(8), ColumnNumber(1), TokenKind::Let()),
         (
-            LineNumber(8),
-            ColumnNumber(5),
+            TokenPosition::from_range(4, 8, 4, 8),
+            TokenKind::Semicolon(),
+        ),
+        (
+            TokenPosition::from_range(5, 1, 5, 1),
+            TokenKind::RightBrace(),
+        ),
+        (
+            TokenPosition::from_range(5, 2, 5, 2),
+            TokenKind::Semicolon(),
+        ),
+        // "let result = add(five, ten);",
+        (TokenPosition::from_range(6, 1, 6, 3), TokenKind::Let()),
+        (
+            TokenPosition::from_range(6, 5, 6, 10),
             TokenKind::Identifier(String::from("result")),
         ),
-        (LineNumber(8), ColumnNumber(12), TokenKind::Assign()),
+        (TokenPosition::from_range(6, 12, 6, 12), TokenKind::Assign()),
         (
-            LineNumber(8),
-            ColumnNumber(14),
+            TokenPosition::from_range(6, 14, 6, 16),
             TokenKind::Identifier(String::from("add")),
         ),
-        (LineNumber(8), ColumnNumber(17), TokenKind::LeftParen()),
         (
-            LineNumber(8),
-            ColumnNumber(18),
+            TokenPosition::from_range(6, 17, 6, 17),
+            TokenKind::LeftParen(),
+        ),
+        (
+            TokenPosition::from_range(6, 18, 6, 21),
             TokenKind::Identifier(String::from("five")),
         ),
-        (LineNumber(8), ColumnNumber(22), TokenKind::Comma()),
+        (TokenPosition::from_range(6, 22, 6, 22), TokenKind::Comma()),
         (
-            LineNumber(8),
-            ColumnNumber(24),
+            TokenPosition::from_range(6, 24, 6, 26),
             TokenKind::Identifier(String::from("ten")),
         ),
-        (LineNumber(8), ColumnNumber(27), TokenKind::RightParen()),
-        (LineNumber(8), ColumnNumber(28), TokenKind::Semicolon()),
+        (
+            TokenPosition::from_range(6, 27, 6, 27),
+            TokenKind::RightParen(),
+        ),
+        (
+            TokenPosition::from_range(6, 28, 6, 28),
+            TokenKind::Semicolon(),
+        ),
     ];
 
     perform_test(input, expected);

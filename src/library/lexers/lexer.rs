@@ -1,33 +1,39 @@
-use crate::lexers::{
-    read_idle::read_idle, read_number::read_number, read_operator::read_operator,
-    read_text::read_text,
-};
+use std::collections::VecDeque;
 
-use super::{
-    base::{SourceCharecter, State},
-    tokens::Token,
-};
+use crate::tokens::Token;
 
-pub fn read_all<T>(source: T) -> impl Iterator<Item = Token>
-where
-    T: IntoIterator<Item = SourceCharecter>,
-{
-    let mut state = State::Idle;
-    source.into_iter().flat_map(move |character| {
-        let (new_state, new_tokens) = next(character, state.clone());
-        state = new_state;
-        new_tokens.into_iter()
-    })
+pub struct Lexer {
+    source: VecDeque<Token>,
 }
 
-//write read_all function but returning Iterator
+enum LexerState {
+    Idle,
+}
 
-fn next(charecter: SourceCharecter, state: State) -> (State, Vec<Token>) {
-    // println!("current: {:?} -> incoming {:?}", state, charecter);
-    match state {
-        State::Idle => read_idle(&charecter),
-        State::ReadingText(context) => read_text(charecter, context),
-        State::ReadingNumber(context) => read_number(charecter, context),
-        State::ReadingOperator(context) => read_operator(charecter, context),
+impl Lexer {
+    pub fn new() -> Self {
+        Lexer {
+            source: VecDeque::new(),
+        }
+    }
+
+    pub fn process(&mut self, line: &str) {
+        panic!("Lexer process not implemented");
+    }
+
+    pub fn peek(&self) -> Option<&Token> {
+        self.source.front()
+    }
+
+    pub fn next(&mut self) -> Option<Token> {
+        self.source.pop_front()
+    }
+}
+
+impl Iterator for Lexer {
+    type Item = Token;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.next()
     }
 }

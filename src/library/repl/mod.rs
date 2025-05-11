@@ -1,38 +1,23 @@
-use crate::lexers::{SourceCharecter, read_all};
+use std::io::{self, BufRead};
 
-use std::{
-    io::{self, BufRead, BufReader, Read, Write},
-    usize,
-};
+use crate::lexers::Lexer;
 
-pub fn start<R, W>(input: &mut R, output: &mut W) -> io::Result<()>
-where
-    R: Read,
-    W: Write,
-{
-    let buffered = BufReader::new(input);
-    let mut line_count: usize = 0;
-    let read_data = buffered.lines().flat_map(move |line| {
-        line_count += 1;
-        let line_number = line_count.into();
-        let aaa = line
-            .unwrap()
-            .chars()
-            .map(move |ch| {
-                let column_number = line_count.into();
-                SourceCharecter::new(ch, column_number, line_number)
-            })
-            .collect::<Vec<SourceCharecter>>();
-        aaa.into_iter()
-    });
+pub fn start() {
+    let stdin = io::stdin();
+    let reader = stdin.lock();
 
-    read_all(read_data).for_each(|token| {
-        let line = format!(
-            "=> Line: {}, Column: {}, Token: {:?} \n",
-            token.0.0, token.1.0, token.2
+    for line_result in reader.lines() {
+        let mut lexer = Lexer::new();
+        let line = line_result.unwrap();
+        lexer.process(&line);
+
+        println!(
+            "You entered: {}",
+            lexer
+                .into_iter()
+                .map(|token| token.kind)
+                .map(|token| format!("{:?}", token))
+                .collect::<String>()
         );
-        output.write_all(line.as_bytes()).unwrap();
-    });
-
-    Ok(())
+    }
 }
