@@ -189,9 +189,9 @@ fn more_complex_text() {
         "let result = add(five, ten);",
     ];
     let expected = vec![
-        (TokenPosition::from_range(1, 1, 1, 4), TokenKind::Let),
+        (TokenPosition::from_range(1, 1, 1, 3), TokenKind::Let),
         (
-            TokenPosition::from_range(1, 5, 1, 9),
+            TokenPosition::from_range(1, 5, 1, 8),
             TokenKind::Identifier(String::from("five")),
         ),
         (TokenPosition::from_range(1, 10, 1, 10), TokenKind::Assign),
@@ -203,92 +203,77 @@ fn more_complex_text() {
             TokenPosition::from_range(1, 13, 1, 13),
             TokenKind::Semicolon,
         ),
-        (TokenPosition::from_range(2, 1, 2, 4), TokenKind::Let),
+        (TokenPosition::from_range(2, 1, 2, 3), TokenKind::Let),
         (
-            TokenPosition::from_range(2, 5, 2, 9),
+            TokenPosition::from_range(2, 5, 2, 7),
             TokenKind::Identifier(String::from("ten")),
         ),
-        (TokenPosition::from_range(2, 10, 2, 10), TokenKind::Assign),
+        (TokenPosition::from_range(2, 9, 2, 9), TokenKind::Assign),
         (
-            TokenPosition::from_range(2, 12, 2, 12),
+            TokenPosition::from_range(2, 11, 2, 12),
             TokenKind::Integer(10),
         ),
         (
             TokenPosition::from_range(2, 13, 2, 13),
             TokenKind::Semicolon,
         ),
-        (TokenPosition::from_range(3, 1, 3, 1), TokenKind::Let),
+        //"let add = fn(x, y) {",
+        (TokenPosition::from_range(4, 1, 4, 3), TokenKind::Let),
         (
-            TokenPosition::from_range(3, 5, 3, 8),
+            TokenPosition::from_range(4, 5, 4, 7),
             TokenKind::Identifier(String::from("add")),
         ),
-        (TokenPosition::from_range(3, 9, 3, 9), TokenKind::Assign),
-        (TokenPosition::from_range(3, 11, 3, 11), TokenKind::Function),
+        (TokenPosition::from_range(4, 9, 4, 9), TokenKind::Assign),
+        (TokenPosition::from_range(4, 11, 4, 12), TokenKind::Function),
+        (TokenPosition::single(4, 13), TokenKind::LeftParen),
         (
-            TokenPosition::from_range(3, 13, 3, 13),
-            TokenKind::LeftParen,
-        ),
-        (
-            TokenPosition::from_range(3, 14, 3, 14),
+            TokenPosition::single(4, 14),
             TokenKind::Identifier(String::from("x")),
         ),
-        (TokenPosition::from_range(3, 15, 3, 15), TokenKind::Comma),
+        (TokenPosition::single(4, 15), TokenKind::Comma),
         (
-            TokenPosition::from_range(3, 17, 3, 17),
+            TokenPosition::single(4, 17),
             TokenKind::Identifier(String::from("y")),
         ),
+        (TokenPosition::single(4, 18), TokenKind::RightParen),
+        (TokenPosition::single(4, 20), TokenKind::LeftBrace),
+        //"  x + y;"
         (
-            TokenPosition::from_range(3, 18, 3, 18),
-            TokenKind::RightParen,
-        ),
-        (
-            TokenPosition::from_range(3, 19, 3, 19),
-            TokenKind::LeftBrace,
-        ),
-        (
-            TokenPosition::from_range(4, 3, 4, 3),
+            TokenPosition::single(5, 3),
             TokenKind::Identifier(String::from("x")),
         ),
-        (TokenPosition::from_range(4, 5, 4, 5), TokenKind::Plus),
+        (TokenPosition::single(5, 5), TokenKind::Plus),
         (
-            TokenPosition::from_range(4, 7, 4, 7),
+            TokenPosition::single(5, 7),
             TokenKind::Identifier(String::from("y")),
         ),
-        (TokenPosition::from_range(4, 8, 4, 8), TokenKind::Semicolon),
-        (TokenPosition::from_range(5, 1, 5, 1), TokenKind::RightBrace),
-        (TokenPosition::from_range(5, 2, 5, 2), TokenKind::Semicolon),
+        (TokenPosition::single(5, 8), TokenKind::Semicolon),
+        //"};",
+        (TokenPosition::single(6, 1), TokenKind::RightBrace),
+        (TokenPosition::single(6, 2), TokenKind::Semicolon),
         // "let result = add(five, ten);",
-        (TokenPosition::from_range(6, 1, 6, 3), TokenKind::Let),
+        (TokenPosition::from_range(8, 1, 8, 3), TokenKind::Let),
         (
-            TokenPosition::from_range(6, 5, 6, 10),
+            TokenPosition::from_range(8, 5, 8, 10),
             TokenKind::Identifier(String::from("result")),
         ),
-        (TokenPosition::from_range(6, 12, 6, 12), TokenKind::Assign),
+        (TokenPosition::single(8, 12), TokenKind::Assign),
         (
-            TokenPosition::from_range(6, 14, 6, 16),
+            TokenPosition::from_range(8, 14, 8, 16),
             TokenKind::Identifier(String::from("add")),
         ),
+        (TokenPosition::single(8, 17), TokenKind::LeftParen),
         (
-            TokenPosition::from_range(6, 17, 6, 17),
-            TokenKind::LeftParen,
-        ),
-        (
-            TokenPosition::from_range(6, 18, 6, 21),
+            TokenPosition::from_range(8, 18, 8, 21),
             TokenKind::Identifier(String::from("five")),
         ),
-        (TokenPosition::from_range(6, 22, 6, 22), TokenKind::Comma),
+        (TokenPosition::single(8, 22), TokenKind::Comma),
         (
-            TokenPosition::from_range(6, 24, 6, 26),
+            TokenPosition::from_range(8, 24, 8, 26),
             TokenKind::Identifier(String::from("ten")),
         ),
-        (
-            TokenPosition::from_range(6, 27, 6, 27),
-            TokenKind::RightParen,
-        ),
-        (
-            TokenPosition::from_range(6, 28, 6, 28),
-            TokenKind::Semicolon,
-        ),
+        (TokenPosition::single(8, 27), TokenKind::RightParen),
+        (TokenPosition::single(8, 28), TokenKind::Semicolon),
     ];
 
     perform_test(input, expected);

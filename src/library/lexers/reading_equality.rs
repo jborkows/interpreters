@@ -1,9 +1,9 @@
 use crate::{
-    lexers::dispatch::dispatch,
+    lines::TokenPosition,
     tokens::{Token, TokenKind},
 };
 
-use super::parsing_states::LexerState;
+use super::{parsers::delegate_to_next, parsing_states::LexerState};
 
 pub(super) fn reading_equality(
     line_number: u16,
@@ -24,17 +24,18 @@ pub(super) fn reading_equality(
             }
 
             _ => {
-                let mut tokens = vec![Token::new(
-                    crate::lines::TokenPosition::single_character(
-                        starting_position.line_number,
-                        starting_position.column_number,
-                    ),
+                return delegate_to_next(
+                    character,
+                    column_number,
+                    line_number,
                     TokenKind::Assign,
-                )];
-                let result = dispatch(line_number, column_number, character, &LexerState::Idle);
-
-                tokens.extend(result.1);
-                return (result.0, tokens);
+                    || {
+                        TokenPosition::single_character(
+                            starting_position.line_number,
+                            starting_position.column_number,
+                        )
+                    },
+                );
             }
         },
         _ => unreachable!(),
@@ -45,7 +46,7 @@ pub(super) fn finish_equality(state: &LexerState) -> Option<Token> {
     match state {
         LexerState::ReadingEquality { starting_position } => {
             let token = Token::new(
-                crate::lines::TokenPosition::single_character(
+                TokenPosition::single_character(
                     starting_position.line_number,
                     starting_position.column_number,
                 ),

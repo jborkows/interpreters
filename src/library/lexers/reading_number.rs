@@ -3,7 +3,10 @@ use crate::{
     tokens::{Token, TokenKind},
 };
 
-use super::{parsers::acceptable_separator, parsing_states::LexerState};
+use super::{
+    parsers::{acceptable_separator, delegate_to_next},
+    parsing_states::LexerState,
+};
 
 pub(super) fn reading_number(
     line_number: u16,
@@ -32,13 +35,13 @@ pub(super) fn reading_number(
 
             character if acceptable_separator(&character) => {
                 let multipier = if *negative { -1 } else { 1 };
-                let mut tokens = vec![Token::new(
-                    starting_position.token_ends_with(line_number, column_number - 1),
+                return delegate_to_next(
+                    character,
+                    column_number,
+                    line_number,
                     TokenKind::Integer(multipier * *value as i32),
-                )];
-                let result = dispatch(line_number, column_number, character, &LexerState::Idle);
-                tokens.extend(result.1);
-                return (result.0, tokens);
+                    || starting_position.token_ends_with(line_number, column_number - 1),
+                );
             }
 
             _ => {

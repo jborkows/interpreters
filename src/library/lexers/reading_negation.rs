@@ -3,7 +3,7 @@ use crate::{
     tokens::{Token, TokenKind},
 };
 
-use super::parsing_states::LexerState;
+use super::{parsers::delegate_to_next, parsing_states::LexerState};
 
 pub(super) fn reading_negation(
     line_number: u16,
@@ -24,17 +24,18 @@ pub(super) fn reading_negation(
             }
 
             _ => {
-                let mut tokens = vec![Token::new(
-                    crate::lines::TokenPosition::single_character(
-                        starting_position.line_number,
-                        starting_position.column_number,
-                    ),
+                return delegate_to_next(
+                    character,
+                    column_number,
+                    line_number,
                     TokenKind::Negation,
-                )];
-                let result = dispatch(line_number, column_number, character, &LexerState::Idle);
-
-                tokens.extend(result.1);
-                return (result.0, tokens);
+                    || {
+                        crate::lines::TokenPosition::single_character(
+                            starting_position.line_number,
+                            starting_position.column_number,
+                        )
+                    },
+                );
             }
         },
         _ => unreachable!(),

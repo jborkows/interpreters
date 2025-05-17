@@ -7,44 +7,38 @@ pub(super) fn idle_parsing(
     column_number: u16,
     character: char,
 ) -> (LexerState, Vec<Token>) {
-    match character {
-        '=' => {
-            return (
-                LexerState::ReadingEquality {
-                    starting_position: TextPosition::new(line_number, column_number),
-                },
-                vec![],
-            );
-        }
+    let text_possition = TextPosition::new(line_number, column_number);
+    let maybe_state = match character {
+        '=' => Some(LexerState::ReadingEquality {
+            starting_position: text_possition,
+        }),
 
-        '!' => {
-            return (
-                LexerState::ReadingNegation {
-                    starting_position: TextPosition::new(line_number, column_number),
-                },
-                vec![],
-            );
-        }
-        ch if ch.is_numeric() => {
-            return (
-                LexerState::ReadingNumber {
-                    starting_position: TextPosition::new(line_number, column_number),
-                    value: ch.to_digit(10).unwrap() as i32,
-                    negative: false,
-                },
-                vec![],
-            );
-        }
-        '-' => {
-            return (
-                LexerState::ReadingMinus {
-                    starting_position: TextPosition::new(line_number, column_number),
-                },
-                vec![],
-            );
-        }
+        '!' => Some(LexerState::ReadingNegation {
+            starting_position: text_possition,
+        }),
 
-        _ => {}
+        ch if ch.is_numeric() => Some(LexerState::ReadingNumber {
+            starting_position: text_possition,
+            value: ch.to_digit(10).unwrap() as i32,
+            negative: false,
+        }),
+        ch if ch.is_alphabetic() => Some(LexerState::ReadingIdentifier {
+            starting_position: text_possition,
+            chars: vec![character],
+        }),
+        '-' => Some(LexerState::ReadingMinus {
+            starting_position: text_possition,
+        }),
+
+        '"' => Some(LexerState::ReadingText {
+            starting_position: text_possition,
+            chars: vec![],
+        }),
+
+        _ => None,
+    };
+    if let Some(state) = maybe_state {
+        return (state, vec![]);
     }
 
     return match read_special_character(character) {

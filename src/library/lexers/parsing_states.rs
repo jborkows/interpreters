@@ -21,4 +21,12 @@ pub(super) enum LexerState {
         starting_position: TextPosition,
         reason: String,
     },
+    ReadingText {
+        starting_position: TextPosition,
+        chars: Vec<char>,
+    },
+    ReadingIdentifier {
+        starting_position: TextPosition,
+        chars: Vec<char>,
+    },
 }

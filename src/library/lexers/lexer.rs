@@ -3,7 +3,7 @@ use std::{cmp, collections::VecDeque};
 use crate::tokens::Token;
 
 use super::{
-    dispatch::{dispatch, finish_it},
+    dispatch::{dispatch, end_of_line, finish_it},
     parsing_states::LexerState,
 };
 
@@ -36,6 +36,15 @@ impl Lexer {
             for token in tokens {
                 self.source.push_back(token);
             }
+        }
+        let result = end_of_line(&self.state, self.current_line, self.current_column);
+        match result.0 {
+            Some(s) => self.state = s,
+            None => {}
+        }
+        let tokens = result.1;
+        for token in tokens {
+            self.source.push_back(token);
         }
         self.current_column = cmp::max(1, self.current_column);
     }
