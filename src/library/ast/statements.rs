@@ -8,6 +8,10 @@ pub enum Statement {
         name: Identifier,
         value: Box<dyn Expression>,
     },
+    Return {
+        token: Token,
+        return_value: Box<dyn Expression>,
+    },
 }
 
 impl Node for Statement {
@@ -15,6 +19,12 @@ impl Node for Statement {
         match self {
             Statement::Let { name, value, .. } => {
                 format!("let {}={}", name.token_literal(), value.token_literal())
+            }
+            Statement::Return {
+                token,
+                return_value,
+            } => {
+                format!("{} {}", token.short(), return_value.token_literal())
             }
         }
     }

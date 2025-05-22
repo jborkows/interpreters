@@ -77,6 +77,9 @@ impl Parser {
             TokenKind::Let => {
                 return self.parse_let_statement();
             }
+            TokenKind::Return => {
+                return self.parse_return_statement();
+            }
             _ => None,
         }
     }
@@ -138,5 +141,21 @@ impl Parser {
             expected, self.peek_token
         );
         self.errors.push(error);
+    }
+
+    fn parse_return_statement(&mut self) -> Option<Statement> {
+        let return_token = self.current_token.clone();
+        self.save_next_token();
+        let value = ast::expression::Identifier {
+            token: self.current_token.clone(),
+            value: self.current_token.kind.literal(),
+        };
+        if self.peek_token_is(&PureTokenKind::Semicolon) {
+            self.save_next_token();
+        }
+        return Some(Statement::Return {
+            token: return_token,
+            return_value: Box::new(value),
+        });
     }
 }
