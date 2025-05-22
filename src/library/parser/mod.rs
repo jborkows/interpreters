@@ -4,6 +4,7 @@ mod parser_tests;
 use crate::{
     ast::{
         self,
+        expression::Expression,
         statements::{Program, Statement},
     },
     lexers::Lexer,
@@ -74,13 +75,9 @@ impl Parser {
 
     fn parse_statement(&mut self) -> Option<Statement> {
         match self.current_token.kind {
-            TokenKind::Let => {
-                return self.parse_let_statement();
-            }
-            TokenKind::Return => {
-                return self.parse_return_statement();
-            }
-            _ => None,
+            TokenKind::Let => self.parse_let_statement(),
+            TokenKind::Return => return self.parse_return_statement(),
+            _ => return self.parse_expression_statement(),
         }
     }
 
@@ -158,4 +155,51 @@ impl Parser {
             return_value: Box::new(value),
         });
     }
+
+    fn parse_expression_statement(&mut self) -> Option<Statement> {
+        let expression_token = self.current_token.clone();
+        let expression = self.parse_expression(Precedence::Lowest);
+        if self.peek_token_is(&PureTokenKind::Semicolon) {
+            self.save_next_token();
+        }
+        return Some(Statement::ExpressionStatement {
+            token: expression_token,
+            expression,
+        });
+    }
+
+    fn parse_expression(&self, precedence: Precedence) -> Box<dyn ast::expression::Expression> {
+        let prefix: Option<Box<dyn Expression>> = match self.current_token.kind {
+            TokenKind::Identifier(_) => {
+                let identifier = ast::expression::Identifier {
+                    token: self.current_token.clone(),
+                    value: self.current_token.kind.literal(),
+                };
+                Some(Box::new(identifier))
+            }
+            TokenKind::Integer(value) => {
+                let integer = ast::expression::IntegerLiteral {
+                    token: self.current_token.clone(),
+                    value: value,
+                };
+                Some(Box::new(integer))
+            }
+            _ => None,
+        };
+        if let Some(prefix) = prefix {
+            return prefix;
+        } else {
+            panic!("No prefix parse function for {:?}", self.current_token.kind);
+        }
+    }
+}
+
+enum Precedence {
+    Lowest,
+    Equals,
+    LessThan,
+    Sum,
+    Product,
+    Prefix,
+    Call,
 }

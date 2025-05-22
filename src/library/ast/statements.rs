@@ -12,6 +12,10 @@ pub enum Statement {
         token: Token,
         return_value: Box<dyn Expression>,
     },
+    ExpressionStatement {
+        token: Token,
+        expression: Box<dyn Expression>,
+    },
 }
 
 impl Node for Statement {
@@ -25,6 +29,12 @@ impl Node for Statement {
                 return_value,
             } => {
                 format!("{} {}", token.short(), return_value.token_literal())
+            }
+            Statement::ExpressionStatement {
+                token: _,
+                expression,
+            } => {
+                format!("{}", expression.token_literal())
             }
         }
     }
