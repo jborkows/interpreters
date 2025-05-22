@@ -63,7 +63,7 @@ impl TextPosition {
     }
 }
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq, Clone, Copy)]
 pub struct TokenPosition {
     pub start: TextPosition,
     pub end: TextPosition,

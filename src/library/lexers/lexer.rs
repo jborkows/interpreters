@@ -1,6 +1,10 @@
-use std::{cmp, collections::VecDeque};
+use std::iter::Peekable;
+use std::{cmp, collections::VecDeque, env};
 
-use crate::tokens::Token;
+use crate::{
+    lines::TokenPosition,
+    tokens::{Token, TokenKind},
+};
 
 use super::{
     dispatch::{dispatch, end_of_line, finish_it},
@@ -29,7 +33,9 @@ impl Lexer {
         self.current_column = 0;
         for (i, c) in line.chars().enumerate() {
             self.current_column = i as u16 + 1;
-            println!("Processing character: {}, state: {:?}", c, self.state);
+            if env::var("DEBUG").is_ok() {
+                println!("Processing character: {}, state: {:?}", c, self.state);
+            }
             let result = dispatch(self.current_line, self.current_column, c, &self.state);
             self.state = result.0;
             let tokens = result.1;
@@ -60,12 +66,21 @@ impl Lexer {
                 return Some(token);
             }
             None => {
-                println!("Finishing up {:?}", self.state);
-                let token = finish_it(&self.state, self.current_line, self.current_column);
-                self.state = LexerState::Idle;
-                return token;
+                if env::var("DEBUG").is_ok() {
+                    println!("Finishing up {:?}", self.state);
+                }
+                return self.finish();
             }
         }
+    }
+
+    fn finish(&mut self) -> Option<Token> {
+        if env::var("DEBUG").is_ok() {
+            println!("Finishing up {:?}", self.state);
+        }
+        let token = finish_it(&self.state, self.current_line, self.current_column);
+        self.state = LexerState::Idle;
+        return token;
     }
 }
 
@@ -74,5 +89,42 @@ impl Iterator for Lexer {
 
     fn next(&mut self) -> Option<Self::Item> {
         self.next()
+    }
+}
+
+pub struct LexingIterator<I: Iterator<Item = String>> {
+    lines: Peekable<I>,
+    lexer: Lexer,
+}
+
+impl<I: Iterator<Item = String>> LexingIterator<I> {
+    pub fn new(lines: I) -> Self {
+        LexingIterator {
+            lines: lines.peekable(),
+            lexer: Lexer::new(),
+        }
+    }
+}
+
+impl<I: Iterator<Item = String>> Iterator for LexingIterator<I> {
+    type Item = Token;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        loop {
+            // Try getting next token from current lexer state
+            if let Some(token) = self.lexer.next() {
+                return Some(token);
+            }
+
+            // If no more tokens, try to process next line
+            match self.lines.next() {
+                Some(line) => {
+                    self.lexer.process(&line);
+                }
+                None => {
+                    self.lexer.finish();
+                }
+            }
+        }
     }
 }

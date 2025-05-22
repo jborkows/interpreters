@@ -1,5 +1,7 @@
+mod ast;
 mod lexers;
 mod lines;
+mod parser;
 mod repl;
 mod tokens;
 

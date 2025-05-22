@@ -1,0 +1,142 @@
+#[cfg(test)]
+mod parser_tests;
+
+use crate::{
+    ast::{
+        self,
+        statements::{Program, Statement},
+    },
+    lexers::Lexer,
+    tokens::{PureTokenKind, Token, TokenKind},
+};
+
+pub struct Parser {
+    lexer: Lexer,
+    errors: Vec<String>,
+    current_token: Token,
+    peek_token: Option<Token>,
+}
+
+impl Parser {
+    pub fn from_string(source: &str) -> Self {
+        let mut lexer = Lexer::new();
+        for line in source.lines() {
+            lexer.process(line);
+        }
+        Self::new(lexer)
+    }
+
+    pub fn new(mut lexer: Lexer) -> Self {
+        let current = lexer.next();
+        let peek = lexer.next();
+        if let None = current {
+            panic!("Lexer is empty");
+        }
+        let parser = Self {
+            lexer,
+            errors: Vec::new(),
+            current_token: current.unwrap(),
+            peek_token: peek,
+        };
+        parser
+    }
+
+    fn next_token(&mut self) {
+        let next = self.peek_token.take().expect("No next token");
+        self.peek_token = self.lexer.next();
+        self.current_token = next;
+    }
+
+    fn save_next_token(&mut self) {
+        if self.is_finished() {
+            return;
+        }
+        self.next_token();
+    }
+
+    pub fn is_finished(&self) -> bool {
+        self.peek_token.is_none()
+    }
+
+    pub fn parse_program(&mut self) -> Program {
+        let mut program = Program {
+            statements: Vec::new(),
+        };
+        while !self.is_finished() {
+            let statement = self.parse_statement();
+            if let Some(statement) = statement {
+                program.statements.push(statement);
+            }
+            self.save_next_token();
+        }
+        return program;
+    }
+
+    fn parse_statement(&mut self) -> Option<Statement> {
+        match self.current_token.kind {
+            TokenKind::Let => {
+                return self.parse_let_statement();
+            }
+            _ => None,
+        }
+    }
+
+    fn parse_let_statement(&mut self) -> Option<Statement> {
+        let let_token = self.current_token.clone();
+        if !self.expect_peek(&PureTokenKind::Identifier) {
+            return None;
+        }
+
+        let name = ast::expression::Identifier {
+            token: self.current_token.clone(),
+            value: self.current_token.kind.literal(),
+        };
+        if !self.expect_peek(&PureTokenKind::Assign) {
+            return None;
+        }
+        self.save_next_token();
+        let value = ast::expression::Identifier {
+            token: self.current_token.clone(),
+            value: self.current_token.kind.literal(),
+        };
+        if self.peek_token_is(&PureTokenKind::Semicolon) {
+            self.save_next_token();
+        }
+        return Some(Statement::Let {
+            token: let_token,
+            name,
+            value: Box::new(value),
+        });
+    }
+
+    fn curent_token_is(&self, pure_token_kind: PureTokenKind) -> bool {
+        let existing: PureTokenKind = (&self.current_token.kind).into();
+        return existing == pure_token_kind;
+    }
+
+    fn peek_token_is(&self, pure_token_kind: &PureTokenKind) -> bool {
+        if let Some(peek) = &self.peek_token {
+            let existing: PureTokenKind = (&peek.kind).into();
+            return existing == *pure_token_kind;
+        }
+        return false;
+    }
+
+    fn expect_peek(&mut self, pure_token_kind: &PureTokenKind) -> bool {
+        if self.peek_token_is(pure_token_kind) {
+            self.next_token();
+            return true;
+        } else {
+            self.peek_error(pure_token_kind);
+            return false;
+        }
+    }
+
+    fn peek_error(&mut self, expected: &PureTokenKind) {
+        let error = format!(
+            "Expected next token to be {:?}, got {:?} instead",
+            expected, self.peek_token
+        );
+        self.errors.push(error);
+    }
+}
