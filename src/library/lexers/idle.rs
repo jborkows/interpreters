@@ -19,15 +19,11 @@ pub(super) fn idle_parsing(
 
         ch if ch.is_numeric() => Some(LexerState::ReadingNumber {
             starting_position: text_possition,
-            value: ch.to_digit(10).unwrap() as i32,
-            negative: false,
+            value: ch.to_digit(10).unwrap() as u32,
         }),
         ch if ch.is_alphabetic() => Some(LexerState::ReadingIdentifier {
             starting_position: text_possition,
             chars: vec![character],
-        }),
-        '-' => Some(LexerState::ReadingMinus {
-            starting_position: text_possition,
         }),
 
         '"' => Some(LexerState::ReadingText {

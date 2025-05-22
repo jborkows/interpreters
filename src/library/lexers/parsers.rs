@@ -8,6 +8,7 @@ use super::{dispatch::dispatch, parsing_states::LexerState};
 pub(super) fn read_special_character(c: char) -> Option<TokenKind> {
     match c {
         '+' => Some(TokenKind::Plus),
+        '-' => Some(TokenKind::Minus),
         '(' => Some(TokenKind::LeftParen),
         ')' => Some(TokenKind::RightParen),
         '{' => Some(TokenKind::LeftBrace),

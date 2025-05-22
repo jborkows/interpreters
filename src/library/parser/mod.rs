@@ -159,16 +159,22 @@ impl Parser {
     fn parse_expression_statement(&mut self) -> Option<Statement> {
         let expression_token = self.current_token.clone();
         let expression = self.parse_expression(Precedence::Lowest);
+        if expression.is_none() {
+            return None;
+        }
         if self.peek_token_is(&PureTokenKind::Semicolon) {
             self.save_next_token();
         }
         return Some(Statement::ExpressionStatement {
             token: expression_token,
-            expression,
+            expression: expression.unwrap(),
         });
     }
 
-    fn parse_expression(&self, precedence: Precedence) -> Box<dyn ast::expression::Expression> {
+    fn parse_expression(
+        &mut self,
+        precedence: Precedence,
+    ) -> Option<Box<dyn ast::expression::Expression>> {
         let prefix: Option<Box<dyn Expression>> = match self.current_token.kind {
             TokenKind::Identifier(_) => {
                 let identifier = ast::expression::Identifier {
@@ -180,17 +186,39 @@ impl Parser {
             TokenKind::Integer(value) => {
                 let integer = ast::expression::IntegerLiteral {
                     token: self.current_token.clone(),
-                    value: value,
+                    value,
                 };
                 Some(Box::new(integer))
             }
+            TokenKind::Negation => self.parse_prefix_expression(),
+            TokenKind::Minus => self.parse_prefix_expression(),
             _ => None,
         };
         if let Some(prefix) = prefix {
-            return prefix;
+            return Some(prefix);
         } else {
-            panic!("No prefix parse function for {:?}", self.current_token.kind);
+            self.errors.push(format!(
+                "No prefix parse function for {:?} found",
+                self.current_token.kind
+            ));
+            return None;
         }
+    }
+
+    fn parse_prefix_expression(&mut self) -> Option<Box<dyn Expression>> {
+        let operator = match self.current_token.kind {
+            TokenKind::Negation => ast::expression::PrefixOperatorType::Bang,
+            TokenKind::Minus => ast::expression::PrefixOperatorType::Minus,
+            _ => panic!("Unknown prefix operator"),
+        };
+        let current_token = self.current_token.clone();
+        self.save_next_token();
+        let right = self.parse_expression(Precedence::Prefix);
+        return Some(Box::new(ast::expression::PrefixOperator {
+            token: current_token,
+            operator,
+            right: right.unwrap(),
+        }));
     }
 }
 

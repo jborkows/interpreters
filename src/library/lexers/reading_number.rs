@@ -1,7 +1,4 @@
-use crate::{
-    lexers::dispatch::dispatch,
-    tokens::{Token, TokenKind},
-};
+use crate::tokens::{Token, TokenKind};
 
 use super::{
     parsers::{acceptable_separator, delegate_to_next},
@@ -18,28 +15,25 @@ pub(super) fn reading_number(
         LexerState::ReadingNumber {
             starting_position,
             value,
-            negative,
         } => match character {
             '0'..='9' => {
                 let next_digit = character.to_digit(10).unwrap();
-                let new_value = *value * 10 + next_digit as i32;
+                let new_value = *value * 10 + next_digit as u32;
                 return (
                     LexerState::ReadingNumber {
                         starting_position: *starting_position,
                         value: new_value,
-                        negative: *negative,
                     },
                     vec![],
                 );
             }
 
             character if acceptable_separator(&character) => {
-                let multipier = if *negative { -1 } else { 1 };
                 return delegate_to_next(
                     character,
                     column_number,
                     line_number,
-                    TokenKind::Integer(multipier * *value as i32),
+                    TokenKind::Integer(*value as u32),
                     || starting_position.token_ends_with(line_number, column_number - 1),
                 );
             }
@@ -67,12 +61,10 @@ pub(super) fn finish_number(
         LexerState::ReadingNumber {
             starting_position,
             value,
-            negative,
         } => {
-            let multipier = if *negative { -1 } else { 1 };
             let token = Token::new(
                 starting_position.token_ends_with(line_number, column_number),
-                TokenKind::Integer(multipier * *value as i32),
+                TokenKind::Integer(*value as u32),
             );
             return Some(token);
         }

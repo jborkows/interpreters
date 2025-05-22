@@ -119,9 +119,10 @@ fn numbers_and_false_numbers() {
             TokenPosition::from_range(1, 7, 1, 10),
             TokenKind::Invalid(String::from("Unexpected character 'a' in number")),
         ),
+        (TokenPosition::single(1, 12), TokenKind::Minus),
         (
-            TokenPosition::from_range(1, 12, 1, 13),
-            TokenKind::Integer(-1),
+            TokenPosition::from_range(1, 13, 1, 13),
+            TokenKind::Integer(1),
         ),
     ];
 

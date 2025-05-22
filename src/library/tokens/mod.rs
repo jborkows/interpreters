@@ -37,7 +37,8 @@ pub enum TokenKind {
     Invalid(String),
     Identifier(String),
     StringLiteral(String),
-    Integer(i32),
+    Integer(u32),
+    Minus,
 
     Comma,
     Semicolon,
@@ -95,6 +96,7 @@ impl TokenKind {
             TokenKind::If => "if".to_string(),
             TokenKind::Else => "else".to_string(),
             TokenKind::Return => "return".to_string(),
+            TokenKind::Minus => "-".to_string(),
         }
     }
 }
@@ -128,6 +130,7 @@ impl From<&TokenKind> for PureTokenKind {
             TokenKind::If => PureTokenKind::If,
             TokenKind::Else => PureTokenKind::Else,
             TokenKind::Return => PureTokenKind::Return,
+            TokenKind::Minus => PureTokenKind::Minus,
         }
     }
 }
@@ -151,6 +154,7 @@ pub enum PureTokenKind {
 
     Assign,
     Plus,
+    Minus,
     Equal,
     Inequal,
     Negation,

@@ -9,13 +9,9 @@ pub(super) enum LexerState {
     ReadingNegation {
         starting_position: TextPosition,
     },
-    ReadingMinus {
-        starting_position: TextPosition,
-    },
     ReadingNumber {
         starting_position: TextPosition,
-        value: i32,
-        negative: bool,
+        value: u32,
     },
     ReadingInvalid {
         starting_position: TextPosition,
