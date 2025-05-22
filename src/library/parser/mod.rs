@@ -95,17 +95,17 @@ impl Parser {
             return None;
         }
         self.save_next_token();
-        let value = ast::expression::Identifier {
-            token: self.current_token.clone(),
-            value: self.current_token.kind.literal(),
-        };
+        let value = self.parse_expression(Precedence::Lowest);
+        if value.is_none() {
+            return None;
+        }
         if self.peek_token_is(&PureTokenKind::Semicolon) {
             self.save_next_token();
         }
         return Some(Statement::Let {
             token: let_token,
             name,
-            value: Box::new(value),
+            value: value.unwrap(),
         });
     }
 
