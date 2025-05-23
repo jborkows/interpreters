@@ -91,7 +91,6 @@ impl Parser {
 
         let name = ast::expression::Identifier {
             token: self.current_token.clone(),
-            value: self.current_token.kind.literal(),
         };
         if !self.expect_peek(&PureTokenKind::Assign) {
             return None;
@@ -147,7 +146,6 @@ impl Parser {
         self.save_next_token();
         let value = ast::expression::Identifier {
             token: self.current_token.clone(),
-            value: self.current_token.kind.literal(),
         };
         if self.peek_token_is(&PureTokenKind::Semicolon) {
             self.save_next_token();
@@ -181,7 +179,6 @@ impl Parser {
             TokenKind::Identifier(_) => {
                 let identifier = ast::expression::Identifier {
                     token: self.current_token.clone(),
-                    value: self.current_token.kind.literal(),
                 };
                 Some(Box::new(identifier))
             }

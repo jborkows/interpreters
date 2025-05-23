@@ -1,6 +1,6 @@
-use std::rc::Rc;
+use std::{mem, rc::Rc};
 
-use crate::tokens::Token;
+use crate::tokens::{Token, TokenKind};
 
 use super::base::Node;
 
@@ -10,8 +10,8 @@ pub(crate) trait Expression: Node + ToString {
 
 pub(crate) struct Identifier {
     pub token: Rc<Token>,
-    pub value: String,
 }
+
 impl Node for Identifier {
     fn token_literal(&self) -> String {
         self.token.short()
@@ -24,7 +24,11 @@ impl Expression for Identifier {
 }
 impl ToString for Identifier {
     fn to_string(&self) -> String {
-        self.value.clone()
+        let real_type = self.token.as_ref();
+        match &real_type.kind {
+            TokenKind::Identifier(s) => s.to_string(),
+            _ => panic!("Invalid token type for Identifier: {:?}", real_type),
+        }
     }
 }
 
