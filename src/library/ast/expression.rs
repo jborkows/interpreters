@@ -143,3 +143,19 @@ impl Expression for InfixExpression {
         self
     }
 }
+
+pub(crate) struct BooleanLiteral {
+    pub token: Rc<Token>,
+    pub value: bool,
+}
+impl ToString for BooleanLiteral {
+    fn to_string(&self) -> String {
+        self.value.to_string()
+    }
+}
+impl Node for BooleanLiteral {}
+impl Expression for BooleanLiteral {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+}

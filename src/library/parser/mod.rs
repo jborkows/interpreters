@@ -186,6 +186,7 @@ impl Parser {
             }
             TokenKind::Negation => self.parse_prefix_expression(),
             TokenKind::Minus => self.parse_prefix_expression(),
+            TokenKind::True | TokenKind::False => self.parse_boolean(),
             _ => None,
         };
         if let None = maybe_prefix {
@@ -257,6 +258,19 @@ impl Parser {
                 }));
             }
         };
+    }
+
+    fn parse_boolean(&mut self) -> Option<Box<dyn Expression>> {
+        let boolean = match self.current_token.kind {
+            TokenKind::True => true,
+            TokenKind::False => false,
+            _ => panic!("Unknown boolean"),
+        };
+        let current_token = self.current_token.clone();
+        return Some(Box::new(ast::expression::BooleanLiteral {
+            token: current_token,
+            value: boolean,
+        }));
     }
 }
 

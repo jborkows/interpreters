@@ -1,6 +1,6 @@
 use super::Parser;
 use crate::ast::base::Node;
-use crate::ast::expression::{Identifier, InfixExpression, InfixOperatorType};
+use crate::ast::expression::{BooleanLiteral, Identifier, InfixExpression, InfixOperatorType};
 use crate::{
     ast::{
         expression::{Expression, IntegerLiteral, PrefixOperator, PrefixOperatorType},
@@ -93,6 +93,27 @@ fn parse_number() {
 }
 
 #[test]
+fn parse_boolean() {
+    let inputs = vec![("true;", true), ("false;", false)];
+    for (input, value) in inputs {
+        let mut parser = Parser::from_string(input);
+        let program = parser.parse_program();
+        check_parser_errors(&parser);
+        assert_eq!(program.statements.len(), 1);
+
+        match &program.statements[0] {
+            Statement::ExpressionStatement {
+                token: _,
+                expression,
+            } => {
+                check_if_boolean_literal_equals(expression, value);
+            }
+            _ => panic!("Expected ExpressionStatement"),
+        }
+    }
+}
+
+#[test]
 fn parse_prefix() {
     let inputs = vec![
         ("-5;", PrefixOperatorType::Minus, 5),
@@ -125,6 +146,16 @@ fn check_if_identifiers_equals(expression: &Box<dyn Expression>, expected_value:
             "Expected Identifier with value {}, but got {}",
             expected_value,
             literal.value()
+        );
+    }
+}
+
+fn check_if_boolean_literal_equals(expression: &Box<dyn Expression>, expected_value: bool) {
+    let literal = downcast_into!(expression, BooleanLiteral);
+    if literal.value != expected_value {
+        panic!(
+            "Expected Boolean literal with value {}, but got {}",
+            expected_value, literal.value
         );
     }
 }
@@ -174,6 +205,35 @@ fn parse_infix_expression() {
 }
 
 #[test]
+fn parse_infix_expression_boolean() {
+    let inputs = vec![
+        ("true == true", InfixOperatorType::Equal, true, true),
+        ("true != false", InfixOperatorType::NotEqual, true, false),
+        ("false == false", InfixOperatorType::Equal, false, false),
+        ("false != true", InfixOperatorType::NotEqual, false, true),
+    ];
+    for (input, operator, left, right) in inputs {
+        let mut parser = Parser::from_string(input);
+        let program = parser.parse_program();
+        check_parser_errors(&parser);
+        assert_eq!(program.statements.len(), 1);
+
+        match &program.statements[0] {
+            Statement::ExpressionStatement {
+                token: _,
+                expression,
+            } => {
+                let infix = downcast_into!(expression, InfixExpression);
+                assert_eq!(infix.operator, operator);
+                check_if_boolean_literal_equals(&infix.left, left);
+                check_if_boolean_literal_equals(&infix.right, right);
+            }
+            _ => panic!("Expected ExpressionStatement"),
+        }
+    }
+}
+
+#[test]
 fn test_precedense_parsing() {
     let inputs = vec![
         ("-a * b", "((-a) * b)"),
@@ -184,6 +244,8 @@ fn test_precedense_parsing() {
         ("a * b / c", "((a * b) / c)"),
         ("a + b / c", "(a + (b / c))"),
         ("a + b * c - d / e", "((a + (b * c)) - (d / e))"),
+        ("a == b != c", "((a == b) != c)"),
+        ("a == b < c", "(a == (b < c))"),
     ];
     for (input, expected) in inputs {
         let mut parser = Parser::from_string(input);
