@@ -167,11 +167,8 @@ impl Parser {
         });
     }
 
-    fn parse_expression(
-        &mut self,
-        precedence: Precedence,
-    ) -> Option<Box<dyn ast::expression::Expression>> {
-        let mut maybe_prefix: Option<Box<dyn Expression>> = match self.current_token.kind {
+    fn parse_prefix(&mut self) -> Option<Box<dyn Expression>> {
+        return match self.current_token.kind {
             TokenKind::Identifier(_) => {
                 let identifier = ast::expression::Identifier {
                     token: self.current_token.clone(),
@@ -190,6 +187,30 @@ impl Parser {
             TokenKind::StringLiteral(_) => self.parse_string_literal(),
             _ => None,
         };
+    }
+
+    fn infix(&mut self, left_exp: Box<dyn Expression>) -> Option<Box<dyn Expression>> {
+        return match self.peek_token.as_ref().unwrap().kind {
+            TokenKind::Plus
+            | TokenKind::Minus
+            | TokenKind::Slash
+            | TokenKind::Asterisk
+            | TokenKind::Equal
+            | TokenKind::Inequal
+            | TokenKind::LessThen
+            | TokenKind::GreaterThen => {
+                self.save_next_token();
+                self.parse_infix_expression(left_exp)
+            }
+            _ => None,
+        };
+    }
+
+    fn parse_expression(
+        &mut self,
+        precedence: Precedence,
+    ) -> Option<Box<dyn ast::expression::Expression>> {
+        let mut maybe_prefix = self.parse_prefix();
         if let None = maybe_prefix {
             self.errors.push(format!(
                 "No prefix parse function for {:?} found",
@@ -202,20 +223,7 @@ impl Parser {
             && !self.is_finished()
             && precedence < precedence_from(&self.peek_token.as_ref().unwrap())
         {
-            let mut infix = match self.peek_token.as_ref().unwrap().kind {
-                TokenKind::Plus
-                | TokenKind::Minus
-                | TokenKind::Slash
-                | TokenKind::Asterisk
-                | TokenKind::Equal
-                | TokenKind::Inequal
-                | TokenKind::LessThen
-                | TokenKind::GreaterThen => {
-                    self.save_next_token();
-                    self.parse_infix_expression(left_exp)
-                }
-                _ => None,
-            };
+            let mut infix = self.infix(left_exp);
             if let None = infix {
                 return None;
             }
