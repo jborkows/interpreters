@@ -1,12 +1,12 @@
 #[cfg(test)]
 mod parser_tests;
 
-use std::rc::Rc;
+use std::{cell::RefCell, rc::Rc};
 
 use crate::{
     ast::{
         self,
-        expression::Expression,
+        expression::{Expression, InfixOperatorType},
         statements::{Program, Statement},
     },
     lexers::Lexer,
@@ -175,7 +175,7 @@ impl Parser {
         &mut self,
         precedence: Precedence,
     ) -> Option<Box<dyn ast::expression::Expression>> {
-        let prefix: Option<Box<dyn Expression>> = match self.current_token.kind {
+        let mut maybe_prefix: Option<Box<dyn Expression>> = match self.current_token.kind {
             TokenKind::Identifier(_) => {
                 let identifier = ast::expression::Identifier {
                     token: self.current_token.clone(),
@@ -192,15 +192,39 @@ impl Parser {
             TokenKind::Minus => self.parse_prefix_expression(),
             _ => None,
         };
-        if let Some(prefix) = prefix {
-            return Some(prefix);
-        } else {
+        if let None = maybe_prefix {
             self.errors.push(format!(
                 "No prefix parse function for {:?} found",
                 self.current_token.kind
             ));
             return None;
         }
+        let mut left_exp = maybe_prefix.take().expect("Prefix really not found");
+        while !self.peek_token_is(&PureTokenKind::Semicolon)
+            && !self.is_finished()
+            && precedence < precedence_from(&self.peek_token.as_ref().unwrap())
+        {
+            let mut infix = match self.peek_token.as_ref().unwrap().kind {
+                TokenKind::Plus
+                | TokenKind::Minus
+                | TokenKind::Slash
+                | TokenKind::Asterisk
+                | TokenKind::Equal
+                | TokenKind::Inequal
+                | TokenKind::LessThen
+                | TokenKind::GreaterThen => {
+                    self.save_next_token();
+                    self.parse_infix_expression(left_exp)
+                }
+                _ => None,
+            };
+            if let None = infix {
+                return None;
+            }
+            let infix_really = infix.take().expect("Infix really not found");
+            left_exp = infix_really;
+        }
+        return Some(left_exp);
     }
 
     fn parse_prefix_expression(&mut self) -> Option<Box<dyn Expression>> {
@@ -218,8 +242,59 @@ impl Parser {
             right: right.unwrap(),
         }));
     }
+
+    fn parse_infix_expression(&mut self, left: Box<dyn Expression>) -> Option<Box<dyn Expression>> {
+        let current_token = self.current_token.clone();
+        let precedence = precedence_from(current_token.as_ref());
+        let operator = token_into_operator(current_token.as_ref())
+            .take()
+            .expect("Operator not found");
+        self.save_next_token();
+        return match self.parse_expression(precedence) {
+            None => None,
+            Some(right) => {
+                return Some(Box::new(ast::expression::InfixExpression {
+                    token: current_token,
+                    left,
+                    operator,
+                    right,
+                }));
+            }
+        };
+    }
 }
 
+fn token_into_operator(token: &Token) -> Option<InfixOperatorType> {
+    let pure_token_kind: PureTokenKind = (&token.kind).into();
+    match pure_token_kind {
+        PureTokenKind::Plus => Some(InfixOperatorType::Plus),
+        PureTokenKind::Minus => Some(InfixOperatorType::Minus),
+        PureTokenKind::Slash => Some(InfixOperatorType::Divide),
+        PureTokenKind::Asterisk => Some(InfixOperatorType::Multiply),
+        PureTokenKind::Equal => Some(InfixOperatorType::Equal),
+        PureTokenKind::Inequal => Some(InfixOperatorType::NotEqual),
+        PureTokenKind::LessThen => Some(InfixOperatorType::LessThan),
+        PureTokenKind::GreaterThen => Some(InfixOperatorType::GreaterThan),
+        _ => None,
+    }
+}
+
+fn precedence_from(token: &Token) -> Precedence {
+    let pure_token_kind: PureTokenKind = (&token.kind).into();
+    match pure_token_kind {
+        PureTokenKind::Plus => Precedence::Sum,
+        PureTokenKind::Minus => Precedence::Sum,
+        PureTokenKind::Slash => Precedence::Product,
+        PureTokenKind::Asterisk => Precedence::Product,
+        PureTokenKind::Equal => Precedence::Equals,
+        PureTokenKind::Inequal => Precedence::Equals,
+        PureTokenKind::LessThen => Precedence::LessThan,
+        PureTokenKind::GreaterThen => Precedence::LessThan,
+        _ => Precedence::Lowest,
+    }
+}
+
+#[derive(Debug, PartialEq, PartialOrd)]
 enum Precedence {
     Lowest,
     Equals,

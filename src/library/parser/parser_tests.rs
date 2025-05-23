@@ -1,6 +1,6 @@
 use super::Parser;
 use crate::ast::base::Node;
-use crate::ast::expression::Identifier;
+use crate::ast::expression::{Identifier, InfixExpression, InfixOperatorType};
 use crate::{
     ast::{
         expression::{Expression, IntegerLiteral, PrefixOperator, PrefixOperatorType},
@@ -90,7 +90,7 @@ fn parse_number() {
             token: _,
             expression,
         } => {
-            check_if_integer_literal(expression, 5);
+            check_if_integer_literal_equals(expression, 5);
         }
         _ => panic!("Expected ExpressionStatement"),
     }
@@ -115,14 +115,14 @@ fn parse_prefix() {
             } => {
                 let operator_expression = downcast_into!(expression, PrefixOperator);
                 assert_eq!(operator_expression.operator, operator);
-                check_if_integer_literal(&operator_expression.right, value);
+                check_if_integer_literal_equals(&operator_expression.right, value);
             }
             _ => panic!("Expected ExpressionStatement"),
         }
     }
 }
 
-fn check_if_integer_literal(expression: &Box<dyn Expression>, expected_value: u32) {
+fn check_if_integer_literal_equals(expression: &Box<dyn Expression>, expected_value: u32) {
     let literal = downcast_into!(expression, IntegerLiteral);
     if literal.value() != expected_value {
         panic!(
@@ -130,6 +130,60 @@ fn check_if_integer_literal(expression: &Box<dyn Expression>, expected_value: u3
             expected_value,
             literal.value()
         );
+    }
+}
+
+#[test]
+fn parse_infix_expression() {
+    let inputs = vec![
+        ("5 + 4;", InfixOperatorType::Plus, 5, 4),
+        ("5 - 4;", InfixOperatorType::Minus, 5, 4),
+        ("5 * 4;", InfixOperatorType::Multiply, 5, 4),
+        ("5 / 4;", InfixOperatorType::Divide, 5, 4),
+        ("5 == 4;", InfixOperatorType::Equal, 5, 4),
+        ("5 < 4;", InfixOperatorType::LessThan, 5, 4),
+        ("5 > 4;", InfixOperatorType::GreaterThan, 5, 4),
+        ("5 != 4;", InfixOperatorType::NotEqual, 5, 4),
+    ];
+    for (input, operator, left, right) in inputs {
+        let mut parser = Parser::from_string(input);
+        let program = parser.parse_program();
+        check_parser_errors(&parser);
+        assert_eq!(program.statements.len(), 1);
+
+        match &program.statements[0] {
+            Statement::ExpressionStatement {
+                token: _,
+                expression,
+            } => {
+                let infix = downcast_into!(expression, InfixExpression);
+                assert_eq!(infix.operator, operator);
+                check_if_integer_literal_equals(&infix.left, left);
+                check_if_integer_literal_equals(&infix.right, right);
+            }
+            _ => panic!("Expected ExpressionStatement"),
+        }
+    }
+}
+
+#[test]
+fn test_precedense_parsing() {
+    let inputs = vec![
+        ("-a * b", "((-a) * b)"),
+        ("!a + b", "((!a) + b)"),
+        ("a + b + c", "((a + b) + c)"),
+        ("a + b - c", "((a + b) - c)"),
+        ("a * b * c", "((a * b) * c)"),
+        ("a * b / c", "((a * b) / c)"),
+        ("a + b / c", "(a + (b / c))"),
+        ("a + b * c - d / e", "((a + (b * c)) - (d / e))"),
+    ];
+    for (input, expected) in inputs {
+        let mut parser = Parser::from_string(input);
+        let program = parser.parse_program();
+        check_parser_errors(&parser);
+        assert_eq!(program.statements.len(), 1);
+        assert_eq!(program.statements[0].to_string(), expected);
     }
 }
 

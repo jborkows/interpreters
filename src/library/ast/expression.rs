@@ -98,6 +98,7 @@ impl ToString for PrefixOperator {
     }
 }
 
+#[derive(Debug, PartialEq)]
 pub(crate) enum InfixOperatorType {
     Plus,
     Minus,
@@ -108,10 +109,44 @@ pub(crate) enum InfixOperatorType {
     GreaterThan,
     Equal,
 }
+impl ToString for InfixOperatorType {
+    fn to_string(&self) -> String {
+        match self {
+            InfixOperatorType::Plus => "+".to_string(),
+            InfixOperatorType::Minus => "-".to_string(),
+            InfixOperatorType::NotEqual => "!=".to_string(),
+            InfixOperatorType::Multiply => "*".to_string(),
+            InfixOperatorType::Divide => "/".to_string(),
+            InfixOperatorType::LessThan => "<".to_string(),
+            InfixOperatorType::GreaterThan => ">".to_string(),
+            InfixOperatorType::Equal => "==".to_string(),
+        }
+    }
+}
 
 pub(crate) struct InfixExpression {
     pub token: Rc<Token>,
     pub left: Box<dyn Expression>,
     pub operator: InfixOperatorType,
     pub right: Box<dyn Expression>,
+}
+impl ToString for InfixExpression {
+    fn to_string(&self) -> String {
+        format!(
+            "({} {} {})",
+            self.left.to_string(),
+            self.operator.to_string(),
+            self.right.to_string()
+        )
+    }
+}
+impl Node for InfixExpression {
+    fn token_literal(&self) -> String {
+        self.token.short()
+    }
+}
+impl Expression for InfixExpression {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
 }

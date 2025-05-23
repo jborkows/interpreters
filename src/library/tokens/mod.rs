@@ -93,6 +93,11 @@ impl TokenKind {
         }
     }
 }
+impl ToString for TokenKind {
+    fn to_string(&self) -> String {
+        self.literal()
+    }
+}
 
 impl From<&TokenKind> for PureTokenKind {
     fn from(token_kind: &TokenKind) -> Self {

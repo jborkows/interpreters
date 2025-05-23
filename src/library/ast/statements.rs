@@ -42,6 +42,26 @@ impl Node for Statement {
     }
 }
 
+impl ToString for Statement {
+    fn to_string(&self) -> String {
+        match self {
+            Statement::Let { name, value, .. } => {
+                format!("let {}={}", name.to_string(), value.to_string())
+            }
+            Statement::Return {
+                token,
+                return_value,
+            } => {
+                format!("{} {}", token.short(), return_value.to_string())
+            }
+            Statement::ExpressionStatement {
+                token: _,
+                expression,
+            } => format!("{}", expression.to_string()),
+        }
+    }
+}
+
 pub struct Program {
     pub statements: Vec<Statement>,
 }
