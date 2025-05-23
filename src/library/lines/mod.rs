@@ -51,12 +51,6 @@ impl TextPosition {
             column_number: ColumnNumber(column_number),
         }
     }
-    pub fn from_line(line_number: LineNumber) -> Self {
-        Self {
-            line_number,
-            column_number: ColumnNumber(0),
-        }
-    }
 
     pub fn token_ends_with(&self, line_number: u16, column_number: u16) -> TokenPosition {
         TokenPosition::new(*self, TextPosition::new(line_number, column_number))
@@ -108,25 +102,5 @@ impl TokenPosition {
                 column_number,
             },
         }
-    }
-}
-
-#[derive(Debug)]
-pub struct SourceCharacter {
-    pub(crate) ch: char,
-    pub column_number: ColumnNumber,
-    pub line_number: LineNumber,
-}
-
-impl SourceCharacter {
-    pub fn new(ch: char, column_number: ColumnNumber, line_number: LineNumber) -> Self {
-        Self {
-            ch,
-            column_number,
-            line_number,
-        }
-    }
-    pub fn is_whitespace(&self) -> bool {
-        self.ch.is_whitespace()
     }
 }

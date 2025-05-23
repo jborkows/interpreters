@@ -41,7 +41,6 @@ pub(super) fn dispatch(
             starting_position: _,
             chars: _,
         } => reading_identifier(line_number, column_number, character, state),
-        _ => (LexerState::Idle, vec![]),
     };
 }
 

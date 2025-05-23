@@ -1,4 +1,4 @@
-use crate::lines::{ColumnNumber, LineNumber, SourceCharacter, TextPosition, TokenPosition};
+use crate::lines::TokenPosition;
 
 #[derive(Debug)]
 pub struct Token {
@@ -10,13 +10,6 @@ impl Token {
     pub(crate) fn new(context: TokenPosition, token_kind: TokenKind) -> Self {
         Self {
             context: Some(context),
-            kind: token_kind,
-        }
-    }
-
-    pub fn pure(token_kind: TokenKind) -> Self {
-        Self {
-            context: None,
             kind: token_kind,
         }
     }

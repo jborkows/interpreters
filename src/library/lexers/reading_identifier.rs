@@ -1,14 +1,9 @@
-use std::result;
-
 use crate::{
-    lines::{TextPosition, TokenPosition},
+    lines::TokenPosition,
     tokens::{Token, TokenKind},
 };
 
-use super::{
-    parsers::{acceptable_separator, delegate_to_next_position},
-    parsing_states::LexerState,
-};
+use super::{parsers::delegate_to_next_position, parsing_states::LexerState};
 
 pub(super) fn reading_identifier(
     line_number: u16,
