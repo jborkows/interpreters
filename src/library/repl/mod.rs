@@ -1,6 +1,6 @@
 use std::io::{self, BufRead};
 
-use crate::lexers::Lexer;
+use crate::{lexers::Lexer, parser::Parser};
 
 pub fn start() {
     let stdin = io::stdin();
@@ -11,6 +11,8 @@ pub fn start() {
         let line = line_result.unwrap();
         lexer.process(&line);
 
+        let program = Parser::from_string(line.as_str()).parse_program();
+
         println!(
             "You entered: {}",
             lexer
@@ -18,5 +20,6 @@ pub fn start() {
                 .map(|token| format!("{:?}", token.as_ref().kind))
                 .collect::<String>()
         );
+        println!("Parsed program: {:?}", program.statements.iter().count());
     }
 }

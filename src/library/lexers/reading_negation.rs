@@ -1,7 +1,4 @@
-use crate::{
-    lexers::dispatch::dispatch,
-    tokens::{Token, TokenKind},
-};
+use crate::tokens::{Token, TokenKind};
 
 use super::{parsers::delegate_to_next, parsing_states::LexerState};
 

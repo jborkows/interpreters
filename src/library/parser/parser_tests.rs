@@ -1,9 +1,9 @@
 use std::mem;
 
 use super::Parser;
+use crate::ast::base::Node;
 use crate::{
     ast::{
-        Node,
         expression::{
             Expression, ExpressionKind, IntegerLiteral, PrefixOperator, PrefixOperatorType,
         },

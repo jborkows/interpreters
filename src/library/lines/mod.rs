@@ -23,10 +23,6 @@ impl Add<u16> for ColumnNumber {
     }
 }
 
-pub trait Lexable {
-    fn next_line(&self) -> Option<(LineNumber, String)>;
-}
-
 impl From<usize> for LineNumber {
     fn from(val: usize) -> Self {
         LineNumber(val as u16)
