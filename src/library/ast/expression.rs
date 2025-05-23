@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use crate::tokens::Token;
 
 use super::base::Node;
@@ -7,7 +9,7 @@ pub(crate) trait Expression: Node + ToString {
 }
 
 pub(crate) struct Identifier {
-    pub token: Token,
+    pub token: Rc<Token>,
     pub value: String,
 }
 impl Node for Identifier {
@@ -27,7 +29,7 @@ impl ToString for Identifier {
 }
 
 pub(crate) struct IntegerLiteral {
-    pub token: Token,
+    pub token: Rc<Token>,
     pub value: u32,
 }
 impl ToString for IntegerLiteral {
@@ -62,7 +64,7 @@ impl ToString for PrefixOperatorType {
 }
 
 pub(crate) struct PrefixOperator {
-    pub token: Token,
+    pub token: Rc<Token>,
     pub operator: PrefixOperatorType,
     pub right: Box<dyn Expression>,
 }

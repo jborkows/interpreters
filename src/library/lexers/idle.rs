@@ -1,3 +1,5 @@
+use std::{cell::RefCell, rc::Rc};
+
 use crate::{lines::TextPosition, tokens::Token};
 
 use super::{parsers::read_special_character, parsing_states::LexerState};
@@ -28,7 +30,7 @@ pub(super) fn idle_parsing(
 
         '"' => Some(LexerState::ReadingText {
             starting_position: text_possition,
-            chars: vec![],
+            chars: Rc::new(RefCell::new(vec![])),
         }),
 
         _ => None,

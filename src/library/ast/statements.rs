@@ -1,19 +1,21 @@
+use std::rc::Rc;
+
 use crate::tokens::Token;
 
 use super::{base::Node, expression::Expression, expression::Identifier};
 
 pub enum Statement {
     Let {
-        token: Token,
+        token: Rc<Token>,
         name: Identifier,
         value: Box<dyn Expression>,
     },
     Return {
-        token: Token,
+        token: Rc<Token>,
         return_value: Box<dyn Expression>,
     },
     ExpressionStatement {
-        token: Token,
+        token: Rc<Token>,
         expression: Box<dyn Expression>,
     },
 }

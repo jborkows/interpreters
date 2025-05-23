@@ -1,3 +1,5 @@
+use std::{cell::RefCell, rc::Rc};
+
 use crate::lines::TextPosition;
 
 #[derive(Debug)]
@@ -19,7 +21,7 @@ pub(super) enum LexerState {
     },
     ReadingText {
         starting_position: TextPosition,
-        chars: Vec<char>,
+        chars: Rc<RefCell<Vec<char>>>,
     },
     ReadingIdentifier {
         starting_position: TextPosition,

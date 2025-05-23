@@ -1,6 +1,6 @@
 use crate::lines::{ColumnNumber, LineNumber, SourceCharacter, TextPosition, TokenPosition};
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Token {
     pub context: Option<TokenPosition>,
     pub kind: TokenKind,

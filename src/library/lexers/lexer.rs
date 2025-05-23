@@ -1,10 +1,8 @@
 use std::iter::Peekable;
+use std::rc::Rc;
 use std::{cmp, collections::VecDeque, env};
 
-use crate::{
-    lines::TokenPosition,
-    tokens::{Token, TokenKind},
-};
+use crate::tokens::Token;
 
 use super::{
     dispatch::{dispatch, end_of_line, finish_it},
@@ -12,7 +10,7 @@ use super::{
 };
 
 pub struct Lexer {
-    source: VecDeque<Token>,
+    source: VecDeque<Rc<Token>>,
     current_line: u16,
     current_column: u16,
     state: LexerState,
@@ -40,7 +38,7 @@ impl Lexer {
             self.state = result.0;
             let tokens = result.1;
             for token in tokens {
-                self.source.push_back(token);
+                self.source.push_back(Rc::new(token));
             }
         }
         let result = end_of_line(&self.state, self.current_line, self.current_column);
@@ -50,16 +48,12 @@ impl Lexer {
         }
         let tokens = result.1;
         for token in tokens {
-            self.source.push_back(token);
+            self.source.push_back(Rc::new(token));
         }
         self.current_column = cmp::max(1, self.current_column);
     }
 
-    pub fn peek(&self) -> Option<&Token> {
-        self.source.front()
-    }
-
-    pub fn next(&mut self) -> Option<Token> {
+    pub fn next(&mut self) -> Option<Rc<Token>> {
         let result = self.source.pop_front();
         match result {
             Some(token) => {
@@ -74,18 +68,18 @@ impl Lexer {
         }
     }
 
-    fn finish(&mut self) -> Option<Token> {
+    fn finish(&mut self) -> Option<Rc<Token>> {
         if env::var("DEBUG").is_ok() {
             println!("Finishing up {:?}", self.state);
         }
         let token = finish_it(&self.state, self.current_line, self.current_column);
         self.state = LexerState::Idle;
-        return token;
+        return token.map(|t| Rc::new(t));
     }
 }
 
 impl Iterator for Lexer {
-    type Item = Token;
+    type Item = Rc<Token>;
 
     fn next(&mut self) -> Option<Self::Item> {
         self.next()
@@ -107,7 +101,7 @@ impl<I: Iterator<Item = String>> LexingIterator<I> {
 }
 
 impl<I: Iterator<Item = String>> Iterator for LexingIterator<I> {
-    type Item = Token;
+    type Item = Rc<Token>;
 
     fn next(&mut self) -> Option<Self::Item> {
         loop {

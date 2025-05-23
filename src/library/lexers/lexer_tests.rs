@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use super::lexer::Lexer;
 use crate::lines::{ColumnNumber, LineNumber, TokenPosition};
 use crate::tokens::{Token, TokenKind};
@@ -290,7 +292,7 @@ fn perform_test(input: Vec<&str>, expected: Vec<(TokenPosition, TokenKind)>) {
     for line in input.iter() {
         lexer.process(line);
     }
-    let tokens: Vec<Token> = lexer.into_iter().collect();
+    let tokens: Vec<Rc<Token>> = lexer.into_iter().collect();
     assert_eq!(
         tokens.len(),
         expected.len(),

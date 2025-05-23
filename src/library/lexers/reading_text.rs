@@ -18,13 +18,12 @@ pub(super) fn reading_text(
                     LexerState::Idle,
                     vec![Token::new(
                         starting_position.token_ends_with(line_number, column_number),
-                        TokenKind::StringLiteral(chars.iter().collect()),
+                        TokenKind::StringLiteral(chars.borrow_mut().iter().collect()),
                     )],
                 );
             }
             _ => {
-                let mut chars = chars.clone();
-                chars.push(character);
+                chars.borrow_mut().push(character);
                 return (
                     LexerState::ReadingText {
                         starting_position: *starting_position,
@@ -44,8 +43,7 @@ pub(super) fn text_end_of_line(state: &LexerState) -> (Option<LexerState>, Vec<T
             starting_position,
             chars,
         } => {
-            let mut chars = chars.clone();
-            chars.push('\n');
+            chars.borrow_mut().push('\n');
             return (
                 Some(LexerState::ReadingText {
                     starting_position: *starting_position,

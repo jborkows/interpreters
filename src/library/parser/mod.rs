@@ -1,6 +1,8 @@
 #[cfg(test)]
 mod parser_tests;
 
+use std::rc::Rc;
+
 use crate::{
     ast::{
         self,
@@ -14,8 +16,8 @@ use crate::{
 pub struct Parser {
     lexer: Lexer,
     errors: Vec<String>,
-    current_token: Token,
-    peek_token: Option<Token>,
+    current_token: Rc<Token>,
+    peek_token: Option<Rc<Token>>,
 }
 
 impl Parser {

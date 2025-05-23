@@ -15,8 +15,7 @@ pub fn start() {
             "You entered: {}",
             lexer
                 .into_iter()
-                .map(|token| token.kind)
-                .map(|token| format!("{:?}", token))
+                .map(|token| format!("{:?}", token.as_ref().kind))
                 .collect::<String>()
         );
     }
