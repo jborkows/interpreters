@@ -1,4 +1,4 @@
-use std::{any::Any, mem};
+use std::mem;
 
 use super::Parser;
 use crate::{
@@ -97,7 +97,10 @@ fn parse_prefix() {
         assert_eq!(program.statements.len(), 1);
 
         match &program.statements[0] {
-            Statement::ExpressionStatement { token, expression } => {
+            Statement::ExpressionStatement {
+                token: _,
+                expression,
+            } => {
                 assert_eq!(expression.expression_kind(), ExpressionKind::PrefixOperator);
                 if let ExpressionKind::PrefixOperator = expression.expression_kind() {
                     let operator_expression = unsafe {
@@ -123,10 +126,11 @@ fn check_if_integer_literal(expression: &Box<dyn Expression>, expected_value: u3
     }
     let literal =
         unsafe { mem::transmute::<&Box<dyn Expression>, &Box<IntegerLiteral>>(expression) };
-    if literal.value != expected_value {
+    if literal.value() != expected_value {
         panic!(
             "Expected IntegerLiteral with value {}, but got {}",
-            expected_value, literal.value
+            expected_value,
+            literal.value()
         );
     }
 }

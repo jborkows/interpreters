@@ -34,11 +34,10 @@ impl ToString for Identifier {
 
 pub(crate) struct IntegerLiteral {
     pub token: Rc<Token>,
-    pub value: u32,
 }
 impl ToString for IntegerLiteral {
     fn to_string(&self) -> String {
-        self.value.to_string()
+        self.value().to_string()
     }
 }
 
@@ -47,6 +46,16 @@ impl Node for IntegerLiteral {
         self.token.short()
     }
 }
+impl IntegerLiteral {
+    pub fn value(&self) -> u32 {
+        let real_type = self.token.as_ref();
+        return match &real_type.kind {
+            TokenKind::Integer(i) => *i,
+            _ => panic!("Invalid token type for IntegerLiteral: {:?}", real_type),
+        };
+    }
+}
+
 impl Expression for IntegerLiteral {
     fn expression_kind(&self) -> ExpressionKind {
         ExpressionKind::IntegerLiteral

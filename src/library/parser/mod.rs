@@ -182,10 +182,9 @@ impl Parser {
                 };
                 Some(Box::new(identifier))
             }
-            TokenKind::Integer(value) => {
+            TokenKind::Integer(_value) => {
                 let integer = ast::expression::IntegerLiteral {
                     token: self.current_token.clone(),
-                    value,
                 };
                 Some(Box::new(integer))
             }
