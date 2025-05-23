@@ -9,6 +9,16 @@ use crate::{
     tokens::TokenKind,
 };
 
+macro_rules! downcast_into {
+    ($expr:expr, $target:ty) => {
+        $expr.as_any().downcast_ref::<$target>().expect(concat!(
+            "Expected ",
+            stringify!($target),
+            ""
+        ))
+    };
+}
+
 #[test]
 fn let_parsing() {
     let input = r#"
@@ -55,10 +65,7 @@ fn parse_identifier() {
             token: _,
             expression,
         } => {
-            let identifier = expression
-                .as_any()
-                .downcast_ref::<Identifier>()
-                .expect("Expected Identifier");
+            let identifier = downcast_into!(expression, Identifier);
             assert_eq!(
                 identifier.token.kind,
                 TokenKind::Identifier("foobar".to_string())
@@ -106,10 +113,7 @@ fn parse_prefix() {
                 token: _,
                 expression,
             } => {
-                let operator_expression = expression
-                    .as_any()
-                    .downcast_ref::<PrefixOperator>()
-                    .expect("Expected PrefixOperator");
+                let operator_expression = downcast_into!(expression, PrefixOperator);
                 assert_eq!(operator_expression.operator, operator);
                 check_if_integer_literal(&operator_expression.right, value);
             }
@@ -119,11 +123,7 @@ fn parse_prefix() {
 }
 
 fn check_if_integer_literal(expression: &Box<dyn Expression>, expected_value: u32) {
-    let literal = expression
-        .as_any()
-        .downcast_ref::<IntegerLiteral>()
-        .expect("Expected IntegerLiteral");
-
+    let literal = downcast_into!(expression, IntegerLiteral);
     if literal.value() != expected_value {
         panic!(
             "Expected IntegerLiteral with value {}, but got {}",
