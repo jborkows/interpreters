@@ -1,11 +1,11 @@
-use std::rc::Rc;
+use std::{any::Any, rc::Rc};
 
 use crate::tokens::{Token, TokenKind};
 
 use super::base::Node;
 
-pub(crate) trait Expression: Node + ToString {
-    fn expression_kind(&self) -> ExpressionKind;
+pub(crate) trait Expression: Node + ToString + Any {
+    fn as_any(&self) -> &dyn Any;
 }
 
 pub(crate) struct Identifier {
@@ -18,8 +18,8 @@ impl Node for Identifier {
     }
 }
 impl Expression for Identifier {
-    fn expression_kind(&self) -> ExpressionKind {
-        ExpressionKind::Identifier
+    fn as_any(&self) -> &dyn Any {
+        self
     }
 }
 impl ToString for Identifier {
@@ -57,8 +57,8 @@ impl IntegerLiteral {
 }
 
 impl Expression for IntegerLiteral {
-    fn expression_kind(&self) -> ExpressionKind {
-        ExpressionKind::IntegerLiteral
+    fn as_any(&self) -> &dyn Any {
+        self
     }
 }
 
@@ -67,6 +67,7 @@ pub(crate) enum PrefixOperatorType {
     Bang,
     Minus,
 }
+
 impl ToString for PrefixOperatorType {
     fn to_string(&self) -> String {
         match self {
@@ -87,8 +88,8 @@ impl Node for PrefixOperator {
     }
 }
 impl Expression for PrefixOperator {
-    fn expression_kind(&self) -> ExpressionKind {
-        ExpressionKind::PrefixOperator
+    fn as_any(&self) -> &dyn Any {
+        self
     }
 }
 impl ToString for PrefixOperator {
@@ -97,9 +98,20 @@ impl ToString for PrefixOperator {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
-pub(crate) enum ExpressionKind {
-    Identifier,
-    IntegerLiteral,
-    PrefixOperator,
+pub(crate) enum InfixOperatorType {
+    Plus,
+    Minus,
+    NotEqual,
+    Multiply,
+    Divide,
+    LessThan,
+    GreaterThan,
+    Equal,
+}
+
+pub(crate) struct InfixExpression {
+    pub token: Rc<Token>,
+    pub left: Box<dyn Expression>,
+    pub operator: InfixOperatorType,
+    pub right: Box<dyn Expression>,
 }

@@ -1,12 +1,9 @@
-use std::mem;
-
 use super::Parser;
 use crate::ast::base::Node;
+use crate::ast::expression::Identifier;
 use crate::{
     ast::{
-        expression::{
-            Expression, ExpressionKind, IntegerLiteral, PrefixOperator, PrefixOperatorType,
-        },
+        expression::{Expression, IntegerLiteral, PrefixOperator, PrefixOperatorType},
         statements::Statement,
     },
     tokens::TokenKind,
@@ -54,9 +51,18 @@ fn parse_identifier() {
     check_parser_errors(&parser);
     assert_eq!(program.statements.len(), 1);
     match &program.statements[0] {
-        Statement::ExpressionStatement { token, expression } => {
-            assert_eq!(token.kind, TokenKind::Identifier("foobar".to_string()));
-            assert_eq!(expression.expression_kind(), ExpressionKind::Identifier);
+        Statement::ExpressionStatement {
+            token: _,
+            expression,
+        } => {
+            let identifier = expression
+                .as_any()
+                .downcast_ref::<Identifier>()
+                .expect("Expected Identifier");
+            assert_eq!(
+                identifier.token.kind,
+                TokenKind::Identifier("foobar".to_string())
+            );
         }
         _ => panic!("Expected ExpressionStatement"),
     }
@@ -77,7 +83,6 @@ fn parse_number() {
             token: _,
             expression,
         } => {
-            println!("Expression: {:?}", expression.expression_kind());
             check_if_integer_literal(expression, 5);
         }
         _ => panic!("Expected ExpressionStatement"),
@@ -101,16 +106,12 @@ fn parse_prefix() {
                 token: _,
                 expression,
             } => {
-                assert_eq!(expression.expression_kind(), ExpressionKind::PrefixOperator);
-                if let ExpressionKind::PrefixOperator = expression.expression_kind() {
-                    let operator_expression = unsafe {
-                        mem::transmute::<&Box<dyn Expression>, &Box<PrefixOperator>>(expression)
-                    };
-                    assert_eq!(operator_expression.operator, operator);
-                    check_if_integer_literal(&operator_expression.right, value);
-                } else {
-                    panic!("Expected PrefixOperator");
-                }
+                let operator_expression = expression
+                    .as_any()
+                    .downcast_ref::<PrefixOperator>()
+                    .expect("Expected PrefixOperator");
+                assert_eq!(operator_expression.operator, operator);
+                check_if_integer_literal(&operator_expression.right, value);
             }
             _ => panic!("Expected ExpressionStatement"),
         }
@@ -118,14 +119,11 @@ fn parse_prefix() {
 }
 
 fn check_if_integer_literal(expression: &Box<dyn Expression>, expected_value: u32) {
-    if expression.expression_kind() != ExpressionKind::IntegerLiteral {
-        panic!(
-            "Expected IntegerLiteral, but got {:?}",
-            expression.expression_kind()
-        );
-    }
-    let literal =
-        unsafe { mem::transmute::<&Box<dyn Expression>, &Box<IntegerLiteral>>(expression) };
+    let literal = expression
+        .as_any()
+        .downcast_ref::<IntegerLiteral>()
+        .expect("Expected IntegerLiteral");
+
     if literal.value() != expected_value {
         panic!(
             "Expected IntegerLiteral with value {}, but got {}",
