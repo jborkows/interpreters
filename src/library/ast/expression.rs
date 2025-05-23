@@ -11,6 +11,15 @@ pub(crate) trait Expression: Node + ToString + Any {
 pub(crate) struct Identifier {
     pub token: Rc<Token>,
 }
+impl Identifier {
+    pub fn value(&self) -> String {
+        let real_type = self.token.as_ref();
+        return match &real_type.kind {
+            TokenKind::Identifier(s) => s.to_string(),
+            _ => panic!("Invalid token type for Identifier: {:?}", real_type),
+        };
+    }
+}
 
 impl Node for Identifier {}
 impl Expression for Identifier {

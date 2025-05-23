@@ -110,11 +110,6 @@ impl Parser {
         });
     }
 
-    fn curent_token_is(&self, pure_token_kind: PureTokenKind) -> bool {
-        let existing: PureTokenKind = (&self.current_token.kind).into();
-        return existing == pure_token_kind;
-    }
-
     fn peek_token_is(&self, pure_token_kind: &PureTokenKind) -> bool {
         if let Some(peek) = &self.peek_token {
             let existing: PureTokenKind = (&peek.kind).into();

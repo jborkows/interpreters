@@ -65,11 +65,7 @@ fn parse_identifier() {
             token: _,
             expression,
         } => {
-            let identifier = downcast_into!(expression, Identifier);
-            assert_eq!(
-                identifier.token.kind,
-                TokenKind::Identifier("foobar".to_string())
-            );
+            check_if_identifiers_equals(expression, "foobar".to_string());
         }
         _ => panic!("Expected ExpressionStatement"),
     }
@@ -119,6 +115,17 @@ fn parse_prefix() {
             }
             _ => panic!("Expected ExpressionStatement"),
         }
+    }
+}
+
+fn check_if_identifiers_equals(expression: &Box<dyn Expression>, expected_value: String) {
+    let literal = downcast_into!(expression, Identifier);
+    if literal.value() != expected_value {
+        panic!(
+            "Expected Identifier with value {}, but got {}",
+            expected_value,
+            literal.value()
+        );
     }
 }
 
