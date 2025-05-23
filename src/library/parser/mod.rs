@@ -185,6 +185,7 @@ impl Parser {
             TokenKind::Minus => self.parse_prefix_expression(),
             TokenKind::True | TokenKind::False => self.parse_boolean(),
             TokenKind::StringLiteral(_) => self.parse_string_literal(),
+            TokenKind::LeftParen => self.parse_grouped_expression(),
             _ => None,
         };
     }
@@ -287,6 +288,16 @@ impl Parser {
         return Some(Box::new(ast::expression::StringLiteral {
             token: current_token,
         }));
+    }
+
+    fn parse_grouped_expression(&mut self) -> Option<Box<dyn Expression>> {
+        self.save_next_token();
+        let expression = self.parse_expression(Precedence::Lowest);
+        if !self.peek_token_is(&PureTokenKind::RightParen) {
+            return None;
+        }
+        self.save_next_token();
+        return Some(expression.unwrap());
     }
 }
 

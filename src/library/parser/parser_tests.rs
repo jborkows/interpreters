@@ -1,14 +1,10 @@
 use super::Parser;
-use crate::ast::base::Node;
 use crate::ast::expression::{
     BooleanLiteral, Identifier, InfixExpression, InfixOperatorType, StringLiteral,
 };
-use crate::{
-    ast::{
-        expression::{Expression, IntegerLiteral, PrefixOperator, PrefixOperatorType},
-        statements::Statement,
-    },
-    tokens::TokenKind,
+use crate::ast::{
+    expression::{Expression, IntegerLiteral, PrefixOperator, PrefixOperatorType},
+    statements::Statement,
 };
 
 macro_rules! downcast_into {
@@ -280,6 +276,8 @@ fn test_precedense_parsing() {
         ("a + b * c - d / e", "((a + (b * c)) - (d / e))"),
         ("a == b != c", "((a == b) != c)"),
         ("a == b < c", "(a == (b < c))"),
+        ("a + (b + c) + d", "((a + (b + c)) + d)"),
+        ("-(a + b)", "(-(a + b))"),
     ];
     for (input, expected) in inputs {
         let mut parser = Parser::from_string(input);
