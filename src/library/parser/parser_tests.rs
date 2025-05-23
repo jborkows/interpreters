@@ -1,6 +1,8 @@
 use super::Parser;
 use crate::ast::base::Node;
-use crate::ast::expression::{BooleanLiteral, Identifier, InfixExpression, InfixOperatorType};
+use crate::ast::expression::{
+    BooleanLiteral, Identifier, InfixExpression, InfixOperatorType, StringLiteral,
+};
 use crate::{
     ast::{
         expression::{Expression, IntegerLiteral, PrefixOperator, PrefixOperatorType},
@@ -114,6 +116,27 @@ fn parse_boolean() {
 }
 
 #[test]
+fn parse_string() {
+    let inputs = vec![(r#""aaaa";"#, "aaaa".to_string())];
+    for (input, value) in inputs {
+        let mut parser = Parser::from_string(input);
+        let program = parser.parse_program();
+        check_parser_errors(&parser);
+        assert_eq!(program.statements.len(), 1);
+
+        match &program.statements[0] {
+            Statement::ExpressionStatement {
+                token: _,
+                expression,
+            } => {
+                check_if_strings_equals(expression, value);
+            }
+            _ => panic!("Expected ExpressionStatement"),
+        }
+    }
+}
+
+#[test]
 fn parse_prefix() {
     let inputs = vec![
         ("-5;", PrefixOperatorType::Minus, 5),
@@ -141,6 +164,17 @@ fn parse_prefix() {
 
 fn check_if_identifiers_equals(expression: &Box<dyn Expression>, expected_value: String) {
     let literal = downcast_into!(expression, Identifier);
+    if literal.value() != expected_value {
+        panic!(
+            "Expected Identifier with value {}, but got {}",
+            expected_value,
+            literal.value()
+        );
+    }
+}
+
+fn check_if_strings_equals(expression: &Box<dyn Expression>, expected_value: String) {
+    let literal = downcast_into!(expression, StringLiteral);
     if literal.value() != expected_value {
         panic!(
             "Expected Identifier with value {}, but got {}",

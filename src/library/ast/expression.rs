@@ -159,3 +159,30 @@ impl Expression for BooleanLiteral {
         self
     }
 }
+pub(crate) struct StringLiteral {
+    pub token: Rc<Token>,
+}
+impl ToString for StringLiteral {
+    fn to_string(&self) -> String {
+        let real_type = self.token.as_ref();
+        return match &real_type.kind {
+            TokenKind::StringLiteral(s) => s.to_string(),
+            _ => panic!("Invalid token type for StringLiteral: {:?}", real_type),
+        };
+    }
+}
+impl Node for StringLiteral {}
+impl Expression for StringLiteral {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+}
+impl StringLiteral {
+    pub fn value(&self) -> String {
+        let real_type = self.token.as_ref();
+        return match &real_type.kind {
+            TokenKind::StringLiteral(s) => s.to_string(),
+            _ => panic!("Invalid token type for StringLiteral: {:?}", real_type),
+        };
+    }
+}

@@ -187,6 +187,7 @@ impl Parser {
             TokenKind::Negation => self.parse_prefix_expression(),
             TokenKind::Minus => self.parse_prefix_expression(),
             TokenKind::True | TokenKind::False => self.parse_boolean(),
+            TokenKind::StringLiteral(_) => self.parse_string_literal(),
             _ => None,
         };
         if let None = maybe_prefix {
@@ -270,6 +271,13 @@ impl Parser {
         return Some(Box::new(ast::expression::BooleanLiteral {
             token: current_token,
             value: boolean,
+        }));
+    }
+
+    fn parse_string_literal(&self) -> Option<Box<dyn Expression>> {
+        let current_token = self.current_token.clone();
+        return Some(Box::new(ast::expression::StringLiteral {
+            token: current_token,
         }));
     }
 }
