@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod parser_tests;
 
-use std::{cell::RefCell, rc::Rc};
+use std::rc::Rc;
 
 use crate::{
     ast::{
@@ -144,15 +144,16 @@ impl Parser {
     fn parse_return_statement(&mut self) -> Option<Statement> {
         let return_token = self.current_token.clone();
         self.save_next_token();
-        let value = ast::expression::Identifier {
-            token: self.current_token.clone(),
-        };
+        let value = self.parse_expression(Precedence::Lowest);
+        if value.is_none() {
+            return None;
+        }
         if self.peek_token_is(&PureTokenKind::Semicolon) {
             self.save_next_token();
         }
         return Some(Statement::Return {
             token: return_token,
-            return_value: Box::new(value),
+            return_value: value.unwrap(),
         });
     }
 

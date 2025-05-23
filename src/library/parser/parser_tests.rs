@@ -30,9 +30,9 @@ fn let_parsing() {
     let program = parser.parse_program();
     check_parser_errors(&parser);
     assert_eq!(program.statements.len(), 3);
-    assert_eq!(program.statements[0].token_literal(), "let x=5");
-    assert_eq!(program.statements[1].token_literal(), "let y=10");
-    assert_eq!(program.statements[2].token_literal(), "let foobar=838383");
+    assert_eq!(program.statements[0].to_string(), "let x=5");
+    assert_eq!(program.statements[1].to_string(), "let y=10");
+    assert_eq!(program.statements[2].to_string(), "let foobar=838383");
 }
 
 #[test]
@@ -46,9 +46,9 @@ fn return_parsing() {
     let program = parser.parse_program();
     check_parser_errors(&parser);
     assert_eq!(program.statements.len(), 3);
-    assert_eq!(program.statements[0].token_literal(), "return 5");
-    assert_eq!(program.statements[1].token_literal(), "return 10");
-    assert_eq!(program.statements[2].token_literal(), "return 838383");
+    assert_eq!(program.statements[0].to_string(), "return 5");
+    assert_eq!(program.statements[1].to_string(), "return 10");
+    assert_eq!(program.statements[2].to_string(), "return 838383");
 }
 
 #[test]

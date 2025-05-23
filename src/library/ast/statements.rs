@@ -20,27 +20,7 @@ pub enum Statement {
     },
 }
 
-impl Node for Statement {
-    fn token_literal(&self) -> String {
-        match self {
-            Statement::Let { name, value, .. } => {
-                format!("let {}={}", name.token_literal(), value.token_literal())
-            }
-            Statement::Return {
-                token,
-                return_value,
-            } => {
-                format!("{} {}", token.short(), return_value.token_literal())
-            }
-            Statement::ExpressionStatement {
-                token: _,
-                expression,
-            } => {
-                format!("{}", expression.token_literal())
-            }
-        }
-    }
-}
+impl Node for Statement {}
 
 impl ToString for Statement {
     fn to_string(&self) -> String {
@@ -66,12 +46,14 @@ pub struct Program {
     pub statements: Vec<Statement>,
 }
 
-impl Node for Program {
-    fn token_literal(&self) -> String {
-        if self.statements.is_empty() {
-            String::new()
-        } else {
-            self.statements[0].token_literal()
+impl Node for Program {}
+impl ToString for Program {
+    fn to_string(&self) -> String {
+        let mut result = String::new();
+        for statement in &self.statements {
+            result.push_str(&statement.to_string());
+            result.push('\n');
         }
+        result
     }
 }

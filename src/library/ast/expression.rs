@@ -12,11 +12,7 @@ pub(crate) struct Identifier {
     pub token: Rc<Token>,
 }
 
-impl Node for Identifier {
-    fn token_literal(&self) -> String {
-        self.token.short()
-    }
-}
+impl Node for Identifier {}
 impl Expression for Identifier {
     fn as_any(&self) -> &dyn Any {
         self
@@ -41,11 +37,7 @@ impl ToString for IntegerLiteral {
     }
 }
 
-impl Node for IntegerLiteral {
-    fn token_literal(&self) -> String {
-        self.token.short()
-    }
-}
+impl Node for IntegerLiteral {}
 impl IntegerLiteral {
     pub fn value(&self) -> u32 {
         let real_type = self.token.as_ref();
@@ -82,11 +74,7 @@ pub(crate) struct PrefixOperator {
     pub operator: PrefixOperatorType,
     pub right: Box<dyn Expression>,
 }
-impl Node for PrefixOperator {
-    fn token_literal(&self) -> String {
-        self.token.short()
-    }
-}
+impl Node for PrefixOperator {}
 impl Expression for PrefixOperator {
     fn as_any(&self) -> &dyn Any {
         self
@@ -140,11 +128,7 @@ impl ToString for InfixExpression {
         )
     }
 }
-impl Node for InfixExpression {
-    fn token_literal(&self) -> String {
-        self.token.short()
-    }
-}
+impl Node for InfixExpression {}
 impl Expression for InfixExpression {
     fn as_any(&self) -> &dyn Any {
         self
