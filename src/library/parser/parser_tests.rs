@@ -1,6 +1,6 @@
 use super::Parser;
 use crate::ast::expression::{
-    BooleanLiteral, Identifier, InfixExpression, InfixOperatorType, StringLiteral,
+    BooleanLiteral, Identifier, IfExpression, InfixExpression, InfixOperatorType, StringLiteral,
 };
 use crate::ast::{
     expression::{Expression, IntegerLiteral, PrefixOperator, PrefixOperatorType},
@@ -285,6 +285,82 @@ fn test_precedense_parsing() {
         check_parser_errors(&parser);
         assert_eq!(program.statements.len(), 1);
         assert_eq!(program.statements[0].to_string(), expected);
+    }
+}
+
+#[test]
+fn parse_if_condition() {
+    let input = "if (x < y) { x } ";
+    let mut parser = Parser::from_string(input);
+    let program = parser.parse_program();
+    check_parser_errors(&parser);
+    assert_eq!(program.statements.len(), 1);
+
+    match &program.statements[0] {
+        Statement::ExpressionStatement {
+            token: _,
+            expression,
+        } => {
+            let if_expression = downcast_into!(expression, IfExpression);
+            let condition = downcast_into!(&if_expression.condition, InfixExpression);
+            assert_eq!(condition.operator, InfixOperatorType::LessThan);
+            check_if_identifiers_equals(&condition.left, "x".to_string());
+            check_if_identifiers_equals(&condition.right, "y".to_string());
+            let consequence = &if_expression.consequences()[0];
+            match consequence {
+                Statement::ExpressionStatement {
+                    token: _,
+                    expression,
+                } => {
+                    check_if_identifiers_equals(expression, "x".to_string());
+                }
+                _ => panic!("Expected ExpressionStatement in consequence"),
+            }
+        }
+        _ => panic!("Expected ExpressionStatement"),
+    }
+}
+
+#[test]
+fn parse_if_else_condition() {
+    let input = "if (x < y) { x } else { y }";
+    let mut parser = Parser::from_string(input);
+    let program = parser.parse_program();
+    check_parser_errors(&parser);
+    assert_eq!(program.statements.len(), 1);
+
+    match &program.statements[0] {
+        Statement::ExpressionStatement {
+            token: _,
+            expression,
+        } => {
+            let if_expression = downcast_into!(expression, IfExpression);
+            let condition = downcast_into!(&if_expression.condition, InfixExpression);
+            assert_eq!(condition.operator, InfixOperatorType::LessThan);
+            check_if_identifiers_equals(&condition.left, "x".to_string());
+            check_if_identifiers_equals(&condition.right, "y".to_string());
+            let consequence = &if_expression.consequences()[0];
+            match consequence {
+                Statement::ExpressionStatement {
+                    token: _,
+                    expression,
+                } => {
+                    check_if_identifiers_equals(expression, "x".to_string());
+                }
+                _ => panic!("Expected ExpressionStatement in consequence"),
+            }
+            let alternative = &if_expression.alternative().unwrap()[0];
+            match alternative {
+                Statement::ExpressionStatement {
+                    token: _,
+                    expression,
+                } => {
+                    check_if_identifiers_equals(expression, "y".to_string());
+                }
+                _ => panic!("Expected ExpressionStatement in alternative"),
+            }
+        }
+        _ => panic!("Expected ExpressionStatement"),
     }
 }
 

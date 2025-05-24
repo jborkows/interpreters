@@ -4,6 +4,38 @@ use crate::tokens::Token;
 
 use super::{base::Node, expression::Expression, expression::Identifier};
 
+macro_rules! join_collection {
+    ($expr:expr, $joiner:expr) => {
+        $expr
+            .into_iter()
+            .map(|s| s.to_string())
+            .collect::<Vec<String>>()
+            .join($joiner)
+    };
+}
+
+macro_rules! join_rc_collection {
+    ($expr:expr, $joiner:expr) => {
+        $expr
+            .as_ref()
+            .iter()
+            .map(|s| s.to_string())
+            .collect::<Vec<String>>()
+            .join($joiner)
+    };
+}
+
+/**
+* Don't know if use macro or function
+*/
+#[allow(dead_code)]
+fn join_collection<T: ToString>(expr: &Vec<T>, joiner: &str) -> String {
+    expr.iter()
+        .map(|s| s.to_string())
+        .collect::<Vec<String>>()
+        .join(joiner)
+}
+
 pub enum Statement {
     Let {
         token: Rc<Token>,
@@ -17,6 +49,10 @@ pub enum Statement {
     ExpressionStatement {
         token: Rc<Token>,
         expression: Box<dyn Expression>,
+    },
+    BlockStatement {
+        token: Rc<Token>,
+        statements: Rc<Vec<Statement>>,
     },
 }
 
@@ -38,6 +74,12 @@ impl ToString for Statement {
                 token: _,
                 expression,
             } => format!("{}", expression.to_string()),
+            Statement::BlockStatement {
+                token: _,
+                statements,
+            } => {
+                format!("{}", join_rc_collection!(statements, " "))
+            }
         }
     }
 }
@@ -49,11 +91,6 @@ pub struct Program {
 impl Node for Program {}
 impl ToString for Program {
     fn to_string(&self) -> String {
-        let mut result = String::new();
-        for statement in &self.statements {
-            result.push_str(&statement.to_string());
-            result.push('\n');
-        }
-        result
+        format!("{}", join_collection!(&self.statements, "\n"))
     }
 }

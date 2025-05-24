@@ -2,7 +2,7 @@ use std::{any::Any, rc::Rc};
 
 use crate::tokens::{Token, TokenKind};
 
-use super::base::Node;
+use super::{base::Node, statements::Statement};
 
 pub(crate) trait Expression: Node + ToString + Any {
     fn as_any(&self) -> &dyn Any;
@@ -184,5 +184,73 @@ impl StringLiteral {
             TokenKind::StringLiteral(s) => s.to_string(),
             _ => panic!("Invalid token type for StringLiteral: {:?}", real_type),
         };
+    }
+}
+
+pub(crate) struct IfExpression {
+    pub token: Rc<Token>,
+    pub condition: Box<dyn Expression>,
+    pub consequence: Statement,
+    pub alternative: Option<Statement>,
+}
+
+impl ToString for IfExpression {
+    fn to_string(&self) -> String {
+        let mut result = format!("if ({}){{", self.condition.to_string());
+        result.push_str(&self.consequence.to_string());
+        result.push('}');
+        if let Some(alt) = &self.alternative {
+            result.push_str("else {");
+            result.push_str(&alt.to_string());
+            result.push('}');
+        }
+        result
+    }
+}
+impl Node for IfExpression {}
+impl Expression for IfExpression {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+}
+impl IfExpression {
+    pub fn new(
+        token: Rc<Token>,
+        condition: Box<dyn Expression>,
+        consequence: Statement,
+        alternative: Option<Statement>,
+    ) -> Self {
+        match consequence {
+            Statement::BlockStatement { .. } => {}
+            _ => {
+                panic!("Consequence must be a BlockStatement");
+            }
+        }
+        match alternative {
+            Some(Statement::BlockStatement { .. }) => {}
+            None => {}
+            _ => {
+                panic!("Alternative must be a BlockStatement");
+            }
+        }
+        Self {
+            token,
+            condition,
+            consequence,
+            alternative,
+        }
+    }
+    pub fn consequences(&self) -> Rc<Vec<Statement>> {
+        match &self.consequence {
+            Statement::BlockStatement { statements, .. } => statements.clone(),
+            _ => unreachable!(),
+        }
+    }
+    pub fn alternative(&self) -> Option<Rc<Vec<Statement>>> {
+        match &self.alternative {
+            Some(Statement::BlockStatement { statements, .. }) => Some(statements.clone()),
+            None => None,
+            _ => unreachable!(),
+        }
     }
 }

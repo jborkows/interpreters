@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod parser_tests;
 
-use std::rc::Rc;
+use std::{rc::Rc, thread::current};
 
 use crate::{
     ast::{
@@ -85,14 +85,14 @@ impl Parser {
 
     fn parse_let_statement(&mut self) -> Option<Statement> {
         let let_token = self.current_token.clone();
-        if !self.expect_peek(&PureTokenKind::Identifier) {
+        if !self.expect_peek_and_move_into(&PureTokenKind::Identifier) {
             return None;
         }
 
         let name = ast::expression::Identifier {
             token: self.current_token.clone(),
         };
-        if !self.expect_peek(&PureTokenKind::Assign) {
+        if !self.expect_peek_and_move_into(&PureTokenKind::Assign) {
             return None;
         }
         self.save_next_token();
@@ -117,8 +117,12 @@ impl Parser {
         }
         return false;
     }
+    fn current_token_is(&self, pure_token_kind: &PureTokenKind) -> bool {
+        let existing: PureTokenKind = (&self.current_token.kind).into();
+        return existing == *pure_token_kind;
+    }
 
-    fn expect_peek(&mut self, pure_token_kind: &PureTokenKind) -> bool {
+    fn expect_peek_and_move_into(&mut self, pure_token_kind: &PureTokenKind) -> bool {
         if self.peek_token_is(pure_token_kind) {
             self.next_token();
             return true;
@@ -186,6 +190,7 @@ impl Parser {
             TokenKind::True | TokenKind::False => self.parse_boolean(),
             TokenKind::StringLiteral(_) => self.parse_string_literal(),
             TokenKind::LeftParen => self.parse_grouped_expression(),
+            TokenKind::If => self.parse_if_expression(),
             _ => None,
         };
     }
@@ -293,11 +298,61 @@ impl Parser {
     fn parse_grouped_expression(&mut self) -> Option<Box<dyn Expression>> {
         self.save_next_token();
         let expression = self.parse_expression(Precedence::Lowest);
-        if !self.peek_token_is(&PureTokenKind::RightParen) {
+        if !self.expect_peek_and_move_into(&PureTokenKind::RightParen) {
+            return None;
+        }
+        return Some(expression.unwrap());
+    }
+
+    fn parse_if_expression(&mut self) -> Option<Box<dyn Expression>> {
+        let current_token = self.current_token.clone();
+        if !self.expect_peek_and_move_into(&PureTokenKind::LeftParen) {
             return None;
         }
         self.save_next_token();
-        return Some(expression.unwrap());
+        let condition = self.parse_expression(Precedence::Lowest);
+        if condition.is_none() {
+            return None;
+        }
+        if !self.expect_peek_and_move_into(&PureTokenKind::RightParen) {
+            return None;
+        }
+        if !self.expect_peek_and_move_into(&PureTokenKind::LeftBrace) {
+            return None;
+        }
+        let consequence = self.parse_block_statement();
+        let alternative = if self.peek_token_is(&PureTokenKind::Else) {
+            self.save_next_token();
+            if !self.expect_peek_and_move_into(&PureTokenKind::LeftBrace) {
+                return None;
+            }
+            Some(self.parse_block_statement())
+        } else {
+            None
+        };
+        return Some(Box::new(ast::expression::IfExpression::new(
+            current_token,
+            condition.unwrap(),
+            consequence,
+            alternative,
+        )));
+    }
+
+    fn parse_block_statement(&mut self) -> Statement {
+        let current_token = self.current_token.clone();
+        let mut statements = Vec::new();
+        self.save_next_token();
+        while !self.is_finished() && !self.current_token_is(&PureTokenKind::RightBrace) {
+            let statement = self.parse_statement();
+            if let Some(statement) = statement {
+                statements.push(statement);
+            }
+            self.save_next_token();
+        }
+        return Statement::BlockStatement {
+            token: current_token,
+            statements: Rc::new(statements),
+        };
     }
 }
 
@@ -340,4 +395,9 @@ enum Precedence {
     Product,
     Prefix,
     Call,
+}
+
+enum FailIfPrefixNotFound {
+    Yes,
+    No,
 }
