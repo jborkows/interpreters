@@ -10,16 +10,17 @@ pub fn start() {
         let mut lexer = Lexer::new();
         let line = line_result.unwrap();
         lexer.process(&line);
+        let mut parser = Parser::from_string(line.as_str());
+        let program = parser.parse_program();
+        let errors = parser.errors();
+        if !errors.is_empty() {
+            println!("Errors found in the program:");
+            for error in errors {
+                println!("{}", error);
+            }
+            continue;
+        }
 
-        let program = Parser::from_string(line.as_str()).parse_program();
-
-        println!(
-            "You entered: {}",
-            lexer
-                .into_iter()
-                .map(|token| format!("{:?}", token.as_ref().kind))
-                .collect::<String>()
-        );
-        println!("Parsed program: {:?}", program.statements.iter().count());
+        println!("Parsed program: {}", program.to_string());
     }
 }

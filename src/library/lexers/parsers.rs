@@ -24,7 +24,7 @@ pub(super) fn read_special_character(c: char) -> Option<TokenKind> {
 }
 
 pub(super) fn acceptable_separator(c: &char) -> bool {
-    return *c == ';' || c.is_whitespace() || *c == '\n' || *c == '\r';
+    return *c == ';' || c.is_whitespace() || *c == '\n' || *c == '\r' || *c == ',';
 }
 
 pub(super) fn delegate_to_next<P>(

@@ -1,4 +1,4 @@
-use std::ops::Add;
+use std::{fmt::Display, ops::Add};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct LineNumber(pub u16);
@@ -52,6 +52,14 @@ impl TextPosition {
         TokenPosition::new(*self, TextPosition::new(line_number, column_number))
     }
 }
+impl ToString for TextPosition {
+    fn to_string(&self) -> String {
+        format!(
+            "Line: {}, Column: {}",
+            self.line_number.0, self.column_number.0
+        )
+    }
+}
 
 #[derive(Debug, Eq, PartialEq, Clone, Copy)]
 pub struct TokenPosition {
@@ -98,5 +106,14 @@ impl TokenPosition {
                 column_number,
             },
         }
+    }
+}
+impl ToString for TokenPosition {
+    fn to_string(&self) -> String {
+        format!(
+            "TokenPosition(start: {}, end: {})",
+            self.start.to_string(),
+            self.end.to_string()
+        )
     }
 }

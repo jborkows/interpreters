@@ -3,7 +3,6 @@ use crate::ast::expression::{
     BooleanLiteral, CallExpression, FunctionLiteral, Identifier, IfExpression, InfixExpression,
     InfixOperatorType, StringLiteral,
 };
-use crate::ast::statements;
 use crate::ast::{
     expression::{Expression, IntegerLiteral, PrefixOperator, PrefixOperatorType},
     statements::Statement,
@@ -435,6 +434,30 @@ fn parse_call_expression() {
             check_if_identifiers_equals(&first_argument.right, "z".to_string());
             let second_argument = downcast_into!(&call_expression.arguments[1], Identifier);
             assert_eq!(second_argument.value(), "y");
+        }
+        _ => panic!("Expected ExpressionStatement"),
+    }
+}
+
+#[test]
+fn parse_call_expression_with_literals() {
+    let input = "add(1, false);";
+    let mut parser = Parser::from_string(input);
+    let program = parser.parse_program();
+    check_parser_errors(&parser);
+    assert_eq!(program.statements.len(), 1);
+
+    match &program.statements[0] {
+        Statement::ExpressionStatement {
+            token: _,
+            expression,
+        } => {
+            let call_expression = downcast_into!(expression, CallExpression);
+            let function_identifier = downcast_into!(&call_expression.function, Identifier);
+            assert_eq!(function_identifier.value(), "add");
+            assert_eq!(call_expression.arguments.len(), 2);
+            check_if_integer_literal_equals(&call_expression.arguments[0], 1);
+            check_if_boolean_literal_equals(&call_expression.arguments[1], false);
         }
         _ => panic!("Expected ExpressionStatement"),
     }

@@ -29,6 +29,10 @@ impl Parser {
         Self::new(lexer)
     }
 
+    pub fn errors(&self) -> &Vec<String> {
+        &self.errors
+    }
+
     pub fn new(mut lexer: Lexer) -> Self {
         let current = lexer.next();
         let peek = lexer.next();
@@ -48,6 +52,17 @@ impl Parser {
         let next = self.peek_token.take().expect("No next token");
         self.peek_token = self.lexer.next();
         self.current_token = next;
+        match &self.current_token.kind {
+            TokenKind::Invalid(value) => match self.current_token.context {
+                Some(context) => self.errors.push(format!(
+                    "Invalid token at {}: {}",
+                    context.to_string(),
+                    value
+                )),
+                None => (),
+            },
+            _ => {}
+        }
     }
 
     fn save_next_token(&mut self) {
