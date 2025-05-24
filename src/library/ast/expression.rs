@@ -1,6 +1,9 @@
 use std::{any::Any, rc::Rc};
 
-use crate::tokens::{Token, TokenKind};
+use crate::{
+    join_rc_collection,
+    tokens::{Token, TokenKind},
+};
 
 use super::{base::Node, statements::Statement};
 
@@ -252,5 +255,23 @@ impl IfExpression {
             None => None,
             _ => unreachable!(),
         }
+    }
+}
+
+pub(crate) struct FunctionLiteral {
+    pub token: Rc<Token>,
+    pub parameters: Rc<Vec<Identifier>>,
+    pub body: Statement,
+}
+impl ToString for FunctionLiteral {
+    fn to_string(&self) -> String {
+        let params = join_rc_collection!(self.parameters, ", ");
+        format!("fn({}){{ {} }}", params, self.body.to_string())
+    }
+}
+impl Node for FunctionLiteral {}
+impl Expression for FunctionLiteral {
+    fn as_any(&self) -> &dyn Any {
+        self
     }
 }

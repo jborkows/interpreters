@@ -1,7 +1,9 @@
 use super::Parser;
 use crate::ast::expression::{
-    BooleanLiteral, Identifier, IfExpression, InfixExpression, InfixOperatorType, StringLiteral,
+    BooleanLiteral, FunctionLiteral, Identifier, IfExpression, InfixExpression, InfixOperatorType,
+    StringLiteral,
 };
+use crate::ast::statements;
 use crate::ast::{
     expression::{Expression, IntegerLiteral, PrefixOperator, PrefixOperatorType},
     statements::Statement,
@@ -359,6 +361,44 @@ fn parse_if_else_condition() {
                 }
                 _ => panic!("Expected ExpressionStatement in alternative"),
             }
+        }
+        _ => panic!("Expected ExpressionStatement"),
+    }
+}
+
+#[test]
+fn parse_function_literal() {
+    let input = "fn(x, y) { x + y; }";
+    let mut parser = Parser::from_string(input);
+    let program = parser.parse_program();
+    check_parser_errors(&parser);
+    assert_eq!(program.statements.len(), 1);
+
+    match &program.statements[0] {
+        Statement::ExpressionStatement {
+            token: _,
+            expression,
+        } => {
+            let function_literal = downcast_into!(expression, FunctionLiteral);
+            assert_eq!(function_literal.parameters.len(), 2);
+            assert_eq!(function_literal.parameters[0].to_string(), "x");
+            assert_eq!(function_literal.parameters[1].to_string(), "y");
+            let block = match &function_literal.body {
+                Statement::BlockStatement { statements, .. } => &statements[0],
+                _ => panic!("Expected BlockStatement in function body"),
+            };
+            let expression = match block {
+                Statement::ExpressionStatement {
+                    token: _,
+                    expression,
+                } => expression,
+                _ => panic!("Expected ExpressionStatement in function body"),
+            };
+            let addition = downcast_into!(expression, InfixExpression);
+
+            assert_eq!(addition.operator, InfixOperatorType::Plus);
+            check_if_identifiers_equals(&addition.left, "x".to_string());
+            check_if_identifiers_equals(&addition.right, "y".to_string());
         }
         _ => panic!("Expected ExpressionStatement"),
     }

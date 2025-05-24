@@ -6,7 +6,7 @@ use std::{rc::Rc, thread::current};
 use crate::{
     ast::{
         self,
-        expression::{Expression, InfixOperatorType},
+        expression::{Expression, FunctionLiteral, Identifier, InfixOperatorType},
         statements::{Program, Statement},
     },
     lexers::Lexer,
@@ -191,6 +191,7 @@ impl Parser {
             TokenKind::StringLiteral(_) => self.parse_string_literal(),
             TokenKind::LeftParen => self.parse_grouped_expression(),
             TokenKind::If => self.parse_if_expression(),
+            TokenKind::Function => self.parse_function_expression(),
             _ => None,
         };
     }
@@ -353,6 +354,61 @@ impl Parser {
             token: current_token,
             statements: Rc::new(statements),
         };
+    }
+
+    fn parse_function_expression(&mut self) -> Option<Box<dyn Expression>> {
+        let current_token = self.current_token.clone();
+        if !self.expect_peek_and_move_into(&PureTokenKind::LeftParen) {
+            return None;
+        }
+        let parameters = self.parse_function_parameters();
+        if !self.expect_peek_and_move_into(&PureTokenKind::RightParen) {
+            self.errors
+                .push("Expected right parenthesis after function parameters".to_string());
+            return None;
+        }
+        if !self.expect_peek_and_move_into(&PureTokenKind::LeftBrace) {
+            return None;
+        }
+        let body = self.parse_block_statement();
+        return Some(Box::new(FunctionLiteral {
+            token: current_token,
+            parameters: Rc::new(parameters),
+            body,
+        }));
+    }
+
+    fn parse_function_parameters(&mut self) -> Vec<Identifier> {
+        if self.peek_token_is(&PureTokenKind::RightParen) {
+            return vec![];
+        }
+        let mut arguments: Vec<Identifier> = vec![];
+        while !(self.is_finished() || self.current_token_is(&PureTokenKind::RightParen)) {
+            println!("Current token: {:?}", self.current_token.kind.to_string(),);
+            if self.expect_peek_and_move_into(&PureTokenKind::Identifier) {
+                let identifier = Identifier {
+                    token: self.current_token.clone(),
+                };
+                arguments.push(identifier);
+            } else {
+                self.errors.push(format!(
+                    "Expected identifier, got {:?}",
+                    self.current_token.kind
+                ));
+            }
+            if self.peek_token_is(&PureTokenKind::Comma) {
+                self.save_next_token();
+            } else if self.peek_token_is(&PureTokenKind::RightParen) {
+                break;
+            } else {
+                self.errors.push(format!(
+                    "Expected comma or right parenthesis, got {:?}",
+                    self.peek_token.as_ref().unwrap().kind
+                ));
+                break;
+            }
+        }
+        return arguments;
     }
 }
 
