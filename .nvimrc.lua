@@ -34,6 +34,7 @@ dap.configurations.rust = {
     cwd = "${workspaceFolder}",
     stopOnEntry = false,
     runInTerminal = false,
+    -- IMPORTANT: This is required to ensure that values are displayed correctly in the debugger
     sourceLanguages = { "rust" },
   },
 }
