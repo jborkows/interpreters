@@ -1,13 +1,14 @@
 use super::Parser;
 use crate::ast::expression::{
-    BooleanLiteral, FunctionLiteral, Identifier, IfExpression, InfixExpression, InfixOperatorType,
-    StringLiteral,
+    BooleanLiteral, CallExpression, FunctionLiteral, Identifier, IfExpression, InfixExpression,
+    InfixOperatorType, StringLiteral,
 };
 use crate::ast::statements;
 use crate::ast::{
     expression::{Expression, IntegerLiteral, PrefixOperator, PrefixOperatorType},
     statements::Statement,
 };
+use crate::join_collection;
 
 macro_rules! downcast_into {
     ($expr:expr, $target:ty) => {
@@ -16,6 +17,12 @@ macro_rules! downcast_into {
             stringify!($target),
             ""
         ))
+    };
+}
+
+macro_rules! print_bash_error {
+    ($msg:expr) => {
+        format!("\x1b[31m{}\x1b[0m", $msg)
     };
 }
 
@@ -280,6 +287,7 @@ fn test_precedense_parsing() {
         ("a == b < c", "(a == (b < c))"),
         ("a + (b + c) + d", "((a + (b + c)) + d)"),
         ("-(a + b)", "(-(a + b))"),
+        ("a + add(b*c) + d", "((a + add((b * c))) + d)"),
     ];
     for (input, expected) in inputs {
         let mut parser = Parser::from_string(input);
@@ -404,8 +412,39 @@ fn parse_function_literal() {
     }
 }
 
+#[test]
+fn parse_call_expression() {
+    let input = "add(x + z, y);";
+    let mut parser = Parser::from_string(input);
+    let program = parser.parse_program();
+    check_parser_errors(&parser);
+    assert_eq!(program.statements.len(), 1);
+
+    match &program.statements[0] {
+        Statement::ExpressionStatement {
+            token: _,
+            expression,
+        } => {
+            let call_expression = downcast_into!(expression, CallExpression);
+            let function_identifier = downcast_into!(&call_expression.function, Identifier);
+            assert_eq!(function_identifier.value(), "add");
+            assert_eq!(call_expression.arguments.len(), 2);
+            let first_argument = downcast_into!(&call_expression.arguments[0], InfixExpression);
+            assert_eq!(first_argument.operator, InfixOperatorType::Plus);
+            check_if_identifiers_equals(&first_argument.left, "x".to_string());
+            check_if_identifiers_equals(&first_argument.right, "z".to_string());
+            let second_argument = downcast_into!(&call_expression.arguments[1], Identifier);
+            assert_eq!(second_argument.value(), "y");
+        }
+        _ => panic!("Expected ExpressionStatement"),
+    }
+}
+
 fn check_parser_errors(parser: &Parser) {
     if !parser.errors.is_empty() {
-        panic!("Parser errors: {:?}", parser.errors);
+        panic!(
+            "Parser errors: \n{}",
+            print_bash_error!(join_collection!(&parser.errors, "\n"))
+        );
     }
 }

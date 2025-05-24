@@ -209,6 +209,10 @@ impl Parser {
                 self.save_next_token();
                 self.parse_infix_expression(left_exp)
             }
+            TokenKind::LeftParen => {
+                self.save_next_token();
+                self.parse_call_expression(left_exp)
+            }
             _ => None,
         };
     }
@@ -410,6 +414,47 @@ impl Parser {
         }
         return arguments;
     }
+
+    fn parse_call_expression(
+        &mut self,
+        left_exp: Box<dyn Expression>,
+    ) -> Option<Box<dyn Expression>> {
+        let current_token = self.current_token.clone();
+        let arguments = self.parse_call_arguments();
+        return Some(Box::new(ast::expression::CallExpression {
+            token: current_token,
+            function: left_exp,
+            arguments,
+        }));
+    }
+
+    fn parse_call_arguments(&mut self) -> Vec<Box<dyn Expression>> {
+        if self.peek_token_is(&PureTokenKind::RightParen) {
+            self.save_next_token();
+            return vec![];
+        }
+        let mut arguments: Vec<Box<dyn Expression>> = vec![];
+        self.save_next_token();
+        arguments.push(
+            self.parse_expression(Precedence::Lowest)
+                .expect("Expected expression after left parenthesis"),
+        );
+        while self.peek_token_is(&PureTokenKind::Comma) {
+            self.save_next_token();
+            self.save_next_token();
+            if let Some(argument) = self.parse_expression(Precedence::Lowest) {
+                arguments.push(argument);
+            } else {
+                self.errors
+                    .push("Expected expression after comma".to_string());
+            }
+        }
+        if !self.expect_peek_and_move_into(&PureTokenKind::RightParen) {
+            self.errors
+                .push("Expected right parenthesis after call arguments".to_string());
+        }
+        return arguments;
+    }
 }
 
 fn token_into_operator(token: &Token) -> Option<InfixOperatorType> {
@@ -438,6 +483,7 @@ fn precedence_from(token: &Token) -> Precedence {
         PureTokenKind::Inequal => Precedence::Equals,
         PureTokenKind::LessThen => Precedence::LessThan,
         PureTokenKind::GreaterThen => Precedence::LessThan,
+        PureTokenKind::LeftParen => Precedence::Call,
         _ => Precedence::Lowest,
     }
 }

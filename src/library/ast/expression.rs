@@ -1,7 +1,7 @@
 use std::{any::Any, rc::Rc};
 
 use crate::{
-    join_rc_collection,
+    join_collection, join_rc_collection,
     tokens::{Token, TokenKind},
 };
 
@@ -271,6 +271,24 @@ impl ToString for FunctionLiteral {
 }
 impl Node for FunctionLiteral {}
 impl Expression for FunctionLiteral {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+}
+
+pub(crate) struct CallExpression {
+    pub token: Rc<Token>,
+    pub function: Box<dyn Expression>, //Identifier or FunctionLiteral
+    pub arguments: Vec<Box<dyn Expression>>,
+}
+impl ToString for CallExpression {
+    fn to_string(&self) -> String {
+        let args = join_collection!(&self.arguments, ", ");
+        format!("{}({})", self.function.to_string(), args)
+    }
+}
+impl Node for CallExpression {}
+impl Expression for CallExpression {
     fn as_any(&self) -> &dyn Any {
         self
     }
