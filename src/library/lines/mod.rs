@@ -1,4 +1,4 @@
-use std::{fmt::Display, ops::Add};
+use std::ops::Add;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct LineNumber(pub u16);

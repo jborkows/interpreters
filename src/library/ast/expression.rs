@@ -7,62 +7,181 @@ use crate::{
 
 use super::{base::Node, statements::Statement};
 
-pub(crate) trait Expression: Node + ToString + Any {
-    fn as_any(&self) -> &dyn Any;
+#[derive(Debug)]
+pub enum Expression {
+    Identifier(Rc<Token>),
+    IntegerLiteral(Rc<Token>),
+    PrefixOperator {
+        token: Rc<Token>,
+        operator: PrefixOperatorType,
+        right: Box<Expression>,
+    },
+    InfixExpression {
+        token: Rc<Token>,
+        left: Box<Expression>,
+        operator: InfixOperatorType,
+        right: Box<Expression>,
+    },
+    CallExpression {
+        token: Rc<Token>,
+        function: Box<Expression>, //Identifier or FunctionLiteral
+        arguments: Vec<Expression>,
+    },
+    BooleanLiteral {
+        token: Rc<Token>,
+        value: bool,
+    },
+    StringLiteral(Rc<Token>),
+    IfExpression {
+        token: Rc<Token>,
+        condition: Box<Expression>,
+        consequence: Box<Statement>,
+        alternative: Option<Box<Statement>>,
+    },
+    FunctionLiteral {
+        token: Rc<Token>,
+        parameters: Rc<Vec<Expression>>, // Identifier
+        body: Box<Statement>,
+    },
 }
 
-pub(crate) struct Identifier {
-    pub token: Rc<Token>,
-}
-impl Identifier {
-    pub fn value(&self) -> String {
-        let real_type = self.token.as_ref();
-        return match &real_type.kind {
-            TokenKind::Identifier(s) => s.to_string(),
-            _ => panic!("Invalid token type for Identifier: {:?}", real_type),
-        };
-    }
-}
-
-impl Node for Identifier {}
-impl Expression for Identifier {
+impl Node for Expression {
     fn as_any(&self) -> &dyn Any {
         self
     }
 }
-impl ToString for Identifier {
+
+impl ToString for Expression {
     fn to_string(&self) -> String {
-        let real_type = self.token.as_ref();
-        match &real_type.kind {
-            TokenKind::Identifier(s) => s.to_string(),
-            _ => panic!("Invalid token type for Identifier: {:?}", real_type),
+        match self {
+            Expression::Identifier(token) => {
+                let real_type = token.as_ref();
+                match &real_type.kind {
+                    TokenKind::Identifier(s) => s.to_string(),
+                    _ => panic!("Invalid token type for Identifier: {:?}", real_type),
+                }
+            }
+            Expression::IntegerLiteral(token) => {
+                let real_type = token.as_ref();
+                match &real_type.kind {
+                    TokenKind::Integer(i) => i.to_string(),
+                    _ => panic!("Invalid token type for IntegerLiteral: {:?}", real_type),
+                }
+            }
+            Expression::PrefixOperator {
+                token: _,
+                operator,
+                right,
+            } => {
+                format!("({}{})", operator.to_string(), right.to_string())
+            }
+            Expression::InfixExpression {
+                token: _,
+                left,
+                operator,
+                right,
+            } => format!(
+                "({} {} {})",
+                left.to_string(),
+                operator.to_string(),
+                right.to_string()
+            ),
+            Expression::CallExpression {
+                token: _,
+                function,
+                arguments,
+            } => {
+                let args = join_collection!(arguments, ", ");
+                format!("{}({})", function.to_string(), args)
+            }
+            Expression::BooleanLiteral { token: _, value } => value.to_string(),
+            Expression::StringLiteral(token) => {
+                let real_type = token.as_ref();
+                match &real_type.kind {
+                    TokenKind::StringLiteral(s) => s.to_string(),
+                    _ => panic!("Invalid token type for StringLiteral: {:?}", real_type),
+                }
+            }
+            Expression::IfExpression {
+                token: _,
+                condition,
+                consequence,
+                alternative,
+            } => {
+                let mut result = format!("if ({}){{", condition.to_string());
+                result.push_str(&consequence.to_string());
+                result.push('}');
+                if let Some(alt) = &alternative {
+                    result.push_str("else {");
+                    result.push_str(&alt.to_string());
+                    result.push('}');
+                }
+                result
+            }
+            Expression::FunctionLiteral {
+                token,
+                parameters,
+                body,
+            } => {
+                let params = join_rc_collection!(parameters, ", ");
+                format!("fn({}){{ {} }}", params, body.to_string())
+            }
         }
     }
 }
-
-pub(crate) struct IntegerLiteral {
-    pub token: Rc<Token>,
+pub fn if_expression(
+    token: Rc<Token>,
+    condition: Expression,
+    consequence: Statement,
+    alternative: Option<Statement>,
+) -> Expression {
+    match consequence {
+        Statement::BlockStatement { .. } => {}
+        _ => {
+            panic!("Consequence must be a BlockStatement");
+        }
+    }
+    match alternative {
+        Some(Statement::BlockStatement { .. }) => {}
+        None => {}
+        _ => {
+            panic!("Alternative must be a BlockStatement");
+        }
+    }
+    Expression::IfExpression {
+        token,
+        condition: Box::new(condition),
+        consequence: Box::new(consequence),
+        alternative: alternative.map(|alt| Box::new(alt)),
+    }
 }
-impl ToString for IntegerLiteral {
-    fn to_string(&self) -> String {
-        self.value().to_string()
+pub fn function_literal(
+    token: Rc<Token>,
+    parameters: Rc<Vec<Expression>>,
+    body: Statement,
+) -> Expression {
+    match body {
+        Statement::BlockStatement { .. } => {}
+        _ => {
+            panic!("Body must be a BlockStatement");
+        }
+    }
+    parameters.iter().for_each(|param| {
+        if !matches!(param, Expression::Identifier(_)) {
+            panic!("Parameters must be Identifier expressions");
+        }
+    });
+    Expression::FunctionLiteral {
+        token,
+        parameters,
+        body: Box::new(body),
     }
 }
 
-impl Node for IntegerLiteral {}
-impl IntegerLiteral {
-    pub fn value(&self) -> u32 {
-        let real_type = self.token.as_ref();
-        return match &real_type.kind {
-            TokenKind::Integer(i) => *i,
-            _ => panic!("Invalid token type for IntegerLiteral: {:?}", real_type),
-        };
-    }
-}
-
-impl Expression for IntegerLiteral {
-    fn as_any(&self) -> &dyn Any {
-        self
+pub fn identifier(token: Rc<Token>) -> Expression {
+    match token.as_ref().kind {
+        TokenKind::Identifier(_) => Expression::Identifier(token),
+        _ => panic!("Invalid token type for Identifier: {:?}", token),
     }
 }
 
@@ -78,23 +197,6 @@ impl ToString for PrefixOperatorType {
             PrefixOperatorType::Bang => "!".to_string(),
             PrefixOperatorType::Minus => "-".to_string(),
         }
-    }
-}
-
-pub(crate) struct PrefixOperator {
-    pub token: Rc<Token>,
-    pub operator: PrefixOperatorType,
-    pub right: Box<dyn Expression>,
-}
-impl Node for PrefixOperator {}
-impl Expression for PrefixOperator {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-}
-impl ToString for PrefixOperator {
-    fn to_string(&self) -> String {
-        format!("({}{})", self.operator.to_string(), self.right.to_string())
     }
 }
 
@@ -121,175 +223,5 @@ impl ToString for InfixOperatorType {
             InfixOperatorType::GreaterThan => ">".to_string(),
             InfixOperatorType::Equal => "==".to_string(),
         }
-    }
-}
-
-pub(crate) struct InfixExpression {
-    pub token: Rc<Token>,
-    pub left: Box<dyn Expression>,
-    pub operator: InfixOperatorType,
-    pub right: Box<dyn Expression>,
-}
-impl ToString for InfixExpression {
-    fn to_string(&self) -> String {
-        format!(
-            "({} {} {})",
-            self.left.to_string(),
-            self.operator.to_string(),
-            self.right.to_string()
-        )
-    }
-}
-impl Node for InfixExpression {}
-impl Expression for InfixExpression {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-}
-
-pub(crate) struct BooleanLiteral {
-    pub token: Rc<Token>,
-    pub value: bool,
-}
-impl ToString for BooleanLiteral {
-    fn to_string(&self) -> String {
-        self.value.to_string()
-    }
-}
-impl Node for BooleanLiteral {}
-impl Expression for BooleanLiteral {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-}
-pub(crate) struct StringLiteral {
-    pub token: Rc<Token>,
-}
-impl ToString for StringLiteral {
-    fn to_string(&self) -> String {
-        let real_type = self.token.as_ref();
-        return match &real_type.kind {
-            TokenKind::StringLiteral(s) => s.to_string(),
-            _ => panic!("Invalid token type for StringLiteral: {:?}", real_type),
-        };
-    }
-}
-impl Node for StringLiteral {}
-impl Expression for StringLiteral {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-}
-impl StringLiteral {
-    pub fn value(&self) -> String {
-        let real_type = self.token.as_ref();
-        return match &real_type.kind {
-            TokenKind::StringLiteral(s) => s.to_string(),
-            _ => panic!("Invalid token type for StringLiteral: {:?}", real_type),
-        };
-    }
-}
-
-pub(crate) struct IfExpression {
-    pub token: Rc<Token>,
-    pub condition: Box<dyn Expression>,
-    pub consequence: Statement,
-    pub alternative: Option<Statement>,
-}
-
-impl ToString for IfExpression {
-    fn to_string(&self) -> String {
-        let mut result = format!("if ({}){{", self.condition.to_string());
-        result.push_str(&self.consequence.to_string());
-        result.push('}');
-        if let Some(alt) = &self.alternative {
-            result.push_str("else {");
-            result.push_str(&alt.to_string());
-            result.push('}');
-        }
-        result
-    }
-}
-impl Node for IfExpression {}
-impl Expression for IfExpression {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-}
-impl IfExpression {
-    pub fn new(
-        token: Rc<Token>,
-        condition: Box<dyn Expression>,
-        consequence: Statement,
-        alternative: Option<Statement>,
-    ) -> Self {
-        match consequence {
-            Statement::BlockStatement { .. } => {}
-            _ => {
-                panic!("Consequence must be a BlockStatement");
-            }
-        }
-        match alternative {
-            Some(Statement::BlockStatement { .. }) => {}
-            None => {}
-            _ => {
-                panic!("Alternative must be a BlockStatement");
-            }
-        }
-        Self {
-            token,
-            condition,
-            consequence,
-            alternative,
-        }
-    }
-    pub fn consequences(&self) -> Rc<Vec<Statement>> {
-        match &self.consequence {
-            Statement::BlockStatement { statements, .. } => statements.clone(),
-            _ => unreachable!(),
-        }
-    }
-    pub fn alternative(&self) -> Option<Rc<Vec<Statement>>> {
-        match &self.alternative {
-            Some(Statement::BlockStatement { statements, .. }) => Some(statements.clone()),
-            None => None,
-            _ => unreachable!(),
-        }
-    }
-}
-
-pub(crate) struct FunctionLiteral {
-    pub token: Rc<Token>,
-    pub parameters: Rc<Vec<Identifier>>,
-    pub body: Statement,
-}
-impl ToString for FunctionLiteral {
-    fn to_string(&self) -> String {
-        let params = join_rc_collection!(self.parameters, ", ");
-        format!("fn({}){{ {} }}", params, self.body.to_string())
-    }
-}
-impl Node for FunctionLiteral {}
-impl Expression for FunctionLiteral {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-}
-
-pub(crate) struct CallExpression {
-    pub token: Rc<Token>,
-    pub function: Box<dyn Expression>, //Identifier or FunctionLiteral
-    pub arguments: Vec<Box<dyn Expression>>,
-}
-impl ToString for CallExpression {
-    fn to_string(&self) -> String {
-        let args = join_collection!(&self.arguments, ", ");
-        format!("{}({})", self.function.to_string(), args)
-    }
-}
-impl Node for CallExpression {}
-impl Expression for CallExpression {
-    fn as_any(&self) -> &dyn Any {
-        self
     }
 }

@@ -1,9 +1,6 @@
 use crate::tokens::{Token, TokenKind};
 
-use super::{
-    parsers::{acceptable_separator, delegate_to_next},
-    parsing_states::LexerState,
-};
+use super::{parsers::delegate_to_next, parsing_states::LexerState};
 
 pub(super) fn reading_number(
     line_number: u16,

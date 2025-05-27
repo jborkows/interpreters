@@ -2,21 +2,22 @@ use std::rc::Rc;
 
 use crate::{join_collection, join_rc_collection, tokens::Token};
 
-use super::{base::Node, expression::Expression, expression::Identifier};
+use super::{base::Node, expression::Expression};
 
+#[derive(Debug)]
 pub enum Statement {
     Let {
         token: Rc<Token>,
-        name: Identifier,
-        value: Box<dyn Expression>,
+        name: Expression,
+        value: Expression,
     },
     Return {
         token: Rc<Token>,
-        return_value: Box<dyn Expression>,
+        return_value: Expression,
     },
     ExpressionStatement {
         token: Rc<Token>,
-        expression: Box<dyn Expression>,
+        expression: Expression,
     },
     BlockStatement {
         token: Rc<Token>,
@@ -24,7 +25,11 @@ pub enum Statement {
     },
 }
 
-impl Node for Statement {}
+impl Node for Statement {
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+}
 
 impl ToString for Statement {
     fn to_string(&self) -> String {
@@ -56,7 +61,11 @@ pub struct Program {
     pub statements: Vec<Statement>,
 }
 
-impl Node for Program {}
+impl Node for Program {
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+}
 impl ToString for Program {
     fn to_string(&self) -> String {
         format!("{}", join_collection!(&self.statements, "\n"))

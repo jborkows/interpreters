@@ -1,12 +1,12 @@
 #[cfg(test)]
 mod parser_tests;
 
-use std::{rc::Rc, thread::current};
+use std::rc::Rc;
 
 use crate::{
     ast::{
         self,
-        expression::{Expression, FunctionLiteral, Identifier, InfixOperatorType},
+        expression::{Expression, InfixOperatorType, function_literal, identifier, if_expression},
         statements::{Program, Statement},
     },
     lexers::Lexer,
@@ -104,9 +104,7 @@ impl Parser {
             return None;
         }
 
-        let name = ast::expression::Identifier {
-            token: self.current_token.clone(),
-        };
+        let name = Expression::Identifier(self.current_token.clone());
         if !self.expect_peek_and_move_into(&PureTokenKind::Assign) {
             return None;
         }
@@ -186,19 +184,15 @@ impl Parser {
         });
     }
 
-    fn parse_prefix(&mut self) -> Option<Box<dyn Expression>> {
+    fn parse_prefix(&mut self) -> Option<Expression> {
         return match self.current_token.kind {
             TokenKind::Identifier(_) => {
-                let identifier = ast::expression::Identifier {
-                    token: self.current_token.clone(),
-                };
-                Some(Box::new(identifier))
+                let identifier = Expression::Identifier(self.current_token.clone());
+                Some(identifier)
             }
             TokenKind::Integer(_value) => {
-                let integer = ast::expression::IntegerLiteral {
-                    token: self.current_token.clone(),
-                };
-                Some(Box::new(integer))
+                let integer = Expression::IntegerLiteral(self.current_token.clone());
+                Some(integer)
             }
             TokenKind::Negation => self.parse_prefix_expression(),
             TokenKind::Minus => self.parse_prefix_expression(),
@@ -211,7 +205,7 @@ impl Parser {
         };
     }
 
-    fn infix(&mut self, left_exp: Box<dyn Expression>) -> Option<Box<dyn Expression>> {
+    fn infix(&mut self, left_exp: Expression) -> Option<Expression> {
         return match self.peek_token.as_ref().unwrap().kind {
             TokenKind::Plus
             | TokenKind::Minus
@@ -232,10 +226,7 @@ impl Parser {
         };
     }
 
-    fn parse_expression(
-        &mut self,
-        precedence: Precedence,
-    ) -> Option<Box<dyn ast::expression::Expression>> {
+    fn parse_expression(&mut self, precedence: Precedence) -> Option<Expression> {
         let mut maybe_prefix = self.parse_prefix();
         if let None = maybe_prefix {
             self.errors.push(format!(
@@ -259,7 +250,7 @@ impl Parser {
         return Some(left_exp);
     }
 
-    fn parse_prefix_expression(&mut self) -> Option<Box<dyn Expression>> {
+    fn parse_prefix_expression(&mut self) -> Option<Expression> {
         let operator = match self.current_token.kind {
             TokenKind::Negation => ast::expression::PrefixOperatorType::Bang,
             TokenKind::Minus => ast::expression::PrefixOperatorType::Minus,
@@ -268,14 +259,14 @@ impl Parser {
         let current_token = self.current_token.clone();
         self.save_next_token();
         let right = self.parse_expression(Precedence::Prefix);
-        return Some(Box::new(ast::expression::PrefixOperator {
+        return Some(Expression::PrefixOperator {
             token: current_token,
             operator,
-            right: right.unwrap(),
-        }));
+            right: right.map(|a| Box::new(a)).unwrap(),
+        });
     }
 
-    fn parse_infix_expression(&mut self, left: Box<dyn Expression>) -> Option<Box<dyn Expression>> {
+    fn parse_infix_expression(&mut self, left: Expression) -> Option<Expression> {
         let current_token = self.current_token.clone();
         let precedence = precedence_from(current_token.as_ref());
         let operator = token_into_operator(current_token.as_ref())
@@ -285,37 +276,35 @@ impl Parser {
         return match self.parse_expression(precedence) {
             None => None,
             Some(right) => {
-                return Some(Box::new(ast::expression::InfixExpression {
+                return Some(Expression::InfixExpression {
                     token: current_token,
-                    left,
+                    left: Box::new(left),
                     operator,
-                    right,
-                }));
+                    right: Box::new(right),
+                });
             }
         };
     }
 
-    fn parse_boolean(&mut self) -> Option<Box<dyn Expression>> {
+    fn parse_boolean(&mut self) -> Option<Expression> {
         let boolean = match self.current_token.kind {
             TokenKind::True => true,
             TokenKind::False => false,
             _ => panic!("Unknown boolean"),
         };
         let current_token = self.current_token.clone();
-        return Some(Box::new(ast::expression::BooleanLiteral {
+        return Some(Expression::BooleanLiteral {
             token: current_token,
             value: boolean,
-        }));
+        });
     }
 
-    fn parse_string_literal(&self) -> Option<Box<dyn Expression>> {
+    fn parse_string_literal(&self) -> Option<Expression> {
         let current_token = self.current_token.clone();
-        return Some(Box::new(ast::expression::StringLiteral {
-            token: current_token,
-        }));
+        return Some(Expression::StringLiteral(current_token));
     }
 
-    fn parse_grouped_expression(&mut self) -> Option<Box<dyn Expression>> {
+    fn parse_grouped_expression(&mut self) -> Option<Expression> {
         self.save_next_token();
         let expression = self.parse_expression(Precedence::Lowest);
         if !self.expect_peek_and_move_into(&PureTokenKind::RightParen) {
@@ -324,7 +313,7 @@ impl Parser {
         return Some(expression.unwrap());
     }
 
-    fn parse_if_expression(&mut self) -> Option<Box<dyn Expression>> {
+    fn parse_if_expression(&mut self) -> Option<Expression> {
         let current_token = self.current_token.clone();
         if !self.expect_peek_and_move_into(&PureTokenKind::LeftParen) {
             return None;
@@ -350,12 +339,12 @@ impl Parser {
         } else {
             None
         };
-        return Some(Box::new(ast::expression::IfExpression::new(
+        return Some(if_expression(
             current_token,
             condition.unwrap(),
             consequence,
             alternative,
-        )));
+        ));
     }
 
     fn parse_block_statement(&mut self) -> Statement {
@@ -375,7 +364,7 @@ impl Parser {
         };
     }
 
-    fn parse_function_expression(&mut self) -> Option<Box<dyn Expression>> {
+    fn parse_function_expression(&mut self) -> Option<Expression> {
         let current_token = self.current_token.clone();
         if !self.expect_peek_and_move_into(&PureTokenKind::LeftParen) {
             return None;
@@ -390,24 +379,18 @@ impl Parser {
             return None;
         }
         let body = self.parse_block_statement();
-        return Some(Box::new(FunctionLiteral {
-            token: current_token,
-            parameters: Rc::new(parameters),
-            body,
-        }));
+        return Some(function_literal(current_token, Rc::new(parameters), body));
     }
 
-    fn parse_function_parameters(&mut self) -> Vec<Identifier> {
+    fn parse_function_parameters(&mut self) -> Vec<Expression> {
         if self.peek_token_is(&PureTokenKind::RightParen) {
             return vec![];
         }
-        let mut arguments: Vec<Identifier> = vec![];
+        let mut arguments: Vec<Expression> = vec![];
         while !(self.is_finished() || self.current_token_is(&PureTokenKind::RightParen)) {
             println!("Current token: {:?}", self.current_token.kind.to_string(),);
             if self.expect_peek_and_move_into(&PureTokenKind::Identifier) {
-                let identifier = Identifier {
-                    token: self.current_token.clone(),
-                };
+                let identifier = identifier(self.current_token.clone());
                 arguments.push(identifier);
             } else {
                 self.errors.push(format!(
@@ -430,25 +413,22 @@ impl Parser {
         return arguments;
     }
 
-    fn parse_call_expression(
-        &mut self,
-        left_exp: Box<dyn Expression>,
-    ) -> Option<Box<dyn Expression>> {
+    fn parse_call_expression(&mut self, left_exp: Expression) -> Option<Expression> {
         let current_token = self.current_token.clone();
         let arguments = self.parse_call_arguments();
-        return Some(Box::new(ast::expression::CallExpression {
+        return Some(Expression::CallExpression {
             token: current_token,
-            function: left_exp,
+            function: Box::new(left_exp),
             arguments,
-        }));
+        });
     }
 
-    fn parse_call_arguments(&mut self) -> Vec<Box<dyn Expression>> {
+    fn parse_call_arguments(&mut self) -> Vec<Expression> {
         if self.peek_token_is(&PureTokenKind::RightParen) {
             self.save_next_token();
             return vec![];
         }
-        let mut arguments: Vec<Box<dyn Expression>> = vec![];
+        let mut arguments: Vec<Expression> = vec![];
         self.save_next_token();
         arguments.push(
             self.parse_expression(Precedence::Lowest)

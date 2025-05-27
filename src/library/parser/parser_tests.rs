@@ -1,13 +1,11 @@
 use super::Parser;
-use crate::ast::expression::{
-    BooleanLiteral, CallExpression, FunctionLiteral, Identifier, IfExpression, InfixExpression,
-    InfixOperatorType, StringLiteral,
-};
+use crate::ast::expression::InfixOperatorType;
 use crate::ast::{
-    expression::{Expression, IntegerLiteral, PrefixOperator, PrefixOperatorType},
+    expression::{Expression, PrefixOperatorType},
     statements::Statement,
 };
-use crate::join_collection;
+use crate::tokens::TokenKind;
+use crate::{join_collection, print_bash_error};
 
 macro_rules! downcast_into {
     ($expr:expr, $target:ty) => {
@@ -16,12 +14,6 @@ macro_rules! downcast_into {
             stringify!($target),
             ""
         ))
-    };
-}
-
-macro_rules! print_bash_error {
-    ($msg:expr) => {
-        format!("\x1b[31m{}\x1b[0m", $msg)
     };
 }
 
@@ -146,7 +138,7 @@ fn parse_prefix() {
         ("-5;", PrefixOperatorType::Minus, 5),
         ("!5;", PrefixOperatorType::Bang, 5),
     ];
-    for (input, operator, value) in inputs {
+    for (input, expected_operator, expected_value) in inputs {
         let mut parser = Parser::from_string(input);
         let program = parser.parse_program();
         check_parser_errors(&parser);
@@ -156,56 +148,84 @@ fn parse_prefix() {
             Statement::ExpressionStatement {
                 token: _,
                 expression,
-            } => {
-                let operator_expression = downcast_into!(expression, PrefixOperator);
-                assert_eq!(operator_expression.operator, operator);
-                check_if_integer_literal_equals(&operator_expression.right, value);
-            }
+            } => match expression {
+                Expression::PrefixOperator {
+                    token: _,
+                    operator,
+                    right,
+                } => {
+                    assert_eq!(operator, &expected_operator);
+                    check_if_integer_literal_equals(right, expected_value);
+                }
+                _ => panic!("Expected PrefixOperator, got {:?}", expression),
+            },
             _ => panic!("Expected ExpressionStatement"),
         }
     }
 }
 
-fn check_if_identifiers_equals(expression: &Box<dyn Expression>, expected_value: String) {
-    let literal = downcast_into!(expression, Identifier);
-    if literal.value() != expected_value {
-        panic!(
-            "Expected Identifier with value {}, but got {}",
-            expected_value,
-            literal.value()
-        );
+fn check_if_identifiers_equals(expression: &Expression, expected_value: String) {
+    match expression {
+        Expression::Identifier(identifier) => match identifier.as_ref().kind {
+            TokenKind::Identifier(ref value) => {
+                if value != &expected_value {
+                    panic!(
+                        "Expected Identifier with value {}, but got {}",
+                        expected_value, value
+                    );
+                }
+            }
+            _ => panic!("Expected Identifier, got {:?}", identifier),
+        },
+        _ => panic!("Expected Identifier, got {:?}", expression),
     }
 }
 
-fn check_if_strings_equals(expression: &Box<dyn Expression>, expected_value: String) {
-    let literal = downcast_into!(expression, StringLiteral);
-    if literal.value() != expected_value {
-        panic!(
-            "Expected Identifier with value {}, but got {}",
-            expected_value,
-            literal.value()
-        );
+fn check_if_strings_equals(expression: &Expression, expected_value: String) {
+    match expression {
+        Expression::StringLiteral(literal) => match literal.as_ref().kind {
+            TokenKind::StringLiteral(ref value) => {
+                if value != &expected_value {
+                    panic!(
+                        "Expected StringLiteral with value {}, but got {}",
+                        expected_value, value
+                    );
+                }
+            }
+            _ => panic!("Expected StringLiteral, got {:?}", literal),
+        },
+        _ => panic!("Expected StringLiteral, got {:?}", expression),
     }
 }
 
-fn check_if_boolean_literal_equals(expression: &Box<dyn Expression>, expected_value: bool) {
-    let literal = downcast_into!(expression, BooleanLiteral);
-    if literal.value != expected_value {
-        panic!(
-            "Expected Boolean literal with value {}, but got {}",
-            expected_value, literal.value
-        );
+fn check_if_boolean_literal_equals(expression: &Expression, expected_value: bool) {
+    match expression {
+        Expression::BooleanLiteral { value, .. } => {
+            if *value != expected_value {
+                panic!(
+                    "Expected BooleanLiteral with value {}, but got {}",
+                    expected_value, value
+                );
+            }
+        }
+        _ => panic!("Expected BooleanLiteral, got {:?}", expression),
     }
 }
 
-fn check_if_integer_literal_equals(expression: &Box<dyn Expression>, expected_value: u32) {
-    let literal = downcast_into!(expression, IntegerLiteral);
-    if literal.value() != expected_value {
-        panic!(
-            "Expected IntegerLiteral with value {}, but got {}",
-            expected_value,
-            literal.value()
-        );
+fn check_if_integer_literal_equals(expression: &Expression, expected_value: u32) {
+    match expression {
+        Expression::IntegerLiteral(literal) => match literal.as_ref().kind {
+            TokenKind::Integer(value) => {
+                if value != expected_value {
+                    panic!(
+                        "Expected IntegerLiteral with value {}, but got {}",
+                        expected_value, value
+                    );
+                }
+            }
+            _ => panic!("Expected IntegerLiteral, got {:?}", literal),
+        },
+        _ => panic!("Expected IntegerLiteral, got {:?}", expression),
     }
 }
 
@@ -221,7 +241,7 @@ fn parse_infix_expression() {
         ("5 > 4;", InfixOperatorType::GreaterThan, 5, 4),
         ("5 != 4;", InfixOperatorType::NotEqual, 5, 4),
     ];
-    for (input, operator, left, right) in inputs {
+    for (input, expected_operator, expected_left, expected_right) in inputs {
         let mut parser = Parser::from_string(input);
         let program = parser.parse_program();
         check_parser_errors(&parser);
@@ -231,12 +251,19 @@ fn parse_infix_expression() {
             Statement::ExpressionStatement {
                 token: _,
                 expression,
-            } => {
-                let infix = downcast_into!(expression, InfixExpression);
-                assert_eq!(infix.operator, operator);
-                check_if_integer_literal_equals(&infix.left, left);
-                check_if_integer_literal_equals(&infix.right, right);
-            }
+            } => match expression {
+                Expression::InfixExpression {
+                    token: _,
+                    left,
+                    operator,
+                    right,
+                } => {
+                    assert_eq!(operator, &expected_operator);
+                    check_if_integer_literal_equals(left, expected_left);
+                    check_if_integer_literal_equals(right, expected_right);
+                }
+                _ => panic!("Expected InfixExpression, got {:?}", expression),
+            },
             _ => panic!("Expected ExpressionStatement"),
         }
     }
@@ -250,7 +277,7 @@ fn parse_infix_expression_boolean() {
         ("false == false", InfixOperatorType::Equal, false, false),
         ("false != true", InfixOperatorType::NotEqual, false, true),
     ];
-    for (input, operator, left, right) in inputs {
+    for (input, expected_operator, expected_left, expected_right) in inputs {
         let mut parser = Parser::from_string(input);
         let program = parser.parse_program();
         check_parser_errors(&parser);
@@ -260,12 +287,19 @@ fn parse_infix_expression_boolean() {
             Statement::ExpressionStatement {
                 token: _,
                 expression,
-            } => {
-                let infix = downcast_into!(expression, InfixExpression);
-                assert_eq!(infix.operator, operator);
-                check_if_boolean_literal_equals(&infix.left, left);
-                check_if_boolean_literal_equals(&infix.right, right);
-            }
+            } => match expression {
+                Expression::InfixExpression {
+                    token: _,
+                    left,
+                    operator,
+                    right,
+                } => {
+                    assert_eq!(operator, &expected_operator);
+                    check_if_boolean_literal_equals(left, expected_left);
+                    check_if_boolean_literal_equals(right, expected_right);
+                }
+                _ => panic!("Expected InfixExpression, got {:?}", expression),
+            },
             _ => panic!("Expected ExpressionStatement"),
         }
     }
@@ -309,23 +343,38 @@ fn parse_if_condition() {
         Statement::ExpressionStatement {
             token: _,
             expression,
-        } => {
-            let if_expression = downcast_into!(expression, IfExpression);
-            let condition = downcast_into!(&if_expression.condition, InfixExpression);
-            assert_eq!(condition.operator, InfixOperatorType::LessThan);
-            check_if_identifiers_equals(&condition.left, "x".to_string());
-            check_if_identifiers_equals(&condition.right, "y".to_string());
-            let consequence = &if_expression.consequences()[0];
-            match consequence {
-                Statement::ExpressionStatement {
-                    token: _,
-                    expression,
-                } => {
-                    check_if_identifiers_equals(expression, "x".to_string());
+        } => match expression {
+            Expression::IfExpression {
+                consequence,
+                token,
+                condition,
+                alternative,
+            } => {
+                assert!(alternative.is_none());
+                assert_eq!(token.kind, TokenKind::If);
+                match condition.as_ref() {
+                    Expression::InfixExpression {
+                        token: _,
+                        left,
+                        operator,
+                        right,
+                    } => {
+                        assert_eq!(*operator, InfixOperatorType::LessThan);
+                        check_if_identifiers_equals(&left, "x".to_string());
+                        check_if_identifiers_equals(&right, "y".to_string());
+                    }
+                    _ => panic!("Expected InfixExpression for condition"),
                 }
-                _ => panic!("Expected ExpressionStatement in consequence"),
+
+                match consequence.as_ref() {
+                    Statement::BlockStatement { statements, .. } => {
+                        assert_eq!(statements.len(), 1);
+                    }
+                    _ => panic!("Expected BlockStatement in consequence"),
+                }
             }
-        }
+            _ => panic!("Expected IfExpression, got {:?}", expression),
+        },
         _ => panic!("Expected ExpressionStatement"),
     }
 }
@@ -342,33 +391,55 @@ fn parse_if_else_condition() {
         Statement::ExpressionStatement {
             token: _,
             expression,
-        } => {
-            let if_expression = downcast_into!(expression, IfExpression);
-            let condition = downcast_into!(&if_expression.condition, InfixExpression);
-            assert_eq!(condition.operator, InfixOperatorType::LessThan);
-            check_if_identifiers_equals(&condition.left, "x".to_string());
-            check_if_identifiers_equals(&condition.right, "y".to_string());
-            let consequence = &if_expression.consequences()[0];
-            match consequence {
-                Statement::ExpressionStatement {
-                    token: _,
-                    expression,
-                } => {
-                    check_if_identifiers_equals(expression, "x".to_string());
+        } => match expression {
+            Expression::IfExpression {
+                consequence,
+                token,
+                condition,
+                alternative,
+            } => {
+                assert_eq!(token.kind, TokenKind::If);
+                match condition.as_ref() {
+                    Expression::InfixExpression {
+                        token: _,
+                        left,
+                        operator,
+                        right,
+                    } => {
+                        assert_eq!(*operator, InfixOperatorType::LessThan);
+                        check_if_identifiers_equals(&left, "x".to_string());
+                        check_if_identifiers_equals(&right, "y".to_string());
+                    }
+                    _ => panic!("Expected InfixExpression for condition"),
                 }
-                _ => panic!("Expected ExpressionStatement in consequence"),
-            }
-            let alternative = &if_expression.alternative().unwrap()[0];
-            match alternative {
-                Statement::ExpressionStatement {
-                    token: _,
-                    expression,
-                } => {
-                    check_if_identifiers_equals(expression, "y".to_string());
+                match alternative {
+                    Some(alternative) => match alternative.as_ref() {
+                        Statement::BlockStatement { statements, .. } => {
+                            assert_eq!(statements.len(), 1);
+                            match &statements[0] {
+                                Statement::ExpressionStatement {
+                                    token: _,
+                                    expression,
+                                } => {
+                                    check_if_identifiers_equals(expression, "y".to_string());
+                                }
+                                _ => panic!("Expected ExpressionStatement in alternative"),
+                            }
+                        }
+                        _ => panic!("Expected BlockStatement in alternative"),
+                    },
+                    None => panic!("Expected alternative to be Some"),
                 }
-                _ => panic!("Expected ExpressionStatement in alternative"),
+
+                match consequence.as_ref() {
+                    Statement::BlockStatement { statements, .. } => {
+                        assert_eq!(statements.len(), 1);
+                    }
+                    _ => panic!("Expected BlockStatement in consequence"),
+                }
             }
-        }
+            _ => panic!("Expected IfExpression, got {:?}", expression),
+        },
         _ => panic!("Expected ExpressionStatement"),
     }
 }
@@ -385,28 +456,42 @@ fn parse_function_literal() {
         Statement::ExpressionStatement {
             token: _,
             expression,
-        } => {
-            let function_literal = downcast_into!(expression, FunctionLiteral);
-            assert_eq!(function_literal.parameters.len(), 2);
-            assert_eq!(function_literal.parameters[0].to_string(), "x");
-            assert_eq!(function_literal.parameters[1].to_string(), "y");
-            let block = match &function_literal.body {
-                Statement::BlockStatement { statements, .. } => &statements[0],
-                _ => panic!("Expected BlockStatement in function body"),
-            };
-            let expression = match block {
-                Statement::ExpressionStatement {
-                    token: _,
-                    expression,
-                } => expression,
-                _ => panic!("Expected ExpressionStatement in function body"),
-            };
-            let addition = downcast_into!(expression, InfixExpression);
-
-            assert_eq!(addition.operator, InfixOperatorType::Plus);
-            check_if_identifiers_equals(&addition.left, "x".to_string());
-            check_if_identifiers_equals(&addition.right, "y".to_string());
-        }
+        } => match expression {
+            Expression::FunctionLiteral {
+                token: _,
+                parameters,
+                body,
+            } => {
+                assert_eq!(parameters.len(), 2);
+                assert_eq!(parameters[0].to_string(), "x");
+                assert_eq!(parameters[1].to_string(), "y");
+                let block = match body.as_ref() {
+                    Statement::BlockStatement { statements, .. } => &statements[0],
+                    _ => panic!("Expected BlockStatement in function body"),
+                };
+                let expression = match block {
+                    Statement::ExpressionStatement {
+                        token: _,
+                        expression,
+                    } => expression,
+                    _ => panic!("Expected ExpressionStatement in function body"),
+                };
+                match expression {
+                    Expression::InfixExpression {
+                        token: _,
+                        left,
+                        operator,
+                        right,
+                    } => {
+                        assert_eq!(*operator, InfixOperatorType::Plus);
+                        check_if_identifiers_equals(left, "x".to_string());
+                        check_if_identifiers_equals(right, "y".to_string());
+                    }
+                    _ => panic!("Expected InfixExpression in function body"),
+                }
+            }
+            _ => panic!("Expected FunctionLiteral, got {:?}", expression),
+        },
         _ => panic!("Expected ExpressionStatement"),
     }
 }
@@ -423,18 +508,31 @@ fn parse_call_expression() {
         Statement::ExpressionStatement {
             token: _,
             expression,
-        } => {
-            let call_expression = downcast_into!(expression, CallExpression);
-            let function_identifier = downcast_into!(&call_expression.function, Identifier);
-            assert_eq!(function_identifier.value(), "add");
-            assert_eq!(call_expression.arguments.len(), 2);
-            let first_argument = downcast_into!(&call_expression.arguments[0], InfixExpression);
-            assert_eq!(first_argument.operator, InfixOperatorType::Plus);
-            check_if_identifiers_equals(&first_argument.left, "x".to_string());
-            check_if_identifiers_equals(&first_argument.right, "z".to_string());
-            let second_argument = downcast_into!(&call_expression.arguments[1], Identifier);
-            assert_eq!(second_argument.value(), "y");
-        }
+        } => match expression {
+            Expression::CallExpression {
+                token: _,
+                function,
+                arguments,
+            } => {
+                assert_eq!(function.to_string(), "add");
+                assert_eq!(arguments.len(), 2);
+                match &arguments[0] {
+                    Expression::InfixExpression {
+                        token: _,
+                        left,
+                        operator,
+                        right,
+                    } => {
+                        assert_eq!(*operator, InfixOperatorType::Plus);
+                        check_if_identifiers_equals(left, "x".to_string());
+                        check_if_identifiers_equals(right, "z".to_string());
+                    }
+                    _ => panic!("Expected InfixExpression for first argument"),
+                }
+                check_if_identifiers_equals(&arguments[1], "y".to_string());
+            }
+            _ => panic!("Expected CallExpression, got {:?}", expression),
+        },
         _ => panic!("Expected ExpressionStatement"),
     }
 }
@@ -451,14 +549,19 @@ fn parse_call_expression_with_literals() {
         Statement::ExpressionStatement {
             token: _,
             expression,
-        } => {
-            let call_expression = downcast_into!(expression, CallExpression);
-            let function_identifier = downcast_into!(&call_expression.function, Identifier);
-            assert_eq!(function_identifier.value(), "add");
-            assert_eq!(call_expression.arguments.len(), 2);
-            check_if_integer_literal_equals(&call_expression.arguments[0], 1);
-            check_if_boolean_literal_equals(&call_expression.arguments[1], false);
-        }
+        } => match expression {
+            Expression::CallExpression {
+                token: _,
+                function,
+                arguments,
+            } => {
+                assert_eq!(function.to_string(), "add");
+                assert_eq!(arguments.len(), 2);
+                check_if_integer_literal_equals(&arguments[0], 1);
+                check_if_boolean_literal_equals(&arguments[1], false);
+            }
+            _ => panic!("Expected CallExpression, got {:?}", expression),
+        },
         _ => panic!("Expected ExpressionStatement"),
     }
 }

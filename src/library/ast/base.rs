@@ -1,4 +1,8 @@
-pub(crate) trait Node: ToString {}
+use std::any::Any;
+
+pub(crate) trait Node: ToString + Any {
+    fn as_any(&self) -> &dyn Any;
+}
 
 #[macro_export]
 macro_rules! join_collection {
