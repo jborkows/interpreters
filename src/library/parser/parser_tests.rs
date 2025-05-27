@@ -6,14 +6,32 @@ use crate::ast::{
 };
 use crate::tokens::TokenKind;
 use crate::{join_collection, print_bash_error};
-
-macro_rules! downcast_into {
-    ($expr:expr, $target:ty) => {
-        $expr.as_any().downcast_ref::<$target>().expect(concat!(
-            "Expected ",
-            stringify!($target),
-            ""
-        ))
+macro_rules! check_expression_value {
+    ($expression:expr, $variant:ident, $token_kind:ident, $expected:expr) => {
+        match $expression {
+            Expression::$variant(inner) => match inner.as_ref().kind {
+                TokenKind::$token_kind(ref value) => {
+                    if value != &$expected {
+                        panic!(
+                            concat!(
+                                "Expected ",
+                                stringify!($token_kind),
+                                " with value {}, but got {}"
+                            ),
+                            $expected, value
+                        );
+                    }
+                }
+                _ => panic!(
+                    concat!("Expected ", stringify!($token_kind), ", got {:?}"),
+                    inner
+                ),
+            },
+            _ => panic!(
+                concat!("Expected ", stringify!($variant), ", got {:?}"),
+                $expression
+            ),
+        }
     };
 }
 
@@ -165,37 +183,11 @@ fn parse_prefix() {
 }
 
 fn check_if_identifiers_equals(expression: &Expression, expected_value: String) {
-    match expression {
-        Expression::Identifier(identifier) => match identifier.as_ref().kind {
-            TokenKind::Identifier(ref value) => {
-                if value != &expected_value {
-                    panic!(
-                        "Expected Identifier with value {}, but got {}",
-                        expected_value, value
-                    );
-                }
-            }
-            _ => panic!("Expected Identifier, got {:?}", identifier),
-        },
-        _ => panic!("Expected Identifier, got {:?}", expression),
-    }
+    check_expression_value!(expression, Identifier, Identifier, expected_value);
 }
 
 fn check_if_strings_equals(expression: &Expression, expected_value: String) {
-    match expression {
-        Expression::StringLiteral(literal) => match literal.as_ref().kind {
-            TokenKind::StringLiteral(ref value) => {
-                if value != &expected_value {
-                    panic!(
-                        "Expected StringLiteral with value {}, but got {}",
-                        expected_value, value
-                    );
-                }
-            }
-            _ => panic!("Expected StringLiteral, got {:?}", literal),
-        },
-        _ => panic!("Expected StringLiteral, got {:?}", expression),
-    }
+    check_expression_value!(expression, StringLiteral, StringLiteral, expected_value);
 }
 
 fn check_if_boolean_literal_equals(expression: &Expression, expected_value: bool) {
@@ -213,20 +205,7 @@ fn check_if_boolean_literal_equals(expression: &Expression, expected_value: bool
 }
 
 fn check_if_integer_literal_equals(expression: &Expression, expected_value: u32) {
-    match expression {
-        Expression::IntegerLiteral(literal) => match literal.as_ref().kind {
-            TokenKind::Integer(value) => {
-                if value != expected_value {
-                    panic!(
-                        "Expected IntegerLiteral with value {}, but got {}",
-                        expected_value, value
-                    );
-                }
-            }
-            _ => panic!("Expected IntegerLiteral, got {:?}", literal),
-        },
-        _ => panic!("Expected IntegerLiteral, got {:?}", expression),
-    }
+    check_expression_value!(expression, IntegerLiteral, Integer, expected_value);
 }
 
 #[test]
