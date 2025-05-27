@@ -1,4 +1,4 @@
-use std::ops::Add;
+use std::{env, ops::Add};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct LineNumber(pub u16);
@@ -54,10 +54,14 @@ impl TextPosition {
 }
 impl ToString for TextPosition {
     fn to_string(&self) -> String {
-        format!(
-            "Line: {}, Column: {}",
-            self.line_number.0, self.column_number.0
-        )
+        if env::var("DEBUG").is_ok() {
+            return format!(
+                "Line: {}, Column: {}",
+                self.line_number.0, self.column_number.0
+            );
+        } else {
+            return format!("{},{}", self.line_number.0, self.column_number.0);
+        }
     }
 }
 
@@ -110,10 +114,14 @@ impl TokenPosition {
 }
 impl ToString for TokenPosition {
     fn to_string(&self) -> String {
-        format!(
-            "TokenPosition(start: {}, end: {})",
-            self.start.to_string(),
-            self.end.to_string()
-        )
+        if self.start.line_number == self.end.line_number
+            && self.start.column_number == self.end.column_number
+        {
+            return format!(
+                "({},{})",
+                self.start.line_number.0, self.start.column_number.0
+            );
+        }
+        format!("({})->({})", self.start.to_string(), self.end.to_string())
     }
 }

@@ -26,6 +26,7 @@ impl Parser {
         for line in source.lines() {
             lexer.process(line);
         }
+        lexer.process(";"); // Ensure the last line is processed
         Self::new(lexer)
     }
 
@@ -230,8 +231,9 @@ impl Parser {
         let mut maybe_prefix = self.parse_prefix();
         if let None = maybe_prefix {
             self.errors.push(format!(
-                "No prefix parse function for {:?} found",
-                self.current_token.kind
+                "Unexpected {:?} found at {:?}. Details: No prefix parse function found",
+                self.current_token.kind,
+                self.current_token.context?.to_string()
             ));
             return None;
         }

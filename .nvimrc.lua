@@ -30,7 +30,7 @@ dap.configurations.rust = {
       -- TODO: You can also automate this by searching deps/*test* can be achieved with `cargo test --no-run`
       return vim.fn.getcwd() .. "/target/debug/deps/interpreter-75efa5b489cc1842"
     end,
-    args = { "--exact", "parser::parser_tests::parse_call_expression_with_literals" }, -- optional: filter to a single test function
+    args = { "--exact", "evaluator::evaluator_tests::text_evalaution_of_integers" }, -- optional: filter to a single test function
     cwd = "${workspaceFolder}",
     stopOnEntry = false,
     runInTerminal = false,

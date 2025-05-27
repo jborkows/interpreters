@@ -22,5 +22,7 @@ pub fn start() {
         }
 
         println!("Parsed program: {}", program.to_string());
+        let result = crate::evaluator::evaluate(&program);
+        println!("Evaluation result: {}", result.to_string());
     }
 }
