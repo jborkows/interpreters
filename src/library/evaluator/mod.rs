@@ -1,11 +1,18 @@
-use crate::ast::{
-    base::Node,
-    expression::Expression,
-    statements::{Program, Statement},
+use crate::{
+    ast::{
+        base::Node,
+        expression::Expression,
+        statements::{Program, Statement},
+    },
+    object::Object,
 };
 
 #[cfg(test)]
 mod evaluator_tests;
+
+const FALSE: Object = Object::Boolean(false);
+const TRUE: Object = Object::Boolean(true);
+const NULL: Object = Object::Null;
 
 pub fn evaluate(node: &dyn Node) -> crate::object::Object {
     let statement = node.as_any().downcast_ref::<Statement>();
@@ -35,12 +42,21 @@ fn evaluate_expression(expression: &Expression) -> crate::object::Object {
                 _ => unreachable!("Expected an integer token, got: {:?}", token),
             }
         }
+        Expression::BooleanLiteral { token, value: _ } => match token.as_ref().kind {
+            crate::tokens::TokenKind::True => {
+                return TRUE;
+            }
+            crate::tokens::TokenKind::False => {
+                return FALSE;
+            }
+            _ => unreachable!("Expected a boolean token, got: {:?}", token),
+        },
         _ => panic!("Expression type not implemented: {:?}", expression),
     }
 }
 
 fn evaluate_program(program: &Program) -> crate::object::Object {
-    let mut result = crate::object::Object::Null;
+    let mut result = NULL;
     for statement in &program.statements {
         result = evaluate(statement);
     }

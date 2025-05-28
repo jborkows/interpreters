@@ -2,10 +2,33 @@ use crate::{join_collection, object::Object, parser::Parser, print_bash_error};
 
 use super::evaluate;
 
+macro_rules! should_be_equal {
+    ($left:expr, $right:ident, $variant:ident) => {
+        match $left {
+            Object::$variant(value) => assert_eq!(value, $right),
+            _ => panic!(
+                concat!(
+                    "Expected ",
+                    stringify!($variant),
+                    " with value {}, but got {}"
+                ),
+                $right.to_string(),
+                $left.to_string()
+            ),
+        };
+    };
+}
+
 #[test]
 fn text_evalaution_of_integers() {
     should_be_integer_equal_to(eval_input("1"), 1);
     should_be_integer_equal_to(eval_input("3"), 3);
+}
+
+#[test]
+fn text_evaluation_of_booleans() {
+    should_be_boolean_equal_to(eval_input("true"), true);
+    should_be_boolean_equal_to(eval_input("false"), false);
 }
 
 fn eval_input(input: &str) -> Object {
@@ -16,10 +39,11 @@ fn eval_input(input: &str) -> Object {
 }
 
 fn should_be_integer_equal_to(left: Object, right: i64) {
-    match left {
-        Object::Int(value) => assert_eq!(value, right),
-        _ => panic!("Expected an integer, got: {}", left.to_string()),
-    }
+    should_be_equal!(left, right, Int);
+}
+
+fn should_be_boolean_equal_to(left: Object, right: bool) {
+    should_be_equal!(left, right, Boolean);
 }
 
 fn check_parser_errors(parser: &Parser) {
