@@ -1,9 +1,12 @@
 use pool::*;
 
-use crate::ast::{
-    base::Node,
-    expression::Expression,
-    statements::{Program, Statement},
+use crate::{
+    allocation_counting,
+    ast::{
+        base::Node,
+        expression::Expression,
+        statements::{Program, Statement},
+    },
 };
 
 #[cfg(test)]
@@ -33,7 +36,8 @@ fn evaluate_expression(expression: &Expression) -> crate::object::Object {
             match token.as_ref().kind {
                 crate::tokens::TokenKind::Integer(value) => {
                     // Handle integer literal evaluation
-                    return int_value(value.into());
+                    let value = value as i64;
+                    return allocation_counting!(int_value(value), value);
                 }
                 _ => unreachable!("Expected an integer token, got: {:?}", token),
             }
