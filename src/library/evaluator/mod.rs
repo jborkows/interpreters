@@ -33,7 +33,7 @@ fn evaluate_expression(expression: &Expression) -> crate::object::Object {
             match token.as_ref().kind {
                 crate::tokens::TokenKind::Integer(value) => {
                     // Handle integer literal evaluation
-                    return crate::object::Object::Int(value.into());
+                    return int_value(value.into());
                 }
                 _ => unreachable!("Expected an integer token, got: {:?}", token),
             }
@@ -46,6 +46,12 @@ fn evaluate_expression(expression: &Expression) -> crate::object::Object {
                 return FALSE;
             }
             _ => unreachable!("Expected a boolean token, got: {:?}", token),
+        },
+        Expression::StringLiteral(token) => match token.as_ref().kind {
+            crate::tokens::TokenKind::StringLiteral(ref value) => {
+                return string_value(value.to_string());
+            }
+            _ => unreachable!("Expected a string token, got: {:?}", token),
         },
         _ => panic!("Expression type not implemented: {:?}", expression),
     }

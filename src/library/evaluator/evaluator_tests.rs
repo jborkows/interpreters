@@ -31,6 +31,12 @@ fn text_evaluation_of_booleans() {
     should_be_boolean_equal_to(eval_input("false"), false);
 }
 
+#[test]
+fn text_evaluation_of_strings() {
+    should_be_string_equal_to(eval_input("\"Hello, World!\""), "Hello, World!".to_string());
+    should_be_string_equal_to(eval_input("\"Test String\""), "Test String".to_string());
+}
+
 fn eval_input(input: &str) -> Object {
     let mut parser = Parser::from_string(input);
     let program = parser.parse_program();
@@ -44,6 +50,10 @@ fn should_be_integer_equal_to(left: Object, right: i64) {
 
 fn should_be_boolean_equal_to(left: Object, right: bool) {
     should_be_equal!(left, right, Boolean);
+}
+
+fn should_be_string_equal_to(left: Object, right: String) {
+    should_be_equal!(left, right, String);
 }
 
 fn check_parser_errors(parser: &Parser) {
