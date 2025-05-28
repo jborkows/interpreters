@@ -11,6 +11,7 @@ use crate::{
 
 #[cfg(test)]
 mod evaluator_tests;
+mod object_pool;
 mod pool;
 
 pub fn evaluate(node: &dyn Node) -> crate::object::Object {

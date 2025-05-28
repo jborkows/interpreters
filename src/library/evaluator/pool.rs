@@ -9,5 +9,11 @@ pub(super) fn string_value(string: String) -> Object {
 }
 
 pub(super) fn int_value(int: i64) -> Object {
+    if int >= 0 && int <= 255 {
+        // Use the preallocated small integer pool for small integers
+        // no real benefit looking at allocation counting here, but it is for fun of generating the
+        // code
+        return super::object_pool::SMALL_INTS[int as usize].clone();
+    }
     Object::Int(int)
 }
