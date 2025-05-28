@@ -1,18 +1,14 @@
-use crate::{
-    ast::{
-        base::Node,
-        expression::Expression,
-        statements::{Program, Statement},
-    },
-    object::Object,
+use pool::*;
+
+use crate::ast::{
+    base::Node,
+    expression::Expression,
+    statements::{Program, Statement},
 };
 
 #[cfg(test)]
 mod evaluator_tests;
-
-const FALSE: Object = Object::Boolean(false);
-const TRUE: Object = Object::Boolean(true);
-const NULL: Object = Object::Null;
+mod pool;
 
 pub fn evaluate(node: &dyn Node) -> crate::object::Object {
     let statement = node.as_any().downcast_ref::<Statement>();
