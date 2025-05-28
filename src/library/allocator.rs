@@ -65,3 +65,17 @@ macro_rules! allocation_counting {
 macro_rules! allocation_counting {
     ($e:expr,$ident:ident) => {{ $e }};
 }
+
+#[cfg(not(feature = "track-allocation"))]
+#[macro_export]
+macro_rules! current_allocation_counting {
+    () => {{}};
+}
+
+#[cfg(feature = "track-allocation")]
+#[macro_export]
+macro_rules! current_allocation_counting {
+    () => {{
+        println!("Current count {}", crate::allocator::allocation_count(),);
+    }};
+}

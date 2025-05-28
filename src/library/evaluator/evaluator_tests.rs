@@ -1,4 +1,6 @@
-use crate::{join_collection, object::Object, parser::Parser, print_bash_error};
+use crate::{
+    current_allocation_counting, join_collection, object::Object, parser::Parser, print_bash_error,
+};
 
 use super::evaluate;
 
@@ -21,6 +23,7 @@ macro_rules! should_be_equal {
 
 #[test]
 fn text_evalaution_of_integers() {
+    current_allocation_counting!();
     should_be_integer_equal_to(eval_input("0"), 0);
     should_be_integer_equal_to(eval_input("1"), 1);
     should_be_integer_equal_to(eval_input("3"), 3);
