@@ -77,7 +77,11 @@ fn prefix_operator_evaluation(
     match operator {
         PrefixOperatorType::Bang => {
             let right = evaluate_expression(as_ref);
-            return bang_operator_evaluation(right);
+            return bang_operator_evaluation(token, right);
+        }
+        PrefixOperatorType::Minus => {
+            let right = evaluate_expression(as_ref);
+            return minus_operator_evaluation(token, right);
         }
         _ => panic!(
             "Prefix operator evaluation not implemented: {:?} for token: {}",
@@ -87,7 +91,19 @@ fn prefix_operator_evaluation(
     }
 }
 
-fn bang_operator_evaluation(right: Object) -> Object {
+fn minus_operator_evaluation(token: &Token, right: Object) -> Object {
+    match right {
+        Object::Int(value) => {
+            return int_value(-value);
+        }
+        _ => panic!(
+            "Minus operator can only be applied to integer values. Error at {}",
+            token.at_text()
+        ),
+    }
+}
+
+fn bang_operator_evaluation(token: &Token, right: Object) -> Object {
     match right {
         Object::Boolean(value) => {
             if value {
@@ -109,7 +125,10 @@ fn bang_operator_evaluation(right: Object) -> Object {
         Object::Null => {
             return TRUE;
         }
-        _ => panic!("Bang operator can only be applied to boolean, string, or integer values"),
+        _ => panic!(
+            "Bang operator can only be applied to boolean, string, or integer values: at {}",
+            token.at_text()
+        ),
     }
 }
 

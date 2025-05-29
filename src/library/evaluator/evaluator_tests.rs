@@ -80,6 +80,12 @@ fn test_bang_operator() {
     should_be_boolean_equal_to("!!false", false);
 }
 
+#[test]
+fn test_minus_operator() {
+    should_be_integer_equal_to("-5", -5);
+    should_be_integer_equal_to("-10", -10);
+}
+
 fn eval_input(input: &str) -> Object {
     let mut parser = Parser::from_string(input);
     let program = parser.parse_program();
