@@ -18,6 +18,14 @@ impl Token {
         return self.kind.literal();
     }
 }
+impl ToString for Token {
+    fn to_string(&self) -> String {
+        if let Some(context) = &self.context {
+            return format!("{}: {}", context.to_string(), self.kind.literal());
+        }
+        self.kind.literal()
+    }
+}
 
 impl PartialEq for Token {
     fn eq(&self, other: &Self) -> bool {
