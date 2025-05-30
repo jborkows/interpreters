@@ -11,6 +11,7 @@ use crate::{
     },
     end_flow,
     object::{Object, error_at},
+    tokens::{Token, TokenKind},
 };
 
 mod evaluator_expression;
@@ -22,6 +23,8 @@ mod if_expression_tests;
 mod infixs;
 #[cfg(test)]
 mod infixs_tests;
+#[cfg(test)]
+mod let_tests;
 #[cfg(test)]
 mod literals_tests;
 mod macros;
@@ -87,13 +90,19 @@ fn evaluate_statement(statement: &Statement) -> Object {
             let return_value = evaluate_expression(return_value);
             return Object::ReturnValue(Rc::new(return_value));
         }
-        Statement::Let { token, name, value } => error_at(
-            format!(
-                "Let statement evaluation not implemented: {}",
-                token.to_string()
-            )
-            .as_str(),
-            token,
-        ),
+        Statement::Let { token, name, value } => let_statement(token, name, value),
     }
+}
+
+fn let_statement(token: &Token, name: &Expression, value: &Expression) -> Object {
+    let name = match name {
+        Expression::Identifier(token) => match &token.kind {
+            TokenKind::Identifier(name) => name.clone(),
+            _ => return error_at("Let statement name must be an identifier", token),
+        },
+        _ => return error_at("Let statement name must be an identifier", token),
+    };
+    let value = evaluate_expression(value);
+    end_flow!(value);
+    todo!()
 }

@@ -4,7 +4,7 @@ use super::evaluate;
 
 #[macro_export]
 macro_rules! should_be_equal_parsed {
-    ($left:expr, $right:ident, $variant:ident) => {
+    ($left:expr, $right:expr, $variant:ident) => {
         let left = eval_input($left);
         match left {
             Object::$variant(value) => assert_eq!(
@@ -23,9 +23,21 @@ macro_rules! should_be_equal_parsed {
                     " with value {}, but got {}"
                 ),
                 $right.to_string(),
-                $left.to_string()
+                left.to_string()
             ),
         };
+    };
+}
+
+#[macro_export]
+macro_rules! expected_integer_as_result_tests {
+    ($($name:ident: ($input:expr, $expected:expr),)*) => {
+        $(
+            #[test]
+            fn $name() {
+                 crate::evaluator::evaluator_tests::should_be_integer_equal_to($input, $expected);
+            }
+        )*
     };
 }
 
