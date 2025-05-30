@@ -36,3 +36,12 @@ expected_integer_as_result_tests! {
     add_fun: ("let add = fn(x, y){return x + y;}; add(5+5, add(5,5));", 20),
     anonymous: ("fn(x){x;}(5);", 5),
 }
+
+expected_integer_as_result_tests! {
+    function_with_closure: (r#"
+       let add = fn(a,b){ a + b;}
+       let applyFunc = fn(a,b,func){ func(a, b); };
+       applyFunc(5, 5, add);
+    "#, 10),
+    function_returning_function:("let newAdder = fn(x){ fn(y){ x + y; }; }; let addTwo = newAdder(2); addTwo(3);", 5),
+}

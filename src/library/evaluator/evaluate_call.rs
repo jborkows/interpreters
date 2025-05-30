@@ -44,6 +44,10 @@ fn apply_function(token: &Token, function: Rc<Object>, parsed: &[Rc<Object>]) ->
             ref body,
             env: ref func_env,
         } => {
+            /*
+             * Function environment is extended so even if variables are not visible in current scope they can
+             * still be accessed in the function body.
+             */
             let extended_env = extend_env(func_env.clone(), parameters, parsed);
             let body_fun = body.as_ref();
             let result = evaluate(body_fun, extended_env);
