@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use evaluator_expression::evaluate_expression;
 use pool::*;
 
@@ -47,14 +49,22 @@ pub fn evaluate(node: &dyn Node) -> Object {
 }
 
 fn evaluate_program(program: &Program) -> Object {
-    return evaluate_statements(&program.statements);
+    let mut result = NULL;
+    for statement in &program.statements {
+        result = evaluate(statement);
+        if let Object::ReturnValue(value) = result {
+            return value.as_ref().clone();
+        }
+    }
+    result
 }
-fn evaluate_statements(statements: &Vec<Statement>) -> Object {
+
+fn evaluate_block_statements(statements: &Vec<Statement>) -> Object {
     let mut result = NULL;
     for statement in statements {
         result = evaluate(statement);
-        if let Object::ReturnValue(ref value) = result {
-            return *value.to_owned();
+        if let Object::ReturnValue(_) = result {
+            return result;
         }
     }
     result
@@ -66,13 +76,13 @@ fn evaluate_statement(statement: &Statement) -> Object {
         Statement::BlockStatement {
             token: _,
             statements,
-        } => evaluate_statements(statements),
+        } => evaluate_block_statements(statements),
         Statement::Return {
             token: _,
             return_value,
         } => {
             let return_value = evaluate_expression(return_value);
-            return Object::ReturnValue(Box::new(return_value));
+            return Object::ReturnValue(Rc::new(return_value));
         }
         _ => panic!(
             "Statement type not implemented: {:?}",

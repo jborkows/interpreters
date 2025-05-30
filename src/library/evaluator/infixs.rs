@@ -38,13 +38,7 @@ pub(super) fn infix_operator_evaluation(
             )),
             _ => None,
         },
-        Object::Boolean(_) => None,
-        Object::Null => None,
-        Object::ReturnValue(object) => panic!(
-            "Infix operator evaluation not implemented for return values: {} for token: {}",
-            object.to_string(),
-            token.to_string()
-        ),
+        _ => None,
     };
     return some_value.unwrap_or_else(|| {
         panic!(
