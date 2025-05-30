@@ -26,6 +26,8 @@ mod pool;
 mod prefixs;
 #[cfg(test)]
 mod prefixs_tests;
+#[cfg(test)]
+mod return_tests;
 
 pub fn evaluate(node: &dyn Node) -> Object {
     let statement = node.as_any().downcast_ref::<Statement>();
@@ -51,6 +53,9 @@ fn evaluate_statements(statements: &Vec<Statement>) -> Object {
     let mut result = NULL;
     for statement in statements {
         result = evaluate(statement);
+        if let Object::ReturnValue(ref value) = result {
+            return *value.to_owned();
+        }
     }
     result
 }
@@ -58,7 +63,17 @@ fn evaluate_statements(statements: &Vec<Statement>) -> Object {
 fn evaluate_statement(statement: &Statement) -> Object {
     match statement {
         Statement::ExpressionStatement { expression, .. } => evaluate_expression(expression),
-        Statement::BlockStatement { token, statements } => evaluate_statements(statements),
+        Statement::BlockStatement {
+            token: _,
+            statements,
+        } => evaluate_statements(statements),
+        Statement::Return {
+            token: _,
+            return_value,
+        } => {
+            let return_value = evaluate_expression(return_value);
+            return Object::ReturnValue(Box::new(return_value));
+        }
         _ => panic!(
             "Statement type not implemented: {:?}",
             statement.to_string()

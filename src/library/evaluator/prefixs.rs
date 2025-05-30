@@ -20,11 +20,6 @@ pub(super) fn prefix_operator_evaluation(
             let right = evaluate_expression(as_ref);
             return minus_operator_evaluation(token, right);
         }
-        _ => panic!(
-            "Prefix operator evaluation not implemented: {:?} for token: {}",
-            operator,
-            token.to_string()
-        ),
     }
 }
 

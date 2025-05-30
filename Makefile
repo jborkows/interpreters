@@ -1,4 +1,4 @@
-.PHONY: all format clippy test check clippy-fix run test-verbose test-with-memory-tracing build-tests
+.PHONY: all format clippy test check clippy-fix run test-verbose test-with-memory-tracing build-tests test-backtrace run-verbose
 
 format:
 	@echo "Formatting code"
@@ -14,6 +14,9 @@ clippy-fix:
 test:
 	@echo "Running tests"
 	cargo test
+test-backtrace:
+	@echo "Running tests with backtrace"
+	RUST_BACKTRACE=1 cargo test
 test-verbose:
 	@echo "Running tests"
 	cargo test -- --nocapture

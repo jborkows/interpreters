@@ -3,6 +3,7 @@ pub enum Object {
     Int(i64),
     String(String),
     Boolean(bool),
+    ReturnValue(Box<Object>),
     Null,
 }
 
@@ -19,6 +20,7 @@ impl ToString for Object {
                 }
             }
             Object::Null => "NULL".to_string(),
+            Object::ReturnValue(object) => object.to_string(),
         }
     }
 }
