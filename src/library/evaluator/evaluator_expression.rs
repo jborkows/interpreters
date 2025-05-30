@@ -44,7 +44,13 @@ pub(super) fn evaluate_expression(expression: &Expression) -> Object {
             right,
         } => {
             let left_value = evaluate_expression(left);
+            if let Object::ReturnValue(_) = left_value {
+                return left_value;
+            }
             let right_value = evaluate_expression(right);
+            if let Object::ReturnValue(_) = right_value {
+                return right_value;
+            }
             return infix_operator_evaluation(token, operator, left_value, right_value);
         }
         Expression::IfExpression {

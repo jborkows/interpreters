@@ -14,10 +14,16 @@ pub(super) fn prefix_operator_evaluation(
     match operator {
         PrefixOperatorType::Bang => {
             let right = evaluate_expression(as_ref);
+            if let Object::ReturnValue(_) = right {
+                return right;
+            }
             return bang_operator_evaluation(token, right);
         }
         PrefixOperatorType::Minus => {
             let right = evaluate_expression(as_ref);
+            if let Object::ReturnValue(_) = right {
+                return right;
+            }
             return minus_operator_evaluation(token, right);
         }
     }
