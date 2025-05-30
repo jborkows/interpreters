@@ -1,6 +1,6 @@
 use crate::{ast::expression::InfixOperatorType, object::Object, tokens::Token};
 
-use super::{int_value, string_value};
+use super::{FALSE, TRUE, int_value, string_value};
 pub(super) fn infix_operator_evaluation(
     token: &Token,
     operator: &InfixOperatorType,
@@ -9,7 +9,7 @@ pub(super) fn infix_operator_evaluation(
 ) -> Object {
     let some_value: Option<Object> = match left {
         Object::Int(left_value) => match right {
-            Object::Int(right_value) => Some(infix_operator_evaluation_int(
+            Object::Int(right_value) => Some(integer_only_infix_operator_evaluation(
                 token,
                 operator,
                 left_value,
@@ -69,6 +69,20 @@ fn string_infix_evaluation(
             }
             return string_value(result);
         }
+        InfixOperatorType::Equal => {
+            if left == right {
+                return TRUE;
+            } else {
+                return FALSE;
+            }
+        }
+        InfixOperatorType::NotEqual => {
+            if left != right {
+                return TRUE;
+            } else {
+                return FALSE;
+            }
+        }
         _ => panic!(
             "Infix operator evaluation not implemented for strings: {:?} for token: {}",
             operator,
@@ -121,7 +135,7 @@ fn string_to_int_infix_evaluation(
     }
 }
 
-fn infix_operator_evaluation_int(
+fn integer_only_infix_operator_evaluation(
     token: &Token,
     operator: &InfixOperatorType,
     left_value: i64,
@@ -136,6 +150,34 @@ fn infix_operator_evaluation_int(
                 panic!("Division by zero error at {}", token.at_text());
             }
             int_value(left_value / right_value)
+        }
+        InfixOperatorType::Equal => {
+            if left_value == right_value {
+                return TRUE;
+            } else {
+                return FALSE;
+            }
+        }
+        InfixOperatorType::NotEqual => {
+            if left_value != right_value {
+                return TRUE;
+            } else {
+                return FALSE;
+            }
+        }
+        InfixOperatorType::GreaterThan => {
+            if left_value > right_value {
+                return TRUE;
+            } else {
+                return FALSE;
+            }
+        }
+        InfixOperatorType::LessThan => {
+            if left_value < right_value {
+                return TRUE;
+            } else {
+                return FALSE;
+            }
         }
         _ => panic!(
             "Infix operator evaluation not implemented: {:?} for token: {}",
