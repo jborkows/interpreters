@@ -8,7 +8,7 @@ use super::evaluate;
 macro_rules! should_be_equal_parsed {
     ($left:expr, $right:expr, $variant:ident) => {
         let left = eval_input($left);
-        match left {
+        match *left {
             Object::$variant(value) => assert_eq!(
                 value,
                 $right,
@@ -43,7 +43,7 @@ macro_rules! expected_integer_as_result_tests {
     };
 }
 
-pub(super) fn eval_input(input: &str) -> Object {
+pub(super) fn eval_input(input: &str) -> Rc<Object> {
     let mut parser = Parser::from_string(input);
     let program = parser.parse_program();
     check_parser_errors(&parser);
@@ -62,10 +62,10 @@ pub(super) fn should_be_boolean_equal_to(left: &str, right: bool) {
 pub(super) fn should_be_string_equal_to(left: &str, right: String) {
     let left = eval_input(left);
     let left_string = left.to_string();
-    match left {
+    match left.as_ref() {
         Object::String(value) => assert_eq!(
             value,
-            right,
+            &right,
             "Expected String with value {}, but got {} for input {}",
             right.to_string(),
             left_string,
@@ -82,7 +82,7 @@ pub(super) fn should_be_string_equal_to(left: &str, right: String) {
 
 pub(super) fn should_be_null(left: &str) {
     let left = eval_input(left);
-    match left {
+    match *left {
         Object::Null => {}
         _ => panic!(
             "Expected Null , but got {} for input {}",
@@ -94,7 +94,7 @@ pub(super) fn should_be_null(left: &str) {
 
 pub(super) fn should_be_error(left_input: &str) {
     let left = eval_input(left_input);
-    match left {
+    match *left {
         Object::Error { .. } => {}
         _ => panic!(
             "Expected Error, but got {} for input {}",
@@ -105,7 +105,7 @@ pub(super) fn should_be_error(left_input: &str) {
 }
 pub(super) fn should_be_error_with_text(left_input: &str, error_text: &str) {
     let left = eval_input(left_input);
-    match left {
+    match left.as_ref() {
         Object::Error {
             message,
             line: _,

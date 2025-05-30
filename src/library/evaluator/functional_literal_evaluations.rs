@@ -11,7 +11,7 @@ pub fn function_literal_evaluation(
     parameters: &Vec<Expression>,
     body: &Statement,
     env: Rc<RefCell<Environment>>,
-) -> Object {
+) -> Rc<Object> {
     let mut parsed_parameters: Vec<Identifier> = vec![];
     for parameter in parameters {
         match parameter {
@@ -27,14 +27,14 @@ pub fn function_literal_evaluation(
         }
     }
     match body {
-        Statement::BlockStatement { token, statements } => Object::Function {
+        Statement::BlockStatement { token, statements } => Rc::new(Object::Function {
             parameters: parsed_parameters,
             body: Rc::new(Statement::BlockStatement {
                 token: token.clone(),
                 statements: statements.clone(),
             }),
             env: env.clone(),
-        },
+        }),
         _ => return error_at("Function body must be a block statement.", token),
     }
 }

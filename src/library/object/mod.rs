@@ -58,13 +58,13 @@ impl ToString for Identifier {
     }
 }
 
-pub fn error_at(message: &str, token: &Token) -> Object {
+pub fn error_at(message: &str, token: &Token) -> Rc<Object> {
     let position = token.position();
-    Object::Error {
+    Rc::new(Object::Error {
         message: message.to_string(),
         line: position.0,
         column: position.1,
-    }
+    })
 }
 
 pub fn type_of(object: &Object) -> String {

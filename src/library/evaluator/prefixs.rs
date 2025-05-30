@@ -14,22 +14,22 @@ pub(super) fn prefix_operator_evaluation(
     operator: &PrefixOperatorType,
     as_ref: &Expression,
     env: Rc<RefCell<Environment>>,
-) -> Object {
+) -> Rc<Object> {
     let right = evaluate_expression(as_ref, env.clone());
     match operator {
         PrefixOperatorType::Bang => {
-            control_flow_dependent!(right, bang_operator_evaluation(token, right));
+            control_flow_dependent!(right, bang_operator_evaluation(token, right.as_ref()));
         }
         PrefixOperatorType::Minus => {
-            control_flow_dependent!(right, minus_operator_evaluation(token, right));
+            control_flow_dependent!(right, minus_operator_evaluation(token, right.as_ref()));
         }
     }
 }
 
-fn minus_operator_evaluation(token: &Token, right: Object) -> Object {
+fn minus_operator_evaluation(token: &Token, right: &Object) -> Rc<Object> {
     match right {
         Object::Int(value) => {
-            return int_value(-value);
+            return Rc::new(int_value(-value));
         }
         _ => error_at(
             format!(
@@ -43,28 +43,14 @@ fn minus_operator_evaluation(token: &Token, right: Object) -> Object {
     }
 }
 
-fn bang_operator_evaluation(token: &Token, right: Object) -> Object {
+fn bang_operator_evaluation(token: &Token, right: &Object) -> Rc<Object> {
     match right {
-        Object::Boolean(value) => {
-            if value {
-                return FALSE;
-            } else {
-                return TRUE;
-            }
-        }
-        Object::String(value) => {
-            if value.trim().is_empty() {
-                return TRUE;
-            } else {
-                return FALSE;
-            }
-        }
+        Object::Boolean(value) => Rc::new(if *value { FALSE } else { TRUE }),
+        Object::String(value) => Rc::new(if value.trim().is_empty() { TRUE } else { FALSE }),
         Object::Int(_value) => {
-            return FALSE;
+            return Rc::new(FALSE);
         }
-        Object::Null => {
-            return TRUE;
-        }
+        Object::Null => Rc::new(TRUE),
         _ => error_at(
             format!(
                 "Bang operator cannot be used to {} ({})",

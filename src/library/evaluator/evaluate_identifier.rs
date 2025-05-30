@@ -5,7 +5,7 @@ use crate::{
     tokens::{Token, TokenKind},
 };
 
-pub(super) fn evaluate_indentifier(token: &Token, env: Rc<RefCell<Environment>>) -> Object {
+pub(super) fn evaluate_indentifier(token: &Token, env: Rc<RefCell<Environment>>) -> Rc<Object> {
     match &token.kind {
         TokenKind::Identifier(name) => {
             if let Some(value) = env.borrow().get(name) {

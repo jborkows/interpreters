@@ -10,7 +10,7 @@ fn can_construct_function() {
         };
     "#;
     let object = eval_input(input);
-    match object {
+    match object.as_ref() {
         crate::object::Object::Function {
             parameters,
             body,

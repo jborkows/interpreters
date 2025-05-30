@@ -40,7 +40,7 @@ mod prefixs_tests;
 #[cfg(test)]
 mod return_tests;
 
-pub fn evaluate(node: &dyn Node, env: Rc<RefCell<Environment>>) -> Object {
+pub fn evaluate(node: &dyn Node, env: Rc<RefCell<Environment>>) -> Rc<Object> {
     let statement = node.as_any().downcast_ref::<Statement>();
     if let Some(statement) = statement {
         return evaluate_statement(statement, env.clone());
@@ -57,22 +57,25 @@ pub fn evaluate(node: &dyn Node, env: Rc<RefCell<Environment>>) -> Object {
     panic!("Should never reach here, node: {:?}", node);
 }
 
-fn evaluate_program(program: &Program, env: Rc<RefCell<Environment>>) -> Object {
-    let mut result = NULL;
+fn evaluate_program(program: &Program, env: Rc<RefCell<Environment>>) -> Rc<Object> {
+    let mut result = Rc::new(NULL);
     for statement in &program.statements {
         result = evaluate(statement, env.clone());
-        if let Object::ReturnValue(value) = result {
-            return value.as_ref().clone();
+        if let Object::ReturnValue(value) = result.as_ref() {
+            return value.clone();
         }
-        if let Object::Error { .. } = result {
+        if let Object::Error { .. } = result.as_ref() {
             return result;
         }
     }
     result
 }
 
-fn evaluate_block_statements(statements: &Vec<Statement>, env: Rc<RefCell<Environment>>) -> Object {
-    let mut result = NULL;
+fn evaluate_block_statements(
+    statements: &Vec<Statement>,
+    env: Rc<RefCell<Environment>>,
+) -> Rc<Object> {
+    let mut result = Rc::new(NULL);
     for statement in statements {
         result = evaluate(statement, env.clone());
         end_flow!(result);
@@ -80,7 +83,7 @@ fn evaluate_block_statements(statements: &Vec<Statement>, env: Rc<RefCell<Enviro
     result
 }
 
-fn evaluate_statement(statement: &Statement, env: Rc<RefCell<Environment>>) -> Object {
+fn evaluate_statement(statement: &Statement, env: Rc<RefCell<Environment>>) -> Rc<Object> {
     match statement {
         Statement::ExpressionStatement { expression, .. } => {
             evaluate_expression(expression, env.clone())
@@ -94,7 +97,7 @@ fn evaluate_statement(statement: &Statement, env: Rc<RefCell<Environment>>) -> O
             return_value,
         } => {
             let return_value = evaluate_expression(return_value, env.clone());
-            return Object::ReturnValue(Rc::new(return_value));
+            return Rc::new(Object::ReturnValue(return_value));
         }
         Statement::Let { token, name, value } => let_statement(token, name, value, env.clone()),
     }
@@ -105,7 +108,7 @@ fn let_statement(
     name: &Expression,
     value: &Expression,
     env: Rc<RefCell<Environment>>,
-) -> Object {
+) -> Rc<Object> {
     let name = match name {
         Expression::Identifier(token) => match &token.kind {
             TokenKind::Identifier(name) => name.clone(),

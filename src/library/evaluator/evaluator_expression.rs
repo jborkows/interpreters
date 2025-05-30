@@ -18,30 +18,30 @@ use super::{
 pub(super) fn evaluate_expression(
     expression: &Expression,
     env: Rc<RefCell<Environment>>,
-) -> Object {
+) -> Rc<Object> {
     match expression {
         Expression::IntegerLiteral(token) => {
             match token.as_ref().kind {
                 TokenKind::Integer(value) => {
                     // Handle integer literal evaluation
                     let value = value as i64;
-                    return allocation_counting!(int_value(value), value);
+                    return Rc::new(allocation_counting!(int_value(value), value));
                 }
                 _ => unreachable!("Expected an integer token, got: {:?}", token),
             }
         }
         Expression::BooleanLiteral { token, value: _ } => match token.as_ref().kind {
             TokenKind::True => {
-                return TRUE;
+                return Rc::new(TRUE);
             }
             TokenKind::False => {
-                return FALSE;
+                return Rc::new(FALSE);
             }
             _ => unreachable!("Expected a boolean token, got: {:?}", token),
         },
         Expression::StringLiteral(token) => match token.as_ref().kind {
             TokenKind::StringLiteral(ref value) => {
-                return string_value(value.to_string());
+                return Rc::new(string_value(value.to_string()));
             }
             _ => unreachable!("Expected a string token, got: {:?}", token),
         },
@@ -69,12 +69,12 @@ pub(super) fn evaluate_expression(
             alternative,
         } => {
             let condition_value = evaluate_expression(condition, env.clone());
-            if is_truthy(condition_value) {
+            if is_truthy(condition_value.as_ref()) {
                 return evaluate(consequence.as_ref(), env.clone());
             } else if let Some(alternative) = alternative {
                 return evaluate(alternative.as_ref(), env.clone());
             } else {
-                return NULL;
+                return Rc::new(NULL);
             }
         }
         Expression::Identifier(token) => evaluate_indentifier(token, env.clone()),
@@ -91,11 +91,11 @@ pub(super) fn evaluate_expression(
     }
 }
 
-fn is_truthy(condition_value: Object) -> bool {
-    if condition_value == NULL {
+fn is_truthy(condition_value: &Object) -> bool {
+    if *condition_value == NULL {
         return false;
     }
-    if condition_value == FALSE {
+    if *condition_value == FALSE {
         return false;
     }
     return true;
