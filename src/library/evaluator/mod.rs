@@ -13,6 +13,9 @@ use crate::{
 mod evaluator_expression;
 #[cfg(test)]
 mod evaluator_tests;
+mod if_expression;
+#[cfg(test)]
+mod if_expression_tests;
 mod infixs;
 #[cfg(test)]
 mod infixs_tests;
@@ -42,8 +45,11 @@ pub fn evaluate(node: &dyn Node) -> Object {
 }
 
 fn evaluate_program(program: &Program) -> Object {
+    return evaluate_statements(&program.statements);
+}
+fn evaluate_statements(statements: &Vec<Statement>) -> Object {
     let mut result = NULL;
-    for statement in &program.statements {
+    for statement in statements {
         result = evaluate(statement);
     }
     result
@@ -52,6 +58,7 @@ fn evaluate_program(program: &Program) -> Object {
 fn evaluate_statement(statement: &Statement) -> Object {
     match statement {
         Statement::ExpressionStatement { expression, .. } => evaluate_expression(expression),
+        Statement::BlockStatement { token, statements } => evaluate_statements(statements),
         _ => panic!(
             "Statement type not implemented: {:?}",
             statement.to_string()

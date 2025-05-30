@@ -1,8 +1,8 @@
 use crate::{allocation_counting, ast::expression::Expression, object::Object, tokens::TokenKind};
 
 use super::{
-    FALSE, TRUE, infixs::infix_operator_evaluation, int_value, prefixs::prefix_operator_evaluation,
-    string_value,
+    FALSE, NULL, TRUE, evaluate, infixs::infix_operator_evaluation, int_value,
+    prefixs::prefix_operator_evaluation, string_value,
 };
 
 pub(super) fn evaluate_expression(expression: &Expression) -> Object {
@@ -47,6 +47,31 @@ pub(super) fn evaluate_expression(expression: &Expression) -> Object {
             let right_value = evaluate_expression(right);
             return infix_operator_evaluation(token, operator, left_value, right_value);
         }
+        Expression::IfExpression {
+            token: _,
+            condition,
+            consequence,
+            alternative,
+        } => {
+            let condition_value = evaluate_expression(condition);
+            if is_truthy(condition_value) {
+                return evaluate(consequence.as_ref());
+            } else if let Some(alternative) = alternative {
+                return evaluate(alternative.as_ref());
+            } else {
+                return NULL;
+            }
+        }
         _ => panic!("Expression type not implemented: {:?}", expression),
     }
+}
+
+fn is_truthy(condition_value: Object) -> bool {
+    if condition_value == NULL {
+        return false;
+    }
+    if condition_value == FALSE {
+        return false;
+    }
+    return true;
 }

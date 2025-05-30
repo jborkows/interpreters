@@ -65,6 +65,18 @@ pub(super) fn should_be_string_equal_to(left: &str, right: String) {
     };
 }
 
+pub(super) fn should_be_null(left: &str) {
+    let left = eval_input(left);
+    match left {
+        Object::Null => {}
+        _ => panic!(
+            "Expected Null , but got {} for input {}",
+            left.to_string(),
+            left.to_string()
+        ),
+    };
+}
+
 pub(super) fn check_parser_errors(parser: &Parser) {
     if !parser.errors().is_empty() {
         panic!(
