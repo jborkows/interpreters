@@ -30,7 +30,12 @@ fn minus_operator_evaluation(token: &Token, right: Object) -> Object {
             return int_value(-value);
         }
         _ => error_at(
-            format!("Minus (-) cannot be applied to {}", type_of(&right)).as_str(),
+            format!(
+                "Minus (-) cannot be applied to {} ({})",
+                type_of(&right),
+                right.to_string()
+            )
+            .as_str(),
             token,
         ),
     }
@@ -58,9 +63,14 @@ fn bang_operator_evaluation(token: &Token, right: Object) -> Object {
         Object::Null => {
             return TRUE;
         }
-        _ => panic!(
-            "Bang operator can only be applied to boolean, string, or integer values: at {}",
-            token.at_text()
+        _ => error_at(
+            format!(
+                "Bang operator cannot be used to {} ({})",
+                type_of(&right),
+                right.to_string()
+            )
+            .as_str(),
+            token,
         ),
     }
 }

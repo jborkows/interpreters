@@ -1,6 +1,6 @@
 use std::any::Any;
 
-pub(crate) trait Node: ToString + Any {
+pub(crate) trait Node: ToString + Any + std::fmt::Debug {
     fn as_any(&self) -> &dyn Any;
 }
 

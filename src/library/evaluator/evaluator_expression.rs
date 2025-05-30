@@ -1,5 +1,9 @@
 use crate::{
-    allocation_counting, ast::expression::Expression, end_flow, object::Object, tokens::TokenKind,
+    allocation_counting,
+    ast::expression::Expression,
+    end_flow,
+    object::{Object, error_at},
+    tokens::TokenKind,
 };
 
 use super::{
@@ -66,7 +70,38 @@ pub(super) fn evaluate_expression(expression: &Expression) -> Object {
                 return NULL;
             }
         }
-        _ => panic!("Expression type not implemented: {:?}", expression),
+        Expression::Identifier(token) => error_at(
+            format!(
+                "Identifier evaluation not implemented: {}",
+                token.to_string()
+            )
+            .as_str(),
+            token,
+        ),
+        Expression::CallExpression {
+            token,
+            function,
+            arguments,
+        } => error_at(
+            format!(
+                "Call expression evaluation not implemented: {}",
+                token.to_string()
+            )
+            .as_str(),
+            token,
+        ),
+        Expression::FunctionLiteral {
+            token,
+            parameters,
+            body,
+        } => error_at(
+            format!(
+                "Function literal evaluation not implemented: {}",
+                token.to_string()
+            )
+            .as_str(),
+            token,
+        ),
     }
 }
 

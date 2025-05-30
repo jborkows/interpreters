@@ -10,7 +10,7 @@ use crate::{
         statements::{Program, Statement},
     },
     end_flow,
-    object::Object,
+    object::{Object, error_at},
 };
 
 mod evaluator_expression;
@@ -47,7 +47,7 @@ pub fn evaluate(node: &dyn Node) -> Object {
     if let Some(expression) = expression {
         return evaluate_expression(expression);
     }
-    panic!("Not implemented yet");
+    panic!("Should never reach here, node: {:?}", node);
 }
 
 fn evaluate_program(program: &Program) -> Object {
@@ -87,9 +87,13 @@ fn evaluate_statement(statement: &Statement) -> Object {
             let return_value = evaluate_expression(return_value);
             return Object::ReturnValue(Rc::new(return_value));
         }
-        _ => panic!(
-            "Statement type not implemented: {:?}",
-            statement.to_string()
+        Statement::Let { token, name, value } => error_at(
+            format!(
+                "Let statement evaluation not implemented: {}",
+                token.to_string()
+            )
+            .as_str(),
+            token,
         ),
     }
 }

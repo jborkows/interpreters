@@ -62,10 +62,12 @@ pub(super) fn infix_operator_evaluation(
     return some_value.unwrap_or_else(|| {
         error_at(
             format!(
-                "Cannot use {} on {} and {}",
+                "Cannot use {} on {}({}) and {}({})",
                 operator.to_string(),
                 type_of(&left),
-                type_of(&right)
+                left.to_string(),
+                type_of(&right),
+                right.to_string()
             )
             .as_str(),
             token,
