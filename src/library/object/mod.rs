@@ -1,10 +1,6 @@
-use std::{fmt::format, rc::Rc};
+use std::{cell::RefCell, rc::Rc};
 
-use crate::{
-    ast::{expression::Expression, statements::Statement},
-    join_collection,
-    tokens::Token,
-};
+use crate::{ast::statements::Statement, join_collection, tokens::Token};
 mod environment;
 pub use environment::Environment;
 
@@ -23,7 +19,7 @@ pub enum Object {
     Function {
         parameters: Vec<Identifier>,
         body: Rc<Statement>,
-        env: Environment,
+        env: Rc<RefCell<Environment>>,
     },
 }
 

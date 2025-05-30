@@ -1,3 +1,5 @@
+use std::{cell::RefCell, rc::Rc};
+
 use crate::{
     allocation_counting,
     ast::expression::Expression,
@@ -7,12 +9,16 @@ use crate::{
 };
 
 use super::{
-    FALSE, NULL, TRUE, evaluate, evaluate_identifier::evaluate_indentifier,
+    FALSE, NULL, TRUE, evaluate, evaluate_call::evaluate_call_expression,
+    evaluate_identifier::evaluate_indentifier,
     functional_literal_evaluations::function_literal_evaluation, infixs::infix_operator_evaluation,
     int_value, prefixs::prefix_operator_evaluation, string_value,
 };
 
-pub(super) fn evaluate_expression(expression: &Expression, env: &mut Environment) -> Object {
+pub(super) fn evaluate_expression(
+    expression: &Expression,
+    env: Rc<RefCell<Environment>>,
+) -> Object {
     match expression {
         Expression::IntegerLiteral(token) => {
             match token.as_ref().kind {
@@ -43,16 +49,16 @@ pub(super) fn evaluate_expression(expression: &Expression, env: &mut Environment
             token,
             operator,
             right,
-        } => prefix_operator_evaluation(token, operator, right.as_ref(), env),
+        } => prefix_operator_evaluation(token, operator, right.as_ref(), env.clone()),
         Expression::InfixExpression {
             token,
             left,
             operator,
             right,
         } => {
-            let left_value = evaluate_expression(left, env);
+            let left_value = evaluate_expression(left, env.clone());
             end_flow!(left_value);
-            let right_value = evaluate_expression(right, env);
+            let right_value = evaluate_expression(right, env.clone());
             end_flow!(right_value);
             return infix_operator_evaluation(token, operator, left_value, right_value);
         }
@@ -62,33 +68,26 @@ pub(super) fn evaluate_expression(expression: &Expression, env: &mut Environment
             consequence,
             alternative,
         } => {
-            let condition_value = evaluate_expression(condition, env);
+            let condition_value = evaluate_expression(condition, env.clone());
             if is_truthy(condition_value) {
-                return evaluate(consequence.as_ref(), env);
+                return evaluate(consequence.as_ref(), env.clone());
             } else if let Some(alternative) = alternative {
-                return evaluate(alternative.as_ref(), env);
+                return evaluate(alternative.as_ref(), env.clone());
             } else {
                 return NULL;
             }
         }
-        Expression::Identifier(token) => evaluate_indentifier(token, env),
+        Expression::Identifier(token) => evaluate_indentifier(token, env.clone()),
         Expression::CallExpression {
             token,
             function,
             arguments,
-        } => error_at(
-            format!(
-                "Call expression evaluation not implemented: {}",
-                token.to_string()
-            )
-            .as_str(),
-            token,
-        ),
+        } => evaluate_call_expression(token, function, arguments, env.clone()),
         Expression::FunctionLiteral {
             token,
             parameters,
             body,
-        } => function_literal_evaluation(token, parameters, body, env),
+        } => function_literal_evaluation(token, parameters, body, env.clone()),
     }
 }
 

@@ -1,3 +1,5 @@
+use std::{cell::RefCell, rc::Rc};
+
 use crate::{
     ast::expression::{Expression, PrefixOperatorType},
     control_flow_dependent,
@@ -11,15 +13,14 @@ pub(super) fn prefix_operator_evaluation(
     token: &Token,
     operator: &PrefixOperatorType,
     as_ref: &Expression,
-    env: &mut Environment,
+    env: Rc<RefCell<Environment>>,
 ) -> Object {
+    let right = evaluate_expression(as_ref, env.clone());
     match operator {
         PrefixOperatorType::Bang => {
-            let right = evaluate_expression(as_ref, env);
             control_flow_dependent!(right, bang_operator_evaluation(token, right));
         }
         PrefixOperatorType::Minus => {
-            let right = evaluate_expression(as_ref, env);
             control_flow_dependent!(right, minus_operator_evaluation(token, right));
         }
     }

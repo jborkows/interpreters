@@ -1,12 +1,14 @@
+use std::{cell::RefCell, rc::Rc};
+
 use crate::{
     object::{Environment, Object, error_at},
     tokens::{Token, TokenKind},
 };
 
-pub(super) fn evaluate_indentifier(token: &Token, env: &mut Environment) -> Object {
+pub(super) fn evaluate_indentifier(token: &Token, env: Rc<RefCell<Environment>>) -> Object {
     match &token.kind {
         TokenKind::Identifier(name) => {
-            if let Some(value) = env.get(name) {
+            if let Some(value) = env.borrow().get(name) {
                 return value.clone();
             } else {
                 return error_at(format!("Identifier '{}' not found.", name).as_str(), token);

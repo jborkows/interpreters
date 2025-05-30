@@ -1,3 +1,5 @@
+use std::{cell::RefCell, rc::Rc};
+
 use crate::{join_collection, object::Object, parser::Parser, print_bash_error};
 
 use super::evaluate;
@@ -45,8 +47,8 @@ pub(super) fn eval_input(input: &str) -> Object {
     let mut parser = Parser::from_string(input);
     let program = parser.parse_program();
     check_parser_errors(&parser);
-    let mut env = crate::object::Environment::new();
-    evaluate(&program, &mut env)
+    let env = Rc::new(RefCell::new(crate::object::Environment::new()));
+    evaluate(&program, env)
 }
 
 pub(super) fn should_be_integer_equal_to(left: &str, right: i64) {

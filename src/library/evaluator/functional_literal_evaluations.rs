@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::{cell::RefCell, rc::Rc};
 
 use crate::{
     ast::{expression::Expression, statements::Statement},
@@ -10,7 +10,7 @@ pub fn function_literal_evaluation(
     token: &Token,
     parameters: &Vec<Expression>,
     body: &Statement,
-    env: &mut Environment,
+    env: Rc<RefCell<Environment>>,
 ) -> Object {
     let mut parsed_parameters: Vec<Identifier> = vec![];
     for parameter in parameters {
@@ -33,7 +33,7 @@ pub fn function_literal_evaluation(
                 token: token.clone(),
                 statements: statements.clone(),
             }),
-            env: Environment::new(),
+            env: env.clone(),
         },
         _ => return error_at("Function body must be a block statement.", token),
     }

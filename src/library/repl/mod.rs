@@ -1,4 +1,8 @@
-use std::io::{self, BufRead};
+use std::{
+    cell::RefCell,
+    io::{self, BufRead},
+    rc::Rc,
+};
 
 use crate::{lexers::Lexer, parser::Parser};
 
@@ -6,7 +10,7 @@ pub fn start() {
     let stdin = io::stdin();
     let reader = stdin.lock();
 
-    let mut environemnt = crate::object::Environment::new();
+    let environemnt = Rc::new(RefCell::new(crate::object::Environment::new()));
     for line_result in reader.lines() {
         let mut lexer = Lexer::new();
         let line = line_result.unwrap();
@@ -23,7 +27,7 @@ pub fn start() {
         }
 
         println!("Parsed program: {}", program.to_string());
-        let result = crate::evaluator::evaluate(&program, &mut environemnt);
+        let result = crate::evaluator::evaluate(&program, environemnt.clone());
         println!("Evaluation result: {}", result.to_string());
     }
 }
