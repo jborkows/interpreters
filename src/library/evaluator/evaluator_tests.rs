@@ -41,7 +41,7 @@ macro_rules! expected_integer_as_result_tests {
     };
 }
 
-fn eval_input(input: &str) -> Object {
+pub(super) fn eval_input(input: &str) -> Object {
     let mut parser = Parser::from_string(input);
     let program = parser.parse_program();
     check_parser_errors(&parser);

@@ -8,8 +8,8 @@ use crate::{
 
 use super::{
     FALSE, NULL, TRUE, evaluate, evaluate_identifier::evaluate_indentifier,
-    infixs::infix_operator_evaluation, int_value, prefixs::prefix_operator_evaluation,
-    string_value,
+    functional_literal_evaluations::function_literal_evaluation, infixs::infix_operator_evaluation,
+    int_value, prefixs::prefix_operator_evaluation, string_value,
 };
 
 pub(super) fn evaluate_expression(expression: &Expression, env: &mut Environment) -> Object {
@@ -88,14 +88,7 @@ pub(super) fn evaluate_expression(expression: &Expression, env: &mut Environment
             token,
             parameters,
             body,
-        } => error_at(
-            format!(
-                "Function literal evaluation not implemented: {}",
-                token.to_string()
-            )
-            .as_str(),
-            token,
-        ),
+        } => function_literal_evaluation(token, parameters, body, env),
     }
 }
 

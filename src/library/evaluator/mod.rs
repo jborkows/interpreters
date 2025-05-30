@@ -18,6 +18,9 @@ mod evaluate_identifier;
 mod evaluator_expression;
 #[cfg(test)]
 mod evaluator_tests;
+mod functional_literal_evaluations;
+#[cfg(test)]
+mod functions_tests;
 #[cfg(test)]
 mod if_expression_tests;
 mod infixs;

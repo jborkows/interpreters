@@ -1,5 +1,6 @@
 use super::Object;
 
+#[derive(Debug, Clone)]
 pub struct Environment {
     variables: std::collections::HashMap<String, Object>,
 }

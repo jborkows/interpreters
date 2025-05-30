@@ -1,10 +1,14 @@
-use std::rc::Rc;
+use std::{fmt::format, rc::Rc};
 
-use crate::tokens::Token;
+use crate::{
+    ast::{expression::Expression, statements::Statement},
+    join_collection,
+    tokens::Token,
+};
 mod environment;
 pub use environment::Environment;
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, Clone)]
 pub enum Object {
     Int(i64),
     String(String),
@@ -16,6 +20,46 @@ pub enum Object {
         column: usize,
     },
     Null,
+    Function {
+        parameters: Vec<Identifier>,
+        body: Rc<Statement>,
+        env: Environment,
+    },
+}
+
+impl PartialEq for Object {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Self::Int(l0), Self::Int(r0)) => l0 == r0,
+            (Self::String(l0), Self::String(r0)) => l0 == r0,
+            (Self::Boolean(l0), Self::Boolean(r0)) => l0 == r0,
+            (Self::ReturnValue(l0), Self::ReturnValue(r0)) => l0 == r0,
+            (
+                Self::Error {
+                    message: l_message,
+                    line: l_line,
+                    column: l_column,
+                },
+                Self::Error {
+                    message: r_message,
+                    line: r_line,
+                    column: r_column,
+                },
+            ) => l_message == r_message && l_line == r_line && l_column == r_column,
+            (Self::Function { .. }, Self::Function { .. }) => false,
+            _ => core::mem::discriminant(self) == core::mem::discriminant(other),
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct Identifier {
+    pub name: String,
+}
+impl ToString for Identifier {
+    fn to_string(&self) -> String {
+        self.name.clone()
+    }
 }
 
 pub fn error_at(message: &str, token: &Token) -> Object {
@@ -35,6 +79,14 @@ pub fn type_of(object: &Object) -> String {
         Object::ReturnValue(_) => "ReturnValue".to_string(),
         Object::Error { .. } => "Error".to_string(),
         Object::Null => "Null".to_string(),
+        Object::Function {
+            parameters,
+            body,
+            env,
+        } => {
+            let params = join_collection!(parameters, ", ");
+            return format!("Function  {}", params);
+        }
     }
 }
 
@@ -59,6 +111,7 @@ impl ToString for Object {
             } => {
                 format!("Error at {}:{} -> {}", line, column, message)
             }
+            Object::Function { .. } => type_of(self),
         }
     }
 }

@@ -390,7 +390,6 @@ impl Parser {
         }
         let mut arguments: Vec<Expression> = vec![];
         while !(self.is_finished() || self.current_token_is(&PureTokenKind::RightParen)) {
-            println!("Current token: {:?}", self.current_token.kind.to_string(),);
             if self.expect_peek_and_move_into(&PureTokenKind::Identifier) {
                 let identifier = identifier(self.current_token.clone());
                 arguments.push(identifier);
