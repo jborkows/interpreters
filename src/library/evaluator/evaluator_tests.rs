@@ -77,6 +77,17 @@ pub(super) fn should_be_null(left: &str) {
     };
 }
 
+pub(super) fn should_be_error(left_input: &str) {
+    let left = eval_input(left_input);
+    match left {
+        Object::Error { .. } => {}
+        _ => panic!(
+            "Expected Error, but got {} for input {}",
+            left.to_string(),
+            left_input.to_string()
+        ),
+    };
+}
 pub(super) fn should_be_error_with_text(left_input: &str, error_text: &str) {
     let left = eval_input(left_input);
     match left {
