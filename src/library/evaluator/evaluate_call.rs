@@ -4,7 +4,7 @@ use crate::{
     ast::expression::Expression,
     end_flow,
     evaluator::evaluate,
-    object::{Environment, Object, error_at},
+    object::{Environment, Identifier, Object, error_at},
     tokens::Token,
 };
 
@@ -34,30 +34,40 @@ pub fn evaluate_call_expression(
             token,
         );
     }
-    return apply_function(token, function, &parsed, env);
+    return apply_function(token, function, &parsed);
 }
 
-fn apply_function(
-    token: &Token,
-    function: Rc<Object>,
-    parsed: &[Rc<Object>],
-    env: Rc<RefCell<Environment>>,
-) -> Rc<Object> {
+fn apply_function(token: &Token, function: Rc<Object>, parsed: &[Rc<Object>]) -> Rc<Object> {
     match *function {
         Object::Function {
             ref parameters,
             ref body,
             env: ref func_env,
         } => {
-            let extended_env = Rc::new(RefCell::new(Environment::enclosed(func_env.clone())));
+            let extended_env = extend_env(func_env.clone(), parameters, parsed);
             let body_fun = body.as_ref();
             let result = evaluate(body_fun, extended_env);
-            end_flow!(result);
-            return result;
+            match *result {
+                Object::ReturnValue(ref value) => value.clone(),
+                Object::Error { .. } => result,
+                _ => result,
+            }
         }
         _ => return error_at("Call expression is not a function.", token),
     }
-    todo!()
+}
+
+fn extend_env(
+    clone: Rc<RefCell<Environment>>,
+    parameters: &[Identifier],
+    arguments: &[Rc<Object>],
+) -> Rc<RefCell<Environment>> {
+    let new_env = Rc::new(RefCell::new(Environment::enclosed(clone)));
+    parameters
+        .iter()
+        .zip(arguments.iter())
+        .for_each(|(param, arg)| new_env.borrow_mut().set(param.name.clone(), arg.clone()));
+    new_env
 }
 
 fn evaluate_expressions(

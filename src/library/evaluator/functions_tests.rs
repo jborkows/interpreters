@@ -31,7 +31,7 @@ fn can_construct_function() {
 expected_integer_as_result_tests! {
     simple: ("let identity = fn(x){x;}; identity(5);", 5),
     simple_return: ("let identity = fn(x){return x;}; identity(5);", 5),
-    double: ("let double = fn(x){return x*2;}; identity(5);", 10),
+    double: ("let double = fn(x){return x*2;}; double(5);", 10),
     add: ("let add = fn(x, y){return x + y;}; add(5, 10);", 15),
     add_fun: ("let add = fn(x, y){return x + y;}; add(5+5, add(5,5));", 20),
     anonymous: ("fn(x){x;}(5);", 5),
