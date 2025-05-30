@@ -1,6 +1,7 @@
 use crate::{
     ast::expression::{Expression, PrefixOperatorType},
-    object::Object,
+    control_flow_dependent,
+    object::{Object, error_at, type_of},
     tokens::Token,
 };
 
@@ -14,17 +15,11 @@ pub(super) fn prefix_operator_evaluation(
     match operator {
         PrefixOperatorType::Bang => {
             let right = evaluate_expression(as_ref);
-            if let Object::ReturnValue(_) = right {
-                return right;
-            }
-            return bang_operator_evaluation(token, right);
+            control_flow_dependent!(right, bang_operator_evaluation(token, right));
         }
         PrefixOperatorType::Minus => {
             let right = evaluate_expression(as_ref);
-            if let Object::ReturnValue(_) = right {
-                return right;
-            }
-            return minus_operator_evaluation(token, right);
+            control_flow_dependent!(right, minus_operator_evaluation(token, right));
         }
     }
 }
@@ -34,9 +29,9 @@ fn minus_operator_evaluation(token: &Token, right: Object) -> Object {
         Object::Int(value) => {
             return int_value(-value);
         }
-        _ => panic!(
-            "Minus operator can only be applied to integer values. Error at {}",
-            token.at_text()
+        _ => error_at(
+            format!("Minus (-) cannot be applied to {}", type_of(&right)).as_str(),
+            token,
         ),
     }
 }

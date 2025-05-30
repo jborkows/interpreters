@@ -1,4 +1,6 @@
-use crate::{allocation_counting, ast::expression::Expression, object::Object, tokens::TokenKind};
+use crate::{
+    allocation_counting, ast::expression::Expression, end_flow, object::Object, tokens::TokenKind,
+};
 
 use super::{
     FALSE, NULL, TRUE, evaluate, infixs::infix_operator_evaluation, int_value,
@@ -44,13 +46,9 @@ pub(super) fn evaluate_expression(expression: &Expression) -> Object {
             right,
         } => {
             let left_value = evaluate_expression(left);
-            if let Object::ReturnValue(_) = left_value {
-                return left_value;
-            }
+            end_flow!(left_value);
             let right_value = evaluate_expression(right);
-            if let Object::ReturnValue(_) = right_value {
-                return right_value;
-            }
+            end_flow!(right_value);
             return infix_operator_evaluation(token, operator, left_value, right_value);
         }
         Expression::IfExpression {

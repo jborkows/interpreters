@@ -9,6 +9,7 @@ use crate::{
         expression::Expression,
         statements::{Program, Statement},
     },
+    end_flow,
     object::Object,
 };
 
@@ -23,6 +24,7 @@ mod infixs;
 mod infixs_tests;
 #[cfg(test)]
 mod literals_tests;
+mod macros;
 mod object_pool;
 mod pool;
 mod prefixs;
@@ -55,6 +57,9 @@ fn evaluate_program(program: &Program) -> Object {
         if let Object::ReturnValue(value) = result {
             return value.as_ref().clone();
         }
+        if let Object::Error { .. } = result {
+            return result;
+        }
     }
     result
 }
@@ -63,9 +68,7 @@ fn evaluate_block_statements(statements: &Vec<Statement>) -> Object {
     let mut result = NULL;
     for statement in statements {
         result = evaluate(statement);
-        if let Object::ReturnValue(_) = result {
-            return result;
-        }
+        end_flow!(result);
     }
     result
 }

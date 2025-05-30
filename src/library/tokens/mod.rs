@@ -18,6 +18,16 @@ impl Token {
         return self.kind.literal();
     }
 
+    pub fn position(&self) -> (usize, usize) {
+        if let Some(context) = &self.context {
+            return (
+                context.start.line_number.0.into(),
+                context.start.column_number.0.into(),
+            );
+        }
+        (0, 0)
+    }
+
     pub fn at_text(&self) -> String {
         if let Some(context) = &self.context {
             return format!(

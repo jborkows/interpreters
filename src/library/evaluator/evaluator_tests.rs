@@ -1,4 +1,4 @@
-use crate::{join_collection, object::Object, parser::Parser, print_bash_error};
+use crate::{join_collection, object::Object, parser::Parser, print_bash_error, tokens::TokenKind};
 
 use super::evaluate;
 
@@ -73,6 +73,30 @@ pub(super) fn should_be_null(left: &str) {
             "Expected Null , but got {} for input {}",
             left.to_string(),
             left.to_string()
+        ),
+    };
+}
+
+pub(super) fn should_be_error_with_text(left_input: &str, error_text: &str) {
+    let left = eval_input(left_input);
+    match left {
+        Object::Error {
+            message,
+            line: _,
+            column: _,
+        } => {
+            assert!(
+                message.contains(error_text),
+                "Expected error message to contain '{}', but got '{}' for input {}",
+                error_text,
+                message,
+                left_input.to_string()
+            );
+        }
+        _ => panic!(
+            "Expected Error, but got {} for input {}",
+            left.to_string(),
+            left_input.to_string()
         ),
     };
 }
