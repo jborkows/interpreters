@@ -1,4 +1,4 @@
-use crate::{join_collection, object::Object, parser::Parser, print_bash_error, tokens::TokenKind};
+use crate::{join_collection, object::Object, parser::Parser, print_bash_error};
 
 use super::evaluate;
 
@@ -45,7 +45,8 @@ fn eval_input(input: &str) -> Object {
     let mut parser = Parser::from_string(input);
     let program = parser.parse_program();
     check_parser_errors(&parser);
-    evaluate(&program)
+    let mut env = crate::object::Environment::new();
+    evaluate(&program, &mut env)
 }
 
 pub(super) fn should_be_integer_equal_to(left: &str, right: i64) {

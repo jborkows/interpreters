@@ -1,6 +1,8 @@
 use std::rc::Rc;
 
 use crate::tokens::Token;
+mod environment;
+pub use environment::Environment;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Object {
