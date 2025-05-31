@@ -13,13 +13,14 @@ macro_rules! end_flow {
     };
 }
 macro_rules! argument_should_be {
-    ($left:ident, $token:expr, $argument_no:expr, $variant:ident) => {
+    ($left:ident, $token:expr, $function_name:expr, $argument_no:expr, $variant:ident) => {
         (match $left.as_ref() {
             super::Object::$variant(s) => Ok(s),
             _ => Err(error_at(
                 format!(
-                    "Invalid argument {}: {}({}) expected {}",
+                    "Invalid argument {} for {}: {}({}) expected {}",
                     $argument_no,
+                    $function_name,
                     super::type_of($left),
                     $left.to_string(),
                     stringify!($variant)
@@ -53,7 +54,7 @@ fn apply_len(
 ) -> std::rc::Rc<super::Object> {
     end_flow!(accept_n_arguments("len", 1, token, arguments));
     let argument = &arguments[0];
-    let value = end_flow!(argument_should_be!(argument, token, 1, String));
+    let value = end_flow!(argument_should_be!(argument, token, "len", 1, String));
     int_value(value.len() as i64)
 }
 
