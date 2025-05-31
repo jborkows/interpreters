@@ -17,28 +17,14 @@ use crate::{
 mod evaluate_call;
 mod evaluate_identifier;
 mod evaluator_expression;
-#[cfg(test)]
-mod evaluator_tests;
 mod functional_literal_evaluations;
-#[cfg(test)]
-mod functions_tests;
-#[cfg(test)]
-mod if_expression_tests;
 mod infixs;
-#[cfg(test)]
-mod infixs_tests;
-#[cfg(test)]
-mod let_tests;
-#[cfg(test)]
-mod literals_tests;
 mod macros;
 mod object_pool;
 mod pool;
 mod prefixs;
 #[cfg(test)]
-mod prefixs_tests;
-#[cfg(test)]
-mod return_tests;
+mod tests;
 
 pub fn evaluate(node: &dyn Node, env: Rc<RefCell<Environment>>) -> Rc<Object> {
     let statement = node.as_any().downcast_ref::<Statement>();

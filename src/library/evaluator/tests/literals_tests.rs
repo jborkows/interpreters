@@ -1,4 +1,6 @@
-use crate::{current_allocation_counting, evaluator::evaluator_tests::should_be_integer_equal_to};
+use crate::{
+    current_allocation_counting, evaluator::tests::evaluator_tests::should_be_integer_equal_to,
+};
 
 use super::evaluator_tests::{should_be_boolean_equal_to, should_be_string_equal_to};
 

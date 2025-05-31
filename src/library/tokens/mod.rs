@@ -27,18 +27,6 @@ impl Token {
         }
         (0, 0)
     }
-
-    pub fn at_text(&self) -> String {
-        if let Some(context) = &self.context {
-            return format!(
-                "{}:{}: ({})",
-                context.start.line_number.0,
-                context.start.column_number.0,
-                self.kind.literal()
-            );
-        }
-        self.kind.literal()
-    }
 }
 impl ToString for Token {
     fn to_string(&self) -> String {

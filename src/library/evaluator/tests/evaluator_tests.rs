@@ -1,8 +1,8 @@
 use std::{cell::RefCell, rc::Rc};
 
-use crate::{join_collection, object::Object, parser::Parser, print_bash_error};
-
-use super::evaluate;
+use crate::{
+    evaluator::evaluate, join_collection, object::Object, parser::Parser, print_bash_error,
+};
 
 #[macro_export]
 macro_rules! should_be_equal_parsed {
@@ -37,7 +37,7 @@ macro_rules! expected_integer_as_result_tests {
         $(
             #[test]
             fn $name() {
-                 crate::evaluator::evaluator_tests::should_be_integer_equal_to($input, $expected);
+                 crate::evaluator::tests::evaluator_tests::should_be_integer_equal_to($input, $expected);
             }
         )*
     };
