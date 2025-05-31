@@ -1,4 +1,4 @@
-use crate::object::Object;
+use super::Object;
 pub const SMALL_INTS: [Object; 256] = [
     Object::Int(0),
     Object::Int(1),

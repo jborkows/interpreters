@@ -1,8 +1,6 @@
 use std::{cell::RefCell, rc::Rc};
 
-use evaluator_expression::evaluate_expression;
-use pool::*;
-
+use crate::object::*;
 use crate::{
     ast::{
         base::Node,
@@ -13,6 +11,7 @@ use crate::{
     object::{Environment, Object, error_at},
     tokens::{Token, TokenKind},
 };
+use evaluator_expression::evaluate_expression;
 
 mod evaluate_call;
 mod evaluate_identifier;
@@ -20,8 +19,6 @@ mod evaluator_expression;
 mod functional_literal_evaluations;
 mod infixs;
 mod macros;
-mod object_pool;
-mod pool;
 mod prefixs;
 #[cfg(test)]
 mod tests;
@@ -44,7 +41,7 @@ pub fn evaluate(node: &dyn Node, env: Rc<RefCell<Environment>>) -> Rc<Object> {
 }
 
 fn evaluate_program(program: &Program, env: Rc<RefCell<Environment>>) -> Rc<Object> {
-    let mut result = Rc::new(NULL);
+    let mut result = null_value();
     for statement in &program.statements {
         result = evaluate(statement, env.clone());
         if let Object::ReturnValue(value) = result.as_ref() {
@@ -61,7 +58,7 @@ fn evaluate_block_statements(
     statements: &Vec<Statement>,
     env: Rc<RefCell<Environment>>,
 ) -> Rc<Object> {
-    let mut result = Rc::new(NULL);
+    let mut result = null_value();
     for statement in statements {
         result = evaluate(statement, env.clone());
         end_flow!(result);

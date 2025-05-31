@@ -4,16 +4,16 @@ use crate::{
     allocation_counting,
     ast::expression::Expression,
     end_flow,
-    object::{Environment, Object, error_at},
+    object::{Environment, Object},
     tokens::TokenKind,
 };
 
 use super::{
-    FALSE, NULL, TRUE, evaluate, evaluate_call::evaluate_call_expression,
-    evaluate_identifier::evaluate_indentifier,
+    evaluate, evaluate_call::evaluate_call_expression, evaluate_identifier::evaluate_indentifier,
     functional_literal_evaluations::function_literal_evaluation, infixs::infix_operator_evaluation,
     int_value, prefixs::prefix_operator_evaluation, string_value,
 };
+use crate::object::*;
 
 pub(super) fn evaluate_expression(
     expression: &Expression,
@@ -25,23 +25,23 @@ pub(super) fn evaluate_expression(
                 TokenKind::Integer(value) => {
                     // Handle integer literal evaluation
                     let value = value as i64;
-                    return Rc::new(allocation_counting!(int_value(value), value));
+                    return allocation_counting!(int_value(value), value);
                 }
                 _ => unreachable!("Expected an integer token, got: {:?}", token),
             }
         }
         Expression::BooleanLiteral { token, value: _ } => match token.as_ref().kind {
             TokenKind::True => {
-                return Rc::new(TRUE);
+                return true_value();
             }
             TokenKind::False => {
-                return Rc::new(FALSE);
+                return false_value();
             }
             _ => unreachable!("Expected a boolean token, got: {:?}", token),
         },
         Expression::StringLiteral(token) => match token.as_ref().kind {
             TokenKind::StringLiteral(ref value) => {
-                return Rc::new(string_value(value.to_string()));
+                return string_value(value.to_string());
             }
             _ => unreachable!("Expected a string token, got: {:?}", token),
         },
@@ -74,7 +74,7 @@ pub(super) fn evaluate_expression(
             } else if let Some(alternative) = alternative {
                 return evaluate(alternative.as_ref(), env.clone());
             } else {
-                return Rc::new(NULL);
+                return null_value();
             }
         }
         Expression::Identifier(token) => evaluate_indentifier(token, env.clone()),
@@ -89,14 +89,4 @@ pub(super) fn evaluate_expression(
             body,
         } => function_literal_evaluation(token, parameters, body, env.clone()),
     }
-}
-
-fn is_truthy(condition_value: &Object) -> bool {
-    if *condition_value == NULL {
-        return false;
-    }
-    if *condition_value == FALSE {
-        return false;
-    }
-    return true;
 }

@@ -1,12 +1,12 @@
 use std::rc::Rc;
 
+use crate::object::*;
 use crate::{
     ast::expression::InfixOperatorType,
     object::{Object, error_at, type_of},
     tokens::Token,
 };
 
-use super::{FALSE, TRUE, int_value, string_value};
 pub(super) fn infix_operator_evaluation(
     token: &Token,
     operator: &InfixOperatorType,
@@ -37,16 +37,16 @@ pub(super) fn infix_operator_evaluation(
         },
         Object::Boolean(left_value) => match *right {
             Object::Boolean(right_value) => match operator {
-                InfixOperatorType::Equal => Some(Rc::new(if left_value == right_value {
-                    TRUE
+                InfixOperatorType::Equal => Some(if left_value == right_value {
+                    true_value()
                 } else {
-                    FALSE
-                })),
-                InfixOperatorType::NotEqual => Some(Rc::new(if left_value != right_value {
-                    TRUE
+                    false_value()
+                }),
+                InfixOperatorType::NotEqual => Some(if left_value != right_value {
+                    true_value()
                 } else {
-                    FALSE
-                })),
+                    false_value()
+                }),
                 _ => None,
             },
             Object::Int(right_value) => int_to_string_infix_evaluation(
@@ -85,10 +85,10 @@ fn string_infix_evaluation(
     match operator {
         InfixOperatorType::Plus => {
             let result = format!("{}{}", left, right);
-            return Some(Rc::new(string_value(result)));
+            return Some(string_value(result));
         }
-        InfixOperatorType::Equal => Some(Rc::new(if left == right { TRUE } else { FALSE })),
-        InfixOperatorType::NotEqual => Some(Rc::new(if left != right { TRUE } else { FALSE })),
+        InfixOperatorType::Equal => Some(boolean_value(left == right)),
+        InfixOperatorType::NotEqual => Some(boolean_value(left != right)),
         _ => None,
     }
 }
@@ -100,7 +100,7 @@ fn int_to_string_infix_evaluation(
     match operator {
         InfixOperatorType::Plus => {
             let result = format!("{}{}", left_value, right_value);
-            return Some(Rc::new(string_value(result)));
+            return Some(string_value(result));
         }
         _ => None,
     }
@@ -114,14 +114,14 @@ fn string_to_int_infix_evaluation(
     match operator {
         InfixOperatorType::Plus => {
             let result = format!("{}{}", left, right_value);
-            return Some(Rc::new(string_value(result)));
+            return Some(string_value(result));
         }
         InfixOperatorType::Multiply => {
             let mut result = String::new();
             for _ in 0..right_value {
                 result.push_str(left);
             }
-            return Some(Rc::new(string_value(result)));
+            return Some(string_value(result));
         }
         _ => None,
     }
@@ -134,35 +134,19 @@ fn integer_only_infix_operator_evaluation(
     right_value: i64,
 ) -> Option<Rc<Object>> {
     match operator {
-        InfixOperatorType::Plus => Some(Rc::new(int_value(left_value + right_value))),
-        InfixOperatorType::Minus => Some(Rc::new(int_value(left_value - right_value))),
-        InfixOperatorType::Multiply => Some(Rc::new(int_value(left_value * right_value))),
+        InfixOperatorType::Plus => Some(int_value(left_value + right_value)),
+        InfixOperatorType::Minus => Some(int_value(left_value - right_value)),
+        InfixOperatorType::Multiply => Some(int_value(left_value * right_value)),
         InfixOperatorType::Divide => {
             if right_value == 0 {
                 Some(error_at("Division by zero is not allowed", token))
             } else {
-                Some(Rc::new(int_value(left_value / right_value)))
+                Some(int_value(left_value / right_value))
             }
         }
-        InfixOperatorType::Equal => Some(Rc::new(if left_value == right_value {
-            TRUE
-        } else {
-            FALSE
-        })),
-        InfixOperatorType::NotEqual => Some(Rc::new(if left_value != right_value {
-            TRUE
-        } else {
-            FALSE
-        })),
-        InfixOperatorType::GreaterThan => Some(Rc::new(if left_value > right_value {
-            TRUE
-        } else {
-            FALSE
-        })),
-        InfixOperatorType::LessThan => Some(Rc::new(if left_value < right_value {
-            TRUE
-        } else {
-            FALSE
-        })),
+        InfixOperatorType::Equal => Some(boolean_value(left_value == right_value)),
+        InfixOperatorType::NotEqual => Some(boolean_value(left_value != right_value)),
+        InfixOperatorType::LessThan => Some(boolean_value(left_value < right_value)),
+        InfixOperatorType::GreaterThan => Some(boolean_value(left_value > right_value)),
     }
 }

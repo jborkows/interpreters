@@ -7,10 +7,10 @@ fn main() {
 }
 
 fn prepare_object_pool() {
-    let out_path = Path::new("src/library/evaluator/object_pool.rs");
+    let out_path = Path::new("src/library/object/object_pool.rs");
     let mut file = File::create(out_path).unwrap();
 
-    writeln!(file, "use crate::object::Object;").unwrap();
+    writeln!(file, "use super::Object;").unwrap();
     writeln!(file, "pub const SMALL_INTS: [Object; 256] = [").unwrap();
     for i in 0..=255 {
         writeln!(file, "    Object::Int({}),", i).unwrap();

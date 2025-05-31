@@ -1,7 +1,7 @@
 use std::{cell::RefCell, rc::Rc};
 
 use crate::{
-    object::{Environment, Object, error_at},
+    object::{Environment, Object, error_at, parse_built_in_function},
     tokens::{Token, TokenKind},
 };
 
@@ -10,9 +10,11 @@ pub(super) fn evaluate_indentifier(token: &Token, env: Rc<RefCell<Environment>>)
         TokenKind::Identifier(name) => {
             if let Some(value) = env.borrow().get(name) {
                 return value.clone();
-            } else {
-                return error_at(format!("Identifier '{}' not found.", name).as_str(), token);
             }
+            if let Some(value) = parse_built_in_function(name) {
+                return Rc::new(Object::Builtin(value));
+            }
+            return error_at(format!("Identifier '{}' not found.", name).as_str(), token);
         }
         _ => error_at(
             format!(

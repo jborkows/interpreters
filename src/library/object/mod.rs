@@ -1,8 +1,14 @@
 use std::{cell::RefCell, rc::Rc};
 
 use crate::{ast::statements::Statement, join_collection, tokens::Token};
+mod builtins;
 mod environment;
+mod helpers;
+mod object_pool;
+use builtins::BuiltInFunction;
+pub use builtins::parse_built_in_function;
 pub use environment::Environment;
+pub use helpers::*;
 
 #[derive(Debug, Clone)]
 pub enum Object {
@@ -21,6 +27,7 @@ pub enum Object {
         body: Rc<Statement>,
         env: Rc<RefCell<Environment>>,
     },
+    Builtin(BuiltInFunction),
 }
 
 impl PartialEq for Object {
@@ -83,6 +90,9 @@ pub fn type_of(object: &Object) -> String {
             let params = join_collection!(parameters, ", ");
             return format!("Function  {}", params);
         }
+        Object::Builtin(built_in_function) => {
+            "BuiltInFunction: ".to_string() + &built_in_function.to_string()
+        }
     }
 }
 
@@ -108,6 +118,7 @@ impl ToString for Object {
                 format!("Error at {}:{} -> {}", line, column, message)
             }
             Object::Function { .. } => type_of(self),
+            Object::Builtin(built_in_function) => built_in_function.to_string(),
         }
     }
 }

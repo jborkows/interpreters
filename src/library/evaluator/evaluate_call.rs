@@ -37,7 +37,7 @@ pub fn evaluate_call_expression(
     return apply_function(token, function, &parsed);
 }
 
-fn apply_function(token: &Token, function: Rc<Object>, parsed: &[Rc<Object>]) -> Rc<Object> {
+fn apply_function(token: &Token, function: Rc<Object>, arguments: &[Rc<Object>]) -> Rc<Object> {
     match *function {
         Object::Function {
             ref parameters,
@@ -48,7 +48,7 @@ fn apply_function(token: &Token, function: Rc<Object>, parsed: &[Rc<Object>]) ->
              * Function environment is extended so even if variables are not visible in current scope they can
              * still be accessed in the function body.
              */
-            let extended_env = extend_env(func_env.clone(), parameters, parsed);
+            let extended_env = extend_env(func_env.clone(), parameters, arguments);
             let body_fun = body.as_ref();
             let result = evaluate(body_fun, extended_env);
             match *result {
@@ -57,6 +57,7 @@ fn apply_function(token: &Token, function: Rc<Object>, parsed: &[Rc<Object>]) ->
                 _ => result,
             }
         }
+        Object::Builtin(ref func) => func.apply(token, arguments),
         _ => return error_at("Call expression is not a function.", token),
     }
 }

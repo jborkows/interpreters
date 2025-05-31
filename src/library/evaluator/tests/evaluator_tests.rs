@@ -42,6 +42,17 @@ macro_rules! expected_integer_as_result_tests {
         )*
     };
 }
+#[macro_export]
+macro_rules! expected_error_with_text {
+    ($expected:expr, { $($name:ident: $input:expr,)* }) => {
+        $(
+            #[test]
+            fn $name() {
+                crate::evaluator::tests::evaluator_tests::should_be_error_with_text($input, $expected);
+            }
+        )*
+    };
+}
 
 pub(super) fn eval_input(input: &str) -> Rc<Object> {
     let mut parser = Parser::from_string(input);

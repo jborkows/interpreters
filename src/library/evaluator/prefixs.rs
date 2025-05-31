@@ -7,7 +7,8 @@ use crate::{
     tokens::Token,
 };
 
-use super::{FALSE, TRUE, evaluate_expression, int_value};
+use super::evaluate_expression;
+use crate::object::*;
 
 pub(super) fn prefix_operator_evaluation(
     token: &Token,
@@ -29,7 +30,7 @@ pub(super) fn prefix_operator_evaluation(
 fn minus_operator_evaluation(token: &Token, right: &Object) -> Rc<Object> {
     match right {
         Object::Int(value) => {
-            return Rc::new(int_value(-value));
+            return int_value(-value);
         }
         _ => error_at(
             format!(
@@ -45,12 +46,10 @@ fn minus_operator_evaluation(token: &Token, right: &Object) -> Rc<Object> {
 
 fn bang_operator_evaluation(token: &Token, right: &Object) -> Rc<Object> {
     match right {
-        Object::Boolean(value) => Rc::new(if *value { FALSE } else { TRUE }),
-        Object::String(value) => Rc::new(if value.trim().is_empty() { TRUE } else { FALSE }),
-        Object::Int(_value) => {
-            return Rc::new(FALSE);
-        }
-        Object::Null => Rc::new(TRUE),
+        Object::Boolean(value) => boolean_value(!*value),
+        Object::String(value) => boolean_value(value.trim().is_empty()),
+        Object::Int(_value) => false_value(),
+        Object::Null => true_value(),
         _ => error_at(
             format!(
                 "Bang operator cannot be used to {} ({})",
