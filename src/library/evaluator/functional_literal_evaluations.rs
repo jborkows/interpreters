@@ -27,9 +27,9 @@ pub fn function_literal_evaluation(
         }
     }
     match body {
-        Statement::BlockStatement { token, statements } => Rc::new(Object::Function {
+        Statement::Block { token, statements } => Rc::new(Object::Function {
             parameters: parsed_parameters,
-            body: Rc::new(Statement::BlockStatement {
+            body: Rc::new(Statement::Block {
                 token: token.clone(),
                 statements: statements.clone(),
             }),

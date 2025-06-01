@@ -16,13 +16,13 @@ pub enum Expression {
         operator: PrefixOperatorType,
         right: Box<Expression>,
     },
-    InfixExpression {
+    Infix {
         token: Rc<Token>,
         left: Box<Expression>,
         operator: InfixOperatorType,
         right: Box<Expression>,
     },
-    CallExpression {
+    Call {
         token: Rc<Token>,
         function: Box<Expression>, //Identifier or FunctionLiteral
         arguments: Vec<Expression>,
@@ -32,7 +32,7 @@ pub enum Expression {
         value: bool,
     },
     StringLiteral(Rc<Token>),
-    IfExpression {
+    AIf {
         #[allow(dead_code)]
         token: Rc<Token>,
         condition: Box<Expression>,
@@ -73,13 +73,13 @@ impl Display for Expression {
                 operator,
                 right,
             } => write!(f, "({}{})", operator, right),
-            Expression::InfixExpression {
+            Expression::Infix {
                 token: _,
                 left,
                 operator,
                 right,
             } => write!(f, "({} {} {})", left, operator, right),
-            Expression::CallExpression {
+            Expression::Call {
                 token: _,
                 function,
                 arguments,
@@ -95,7 +95,7 @@ impl Display for Expression {
                     _ => panic!("Invalid token type for StringLiteral: {:?}", real_type),
                 }
             }
-            Expression::IfExpression {
+            Expression::AIf {
                 token: _,
                 condition,
                 consequence,
@@ -130,19 +130,19 @@ pub fn if_expression(
     alternative: Option<Statement>,
 ) -> Expression {
     match consequence {
-        Statement::BlockStatement { .. } => {}
+        Statement::Block { .. } => {}
         _ => {
             panic!("Consequence must be a BlockStatement");
         }
     }
     match alternative {
-        Some(Statement::BlockStatement { .. }) => {}
+        Some(Statement::Block { .. }) => {}
         None => {}
         _ => {
             panic!("Alternative must be a BlockStatement");
         }
     }
-    Expression::IfExpression {
+    Expression::AIf {
         token,
         condition: Box::new(condition),
         consequence: Box::new(consequence),
@@ -155,7 +155,7 @@ pub fn function_literal(
     body: Statement,
 ) -> Expression {
     match body {
-        Statement::BlockStatement { .. } => {}
+        Statement::Block { .. } => {}
         _ => {
             panic!("Body must be a BlockStatement");
         }

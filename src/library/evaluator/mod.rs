@@ -68,10 +68,8 @@ fn evaluate_block_statements(
 
 fn evaluate_statement(statement: &Statement, env: Rc<RefCell<Environment>>) -> Rc<Object> {
     match statement {
-        Statement::ExpressionStatement { expression, .. } => {
-            evaluate_expression(expression, env.clone())
-        }
-        Statement::BlockStatement {
+        Statement::AExpression { expression, .. } => evaluate_expression(expression, env.clone()),
+        Statement::Block {
             token: _,
             statements,
         } => evaluate_block_statements(statements, env.clone()),

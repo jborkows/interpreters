@@ -31,7 +31,7 @@ macro_rules! join_rc_collection {
 * Don't know if use macro or function
 */
 #[allow(dead_code)]
-fn join_collection<T: ToString>(expr: &Vec<T>, joiner: &str) -> String {
+fn join_collection<T: ToString>(expr: &[T], joiner: &str) -> String {
     expr.iter()
         .map(|s| s.to_string())
         .collect::<Vec<String>>()

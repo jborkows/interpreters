@@ -44,7 +44,7 @@ pub(super) fn evaluate_expression(
             operator,
             right,
         } => prefix_operator_evaluation(token, operator, right.as_ref(), env.clone()),
-        Expression::InfixExpression {
+        Expression::Infix {
             token,
             left,
             operator,
@@ -56,7 +56,7 @@ pub(super) fn evaluate_expression(
             end_flow!(right_value);
             infix_operator_evaluation(token, operator, left_value, right_value)
         }
-        Expression::IfExpression {
+        Expression::AIf {
             token: _,
             condition,
             consequence,
@@ -72,7 +72,7 @@ pub(super) fn evaluate_expression(
             }
         }
         Expression::Identifier(token) => evaluate_indentifier(token, env.clone()),
-        Expression::CallExpression {
+        Expression::Call {
             token,
             function,
             arguments,

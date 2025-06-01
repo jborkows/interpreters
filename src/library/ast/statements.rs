@@ -15,12 +15,12 @@ pub enum Statement {
         token: Rc<Token>,
         return_value: Expression,
     },
-    ExpressionStatement {
+    AExpression {
         #[allow(dead_code)]
         token: Rc<Token>,
         expression: Expression,
     },
-    BlockStatement {
+    Block {
         token: Rc<Token>,
         statements: Rc<Vec<Statement>>,
     },
@@ -42,11 +42,11 @@ impl Display for Statement {
                 token,
                 return_value,
             } => write!(f, "{} {}", token.short(), return_value),
-            Statement::ExpressionStatement {
+            Statement::AExpression {
                 token: _,
                 expression,
             } => write!(f, "{}", expression),
-            Statement::BlockStatement {
+            Statement::Block {
                 token: _,
                 statements,
             } => write!(f, "{}", join_rc_collection!(statements, "\n")),

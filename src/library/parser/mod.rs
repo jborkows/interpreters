@@ -169,7 +169,7 @@ impl Parser {
         if self.peek_token_is(&PureTokenKind::Semicolon) {
             self.save_next_token();
         }
-        Some(Statement::ExpressionStatement {
+        Some(Statement::AExpression {
             token: expression_token,
             expression: expression.unwrap(),
         })
@@ -263,7 +263,7 @@ impl Parser {
         self.save_next_token();
 
         self.parse_expression(precedence)
-            .map(|right| Expression::InfixExpression {
+            .map(|right| Expression::Infix {
                 token: current_token,
                 left: Box::new(left),
                 operator,
@@ -341,7 +341,7 @@ impl Parser {
             }
             self.save_next_token();
         }
-        Statement::BlockStatement {
+        Statement::Block {
             token: current_token,
             statements: Rc::new(statements),
         }
@@ -398,7 +398,7 @@ impl Parser {
     fn parse_call_expression(&mut self, left_exp: Expression) -> Option<Expression> {
         let current_token = self.current_token.clone();
         let arguments = self.parse_call_arguments();
-        Some(Expression::CallExpression {
+        Some(Expression::Call {
             token: current_token,
             function: Box::new(left_exp),
             arguments,

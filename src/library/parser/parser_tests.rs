@@ -77,7 +77,7 @@ fn parse_identifier() {
     check_parser_errors(&parser);
     assert_eq!(program.statements.len(), 1);
     match &program.statements[0] {
-        Statement::ExpressionStatement {
+        Statement::AExpression {
             token: _,
             expression,
         } => {
@@ -98,7 +98,7 @@ fn parse_number() {
     assert_eq!(program.statements.len(), 1);
 
     match &program.statements[0] {
-        Statement::ExpressionStatement {
+        Statement::AExpression {
             token: _,
             expression,
         } => {
@@ -118,7 +118,7 @@ fn parse_boolean() {
         assert_eq!(program.statements.len(), 1);
 
         match &program.statements[0] {
-            Statement::ExpressionStatement {
+            Statement::AExpression {
                 token: _,
                 expression,
             } => {
@@ -139,7 +139,7 @@ fn parse_string() {
         assert_eq!(program.statements.len(), 1);
 
         match &program.statements[0] {
-            Statement::ExpressionStatement {
+            Statement::AExpression {
                 token: _,
                 expression,
             } => {
@@ -163,7 +163,7 @@ fn parse_prefix() {
         assert_eq!(program.statements.len(), 1);
 
         match &program.statements[0] {
-            Statement::ExpressionStatement {
+            Statement::AExpression {
                 token: _,
                 expression,
             } => match expression {
@@ -227,11 +227,11 @@ fn parse_infix_expression() {
         assert_eq!(program.statements.len(), 1);
 
         match &program.statements[0] {
-            Statement::ExpressionStatement {
+            Statement::AExpression {
                 token: _,
                 expression,
             } => match expression {
-                Expression::InfixExpression {
+                Expression::Infix {
                     token: _,
                     left,
                     operator,
@@ -263,11 +263,11 @@ fn parse_infix_expression_boolean() {
         assert_eq!(program.statements.len(), 1);
 
         match &program.statements[0] {
-            Statement::ExpressionStatement {
+            Statement::AExpression {
                 token: _,
                 expression,
             } => match expression {
-                Expression::InfixExpression {
+                Expression::Infix {
                     token: _,
                     left,
                     operator,
@@ -319,11 +319,11 @@ fn parse_if_condition() {
     assert_eq!(program.statements.len(), 1);
 
     match &program.statements[0] {
-        Statement::ExpressionStatement {
+        Statement::AExpression {
             token: _,
             expression,
         } => match expression {
-            Expression::IfExpression {
+            Expression::AIf {
                 consequence,
                 token,
                 condition,
@@ -332,7 +332,7 @@ fn parse_if_condition() {
                 assert!(alternative.is_none());
                 assert_eq!(token.kind, TokenKind::If);
                 match condition.as_ref() {
-                    Expression::InfixExpression {
+                    Expression::Infix {
                         token: _,
                         left,
                         operator,
@@ -346,7 +346,7 @@ fn parse_if_condition() {
                 }
 
                 match consequence.as_ref() {
-                    Statement::BlockStatement { statements, .. } => {
+                    Statement::Block { statements, .. } => {
                         assert_eq!(statements.len(), 1);
                     }
                     _ => panic!("Expected BlockStatement in consequence"),
@@ -367,11 +367,11 @@ fn parse_if_else_condition() {
     assert_eq!(program.statements.len(), 1);
 
     match &program.statements[0] {
-        Statement::ExpressionStatement {
+        Statement::AExpression {
             token: _,
             expression,
         } => match expression {
-            Expression::IfExpression {
+            Expression::AIf {
                 consequence,
                 token,
                 condition,
@@ -379,7 +379,7 @@ fn parse_if_else_condition() {
             } => {
                 assert_eq!(token.kind, TokenKind::If);
                 match condition.as_ref() {
-                    Expression::InfixExpression {
+                    Expression::Infix {
                         token: _,
                         left,
                         operator,
@@ -393,10 +393,10 @@ fn parse_if_else_condition() {
                 }
                 match alternative {
                     Some(alternative) => match alternative.as_ref() {
-                        Statement::BlockStatement { statements, .. } => {
+                        Statement::Block { statements, .. } => {
                             assert_eq!(statements.len(), 1);
                             match &statements[0] {
-                                Statement::ExpressionStatement {
+                                Statement::AExpression {
                                     token: _,
                                     expression,
                                 } => {
@@ -411,7 +411,7 @@ fn parse_if_else_condition() {
                 }
 
                 match consequence.as_ref() {
-                    Statement::BlockStatement { statements, .. } => {
+                    Statement::Block { statements, .. } => {
                         assert_eq!(statements.len(), 1);
                     }
                     _ => panic!("Expected BlockStatement in consequence"),
@@ -432,7 +432,7 @@ fn parse_function_literal() {
     assert_eq!(program.statements.len(), 1);
 
     match &program.statements[0] {
-        Statement::ExpressionStatement {
+        Statement::AExpression {
             token: _,
             expression,
         } => match expression {
@@ -445,18 +445,18 @@ fn parse_function_literal() {
                 assert_eq!(parameters[0].to_string(), "x");
                 assert_eq!(parameters[1].to_string(), "y");
                 let block = match body.as_ref() {
-                    Statement::BlockStatement { statements, .. } => &statements[0],
+                    Statement::Block { statements, .. } => &statements[0],
                     _ => panic!("Expected BlockStatement in function body"),
                 };
                 let expression = match block {
-                    Statement::ExpressionStatement {
+                    Statement::AExpression {
                         token: _,
                         expression,
                     } => expression,
                     _ => panic!("Expected ExpressionStatement in function body"),
                 };
                 match expression {
-                    Expression::InfixExpression {
+                    Expression::Infix {
                         token: _,
                         left,
                         operator,
@@ -484,11 +484,11 @@ fn parse_call_expression() {
     assert_eq!(program.statements.len(), 1);
 
     match &program.statements[0] {
-        Statement::ExpressionStatement {
+        Statement::AExpression {
             token: _,
             expression,
         } => match expression {
-            Expression::CallExpression {
+            Expression::Call {
                 token: _,
                 function,
                 arguments,
@@ -496,7 +496,7 @@ fn parse_call_expression() {
                 assert_eq!(function.to_string(), "add");
                 assert_eq!(arguments.len(), 2);
                 match &arguments[0] {
-                    Expression::InfixExpression {
+                    Expression::Infix {
                         token: _,
                         left,
                         operator,
@@ -525,11 +525,11 @@ fn parse_call_expression_with_literals() {
     assert_eq!(program.statements.len(), 1);
 
     match &program.statements[0] {
-        Statement::ExpressionStatement {
+        Statement::AExpression {
             token: _,
             expression,
         } => match expression {
-            Expression::CallExpression {
+            Expression::Call {
                 token: _,
                 function,
                 arguments,
