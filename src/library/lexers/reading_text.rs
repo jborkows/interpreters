@@ -13,24 +13,22 @@ pub(super) fn reading_text(
             starting_position,
             chars,
         } => match character {
-            '"' => {
-                return (
-                    LexerState::Idle,
-                    vec![Token::new(
-                        starting_position.token_ends_with(line_number, column_number),
-                        TokenKind::StringLiteral(chars.borrow_mut().iter().collect()),
-                    )],
-                );
-            }
+            '"' => (
+                LexerState::Idle,
+                vec![Token::new(
+                    starting_position.token_ends_with(line_number, column_number),
+                    TokenKind::StringLiteral(chars.borrow_mut().iter().collect()),
+                )],
+            ),
             _ => {
                 chars.borrow_mut().push(character);
-                return (
+                (
                     LexerState::ReadingText {
                         starting_position: *starting_position,
                         chars: chars.clone(),
                     },
                     vec![],
-                );
+                )
             }
         },
         _ => unreachable!(),
@@ -44,13 +42,13 @@ pub(super) fn text_end_of_line(state: &LexerState) -> (Option<LexerState>, Vec<T
             chars,
         } => {
             chars.borrow_mut().push('\n');
-            return (
+            (
                 Some(LexerState::ReadingText {
                     starting_position: *starting_position,
                     chars: chars.clone(),
                 }),
                 vec![],
-            );
+            )
         }
         _ => unreachable!(),
     }
@@ -70,7 +68,7 @@ pub(super) fn finish_text(
                 starting_position.token_ends_with(line_number, column_number),
                 TokenKind::Invalid(String::from("Unclosed string literal")),
             );
-            return Some(token);
+            Some(token)
         }
         _ => unreachable!(),
     }

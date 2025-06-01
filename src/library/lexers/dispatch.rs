@@ -17,7 +17,7 @@ pub(super) fn dispatch(
     character: char,
     state: &LexerState,
 ) -> (LexerState, Vec<Token>) {
-    return match state {
+    match state {
         LexerState::Idle => idle_parsing(line_number, column_number, character),
         LexerState::ReadingEquality {
             starting_position: _,
@@ -41,7 +41,7 @@ pub(super) fn dispatch(
             starting_position: _,
             chars: _,
         } => reading_identifier(line_number, column_number, character, state),
-    };
+    }
 }
 
 pub(super) fn end_of_line(
@@ -49,7 +49,7 @@ pub(super) fn end_of_line(
     line_number: u16,
     column_number: u16,
 ) -> (Option<LexerState>, Vec<Token>) {
-    return match state {
+    match state {
         LexerState::ReadingText {
             starting_position: _,
             chars: _,
@@ -59,7 +59,7 @@ pub(super) fn end_of_line(
             chars: _,
         } => identifier_end_of_line(state, line_number, column_number),
         _ => (None, vec![]),
-    };
+    }
 }
 
 pub(super) fn finish_it(state: &LexerState, line_number: u16, column_number: u16) -> Option<Token> {

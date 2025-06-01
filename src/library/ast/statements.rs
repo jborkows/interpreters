@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::{fmt::Display, rc::Rc};
 
 use crate::{join_collection, join_rc_collection, tokens::Token};
 
@@ -32,28 +32,24 @@ impl Node for Statement {
     }
 }
 
-impl ToString for Statement {
-    fn to_string(&self) -> String {
+impl Display for Statement {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Statement::Let { name, value, .. } => {
-                format!("let {}={}", name.to_string(), value.to_string())
+                write!(f, "let {}={}", name, value)
             }
             Statement::Return {
                 token,
                 return_value,
-            } => {
-                format!("{} {}", token.short(), return_value.to_string())
-            }
+            } => write!(f, "{} {}", token.short(), return_value),
             Statement::ExpressionStatement {
                 token: _,
                 expression,
-            } => format!("{}", expression.to_string()),
+            } => write!(f, "{}", expression),
             Statement::BlockStatement {
                 token: _,
                 statements,
-            } => {
-                format!("{}", join_rc_collection!(statements, " "))
-            }
+            } => write!(f, "{}", join_rc_collection!(statements, "\n")),
         }
     }
 }
@@ -68,8 +64,8 @@ impl Node for Program {
         self
     }
 }
-impl ToString for Program {
-    fn to_string(&self) -> String {
-        format!("{}", join_collection!(&self.statements, "\n"))
+impl Display for Program {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", join_collection!(&self.statements, "\n"))
     }
 }

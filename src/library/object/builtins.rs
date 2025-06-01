@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use crate::{object::int_value, tokens::Token};
 
 use super::error_at;
@@ -86,10 +88,10 @@ pub fn parse_built_in_function(function_name: &str) -> Option<BuiltInFunction> {
     }
 }
 
-impl ToString for BuiltInFunction {
-    fn to_string(&self) -> String {
+impl Display for BuiltInFunction {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            BuiltInFunction::Len => "len".to_string(),
+            BuiltInFunction::Len => write!(f, "len"),
         }
     }
 }

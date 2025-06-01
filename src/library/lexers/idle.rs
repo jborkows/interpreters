@@ -21,7 +21,7 @@ pub(super) fn idle_parsing(
 
         ch if ch.is_numeric() => Some(LexerState::ReadingNumber {
             starting_position: text_possition,
-            value: ch.to_digit(10).unwrap() as u32,
+            value: ch.to_digit(10).unwrap(),
         }),
         ch if ch.is_alphabetic() => Some(LexerState::ReadingIdentifier {
             starting_position: text_possition,
@@ -39,7 +39,7 @@ pub(super) fn idle_parsing(
         return (state, vec![]);
     }
 
-    return match read_special_character(character) {
+    match read_special_character(character) {
         Some(token_kind) => {
             let position = crate::lines::TextPosition {
                 line_number: crate::lines::LineNumber(line_number),
@@ -53,5 +53,5 @@ pub(super) fn idle_parsing(
             // Handle the case where the character is not a special character
             (LexerState::Idle, vec![])
         }
-    };
+    }
 }

@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use crate::lines::TokenPosition;
 
 #[derive(Debug)]
@@ -15,25 +17,27 @@ impl Token {
     }
 
     pub fn short(&self) -> String {
-        return self.kind.literal();
+        self.kind.literal()
     }
 
     pub fn position(&self) -> (usize, usize) {
         if let Some(context) = &self.context {
-            return (
+            (
                 context.start.line_number.0.into(),
                 context.start.column_number.0.into(),
-            );
+            )
+        } else {
+            (0, 0)
         }
-        (0, 0)
     }
 }
-impl ToString for Token {
-    fn to_string(&self) -> String {
+impl Display for Token {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if let Some(context) = &self.context {
-            return format!("{}: {}", context.to_string(), self.kind.literal());
+            write!(f, "{}: {}", context, self.kind.literal())
+        } else {
+            write!(f, "{}", self.kind.literal())
         }
-        self.kind.literal()
     }
 }
 
@@ -84,9 +88,9 @@ impl TokenKind {
     pub(crate) fn literal(&self) -> String {
         match self {
             TokenKind::Invalid(s) => format!("Invalid({})", s),
-            TokenKind::Identifier(s) => format!("{}", s),
-            TokenKind::StringLiteral(s) => format!("{}", s),
-            TokenKind::Integer(i) => format!("{}", i),
+            TokenKind::Identifier(s) => s.to_string(),
+            TokenKind::StringLiteral(s) => s.to_string(),
+            TokenKind::Integer(i) => i.to_string(),
             TokenKind::Comma => ",".to_string(),
             TokenKind::Semicolon => ";".to_string(),
             TokenKind::LeftParen => "(".to_string(),
@@ -115,9 +119,9 @@ impl TokenKind {
         }
     }
 }
-impl ToString for TokenKind {
-    fn to_string(&self) -> String {
-        self.literal()
+impl Display for TokenKind {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.literal())
     }
 }
 

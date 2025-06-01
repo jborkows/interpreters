@@ -26,7 +26,7 @@ pub(super) fn read_special_character(c: char) -> Option<TokenKind> {
 }
 
 pub(super) fn acceptable_separator(c: &char) -> bool {
-    return *c == ';' || c.is_whitespace() || *c == '\n' || *c == '\r' || *c == ',';
+    *c == ';' || c.is_whitespace() || *c == '\n' || *c == '\r' || *c == ','
 }
 
 pub(super) fn delegate_to_next<P>(
@@ -39,13 +39,13 @@ pub(super) fn delegate_to_next<P>(
 where
     P: Fn() -> TokenPosition,
 {
-    return delegate_to_next_position(
+    delegate_to_next_position(
         character,
         column_number,
         line_number,
         token_kind,
         token_position(),
-    );
+    )
 }
 
 pub(super) fn delegate_to_next_position(
@@ -58,5 +58,5 @@ pub(super) fn delegate_to_next_position(
     let mut tokens = vec![Token::new(token_position, token_kind)];
     let result = dispatch(line_number, column_number, character, &LexerState::Idle);
     tokens.extend(result.1);
-    return (result.0, tokens);
+    (result.0, tokens)
 }

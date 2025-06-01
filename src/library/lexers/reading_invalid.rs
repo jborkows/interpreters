@@ -16,25 +16,21 @@ pub(super) fn reading_invalid(
             starting_position,
             reason,
         } => match character {
-            character if acceptable_separator(&character) => {
-                return delegate_to_next(
-                    character,
-                    column_number,
-                    line_number,
-                    TokenKind::Invalid(reason.clone()),
-                    || starting_position.token_ends_with(line_number, column_number - 1),
-                );
-            }
+            character if acceptable_separator(&character) => delegate_to_next(
+                character,
+                column_number,
+                line_number,
+                TokenKind::Invalid(reason.clone()),
+                || starting_position.token_ends_with(line_number, column_number - 1),
+            ),
 
-            _ => {
-                return (
-                    LexerState::ReadingInvalid {
-                        starting_position: *starting_position,
-                        reason: reason.clone(),
-                    },
-                    vec![],
-                );
-            }
+            _ => (
+                LexerState::ReadingInvalid {
+                    starting_position: *starting_position,
+                    reason: reason.clone(),
+                },
+                vec![],
+            ),
         },
         _ => unreachable!(),
     }
@@ -54,7 +50,7 @@ pub(super) fn finish_invalid(
                 starting_position.token_ends_with(line_number, column_number),
                 TokenKind::Invalid(reason.clone()),
             );
-            return Some(token);
+            Some(token)
         }
         _ => unreachable!(),
     }

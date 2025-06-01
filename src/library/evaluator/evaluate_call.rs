@@ -34,7 +34,7 @@ pub fn evaluate_call_expression(
             token,
         );
     }
-    return apply_function(token, function, &parsed);
+    apply_function(token, function, &parsed)
 }
 
 fn apply_function(token: &Token, function: Rc<Object>, arguments: &[Rc<Object>]) -> Rc<Object> {
@@ -58,7 +58,7 @@ fn apply_function(token: &Token, function: Rc<Object>, arguments: &[Rc<Object>])
             }
         }
         Object::Builtin(ref func) => func.apply(token, arguments),
-        _ => return error_at("Call expression is not a function.", token),
+        _ => error_at("Call expression is not a function.", token),
     }
 }
 

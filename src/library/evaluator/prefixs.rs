@@ -29,14 +29,12 @@ pub(super) fn prefix_operator_evaluation(
 
 fn minus_operator_evaluation(token: &Token, right: &Object) -> Rc<Object> {
     match right {
-        Object::Int(value) => {
-            return int_value(-value);
-        }
+        Object::Int(value) => int_value(-value),
         _ => error_at(
             format!(
                 "Minus (-) cannot be applied to {} ({})",
-                type_of(&right),
-                right.to_string()
+                type_of(right),
+                right
             )
             .as_str(),
             token,
@@ -53,8 +51,8 @@ fn bang_operator_evaluation(token: &Token, right: &Object) -> Rc<Object> {
         _ => error_at(
             format!(
                 "Bang operator cannot be used to {} ({})",
-                type_of(&right),
-                right.to_string()
+                type_of(right),
+                right
             )
             .as_str(),
             token,

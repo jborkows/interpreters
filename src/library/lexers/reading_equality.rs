@@ -13,30 +13,26 @@ pub(super) fn reading_equality(
 ) -> (LexerState, Vec<Token>) {
     match state {
         LexerState::ReadingEquality { starting_position } => match character {
-            '=' => {
-                return (
-                    LexerState::Idle,
-                    vec![Token::new(
-                        starting_position.token_ends_with(line_number, column_number),
-                        crate::tokens::TokenKind::Equal,
-                    )],
-                );
-            }
+            '=' => (
+                LexerState::Idle,
+                vec![Token::new(
+                    starting_position.token_ends_with(line_number, column_number),
+                    crate::tokens::TokenKind::Equal,
+                )],
+            ),
 
-            _ => {
-                return delegate_to_next(
-                    character,
-                    column_number,
-                    line_number,
-                    TokenKind::Assign,
-                    || {
-                        TokenPosition::single_character(
-                            starting_position.line_number,
-                            starting_position.column_number,
-                        )
-                    },
-                );
-            }
+            _ => delegate_to_next(
+                character,
+                column_number,
+                line_number,
+                TokenKind::Assign,
+                || {
+                    TokenPosition::single_character(
+                        starting_position.line_number,
+                        starting_position.column_number,
+                    )
+                },
+            ),
         },
         _ => unreachable!(),
     }
@@ -52,7 +48,7 @@ pub(super) fn finish_equality(state: &LexerState) -> Option<Token> {
                 ),
                 TokenKind::Assign,
             );
-            return Some(token);
+            Some(token)
         }
         _ => unreachable!(),
     }

@@ -14,14 +14,10 @@ pub(super) fn evaluate_indentifier(token: &Token, env: Rc<RefCell<Environment>>)
             if let Some(value) = parse_built_in_function(name) {
                 return Rc::new(Object::Builtin(value));
             }
-            return error_at(format!("Identifier '{}' not found.", name).as_str(), token);
+            error_at(format!("Identifier '{}' not found.", name).as_str(), token)
         }
         _ => error_at(
-            format!(
-                "Identifier evaluation not implemented: {}",
-                token.to_string()
-            )
-            .as_str(),
+            format!("Identifier evaluation not implemented: {}", token).as_str(),
             token,
         ),
     }

@@ -42,9 +42,8 @@ impl Lexer {
             }
         }
         let result = end_of_line(&self.state, self.current_line, self.current_column);
-        match result.0 {
-            Some(s) => self.state = s,
-            None => {}
+        if let Some(s) = result.0 {
+            self.state = s;
         }
         let tokens = result.1;
         for token in tokens {
@@ -56,14 +55,12 @@ impl Lexer {
     pub fn next(&mut self) -> Option<Rc<Token>> {
         let result = self.source.pop_front();
         match result {
-            Some(token) => {
-                return Some(token);
-            }
+            Some(token) => Some(token),
             None => {
                 if env::var("DEBUG").is_ok() {
                     println!("Finishing up {:?}", self.state);
                 }
-                return self.finish();
+                self.finish()
             }
         }
     }
@@ -74,7 +71,7 @@ impl Lexer {
         }
         let token = finish_it(&self.state, self.current_line, self.current_column);
         self.state = LexerState::Idle;
-        return token.map(|t| Rc::new(t));
+        token.map(Rc::new)
     }
 }
 

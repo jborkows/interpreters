@@ -1,4 +1,4 @@
-use std::{any::Any, rc::Rc};
+use std::{any::Any, fmt::Display, rc::Rc};
 
 use crate::{
     join_collection, join_rc_collection,
@@ -51,21 +51,20 @@ impl Node for Expression {
         self
     }
 }
-
-impl ToString for Expression {
-    fn to_string(&self) -> String {
+impl Display for Expression {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Expression::Identifier(token) => {
                 let real_type = token.as_ref();
                 match &real_type.kind {
-                    TokenKind::Identifier(s) => s.to_string(),
+                    TokenKind::Identifier(s) => write!(f, "{}", s),
                     _ => panic!("Invalid token type for Identifier: {:?}", real_type),
                 }
             }
             Expression::IntegerLiteral(token) => {
                 let real_type = token.as_ref();
                 match &real_type.kind {
-                    TokenKind::Integer(i) => i.to_string(),
+                    TokenKind::Integer(i) => write!(f, "{}", i),
                     _ => panic!("Invalid token type for IntegerLiteral: {:?}", real_type),
                 }
             }
@@ -73,33 +72,26 @@ impl ToString for Expression {
                 token: _,
                 operator,
                 right,
-            } => {
-                format!("({}{})", operator.to_string(), right.to_string())
-            }
+            } => write!(f, "({}{})", operator, right),
             Expression::InfixExpression {
                 token: _,
                 left,
                 operator,
                 right,
-            } => format!(
-                "({} {} {})",
-                left.to_string(),
-                operator.to_string(),
-                right.to_string()
-            ),
+            } => write!(f, "({} {} {})", left, operator, right),
             Expression::CallExpression {
                 token: _,
                 function,
                 arguments,
             } => {
                 let args = join_collection!(arguments, ", ");
-                format!("{}({})", function.to_string(), args)
+                write!(f, "{}({})", function, args)
             }
-            Expression::BooleanLiteral { token: _, value } => value.to_string(),
+            Expression::BooleanLiteral { token: _, value } => write!(f, "{}", value),
             Expression::StringLiteral(token) => {
                 let real_type = token.as_ref();
                 match &real_type.kind {
-                    TokenKind::StringLiteral(s) => s.to_string(),
+                    TokenKind::StringLiteral(s) => write!(f, "{}", s),
                     _ => panic!("Invalid token type for StringLiteral: {:?}", real_type),
                 }
             }
@@ -109,7 +101,7 @@ impl ToString for Expression {
                 consequence,
                 alternative,
             } => {
-                let mut result = format!("if ({}){{", condition.to_string());
+                let mut result = format!("if ({}){{", condition);
                 result.push_str(&consequence.to_string());
                 result.push('}');
                 if let Some(alt) = &alternative {
@@ -117,7 +109,7 @@ impl ToString for Expression {
                     result.push_str(&alt.to_string());
                     result.push('}');
                 }
-                result
+                write!(f, "{}", result)
             }
             Expression::FunctionLiteral {
                 token: _,
@@ -125,11 +117,12 @@ impl ToString for Expression {
                 body,
             } => {
                 let params = join_rc_collection!(parameters, ", ");
-                format!("fn({}){{ {} }}", params, body.to_string())
+                write!(f, "fn({}){{ {} }}", params, body)
             }
         }
     }
 }
+
 pub fn if_expression(
     token: Rc<Token>,
     condition: Expression,
@@ -153,7 +146,7 @@ pub fn if_expression(
         token,
         condition: Box::new(condition),
         consequence: Box::new(consequence),
-        alternative: alternative.map(|alt| Box::new(alt)),
+        alternative: alternative.map(Box::new),
     }
 }
 pub fn function_literal(
@@ -192,11 +185,11 @@ pub(crate) enum PrefixOperatorType {
     Minus,
 }
 
-impl ToString for PrefixOperatorType {
-    fn to_string(&self) -> String {
+impl Display for PrefixOperatorType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            PrefixOperatorType::Bang => "!".to_string(),
-            PrefixOperatorType::Minus => "-".to_string(),
+            PrefixOperatorType::Bang => write!(f, "!"),
+            PrefixOperatorType::Minus => write!(f, "-"),
         }
     }
 }
@@ -212,17 +205,18 @@ pub(crate) enum InfixOperatorType {
     GreaterThan,
     Equal,
 }
-impl ToString for InfixOperatorType {
-    fn to_string(&self) -> String {
+
+impl Display for InfixOperatorType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            InfixOperatorType::Plus => "+".to_string(),
-            InfixOperatorType::Minus => "-".to_string(),
-            InfixOperatorType::NotEqual => "!=".to_string(),
-            InfixOperatorType::Multiply => "*".to_string(),
-            InfixOperatorType::Divide => "/".to_string(),
-            InfixOperatorType::LessThan => "<".to_string(),
-            InfixOperatorType::GreaterThan => ">".to_string(),
-            InfixOperatorType::Equal => "==".to_string(),
+            InfixOperatorType::Plus => write!(f, "+"),
+            InfixOperatorType::Minus => write!(f, "-"),
+            InfixOperatorType::NotEqual => write!(f, "!="),
+            InfixOperatorType::Multiply => write!(f, "*"),
+            InfixOperatorType::Divide => write!(f, "/"),
+            InfixOperatorType::LessThan => write!(f, "<"),
+            InfixOperatorType::GreaterThan => write!(f, ">"),
+            InfixOperatorType::Equal => write!(f, "=="),
         }
     }
 }

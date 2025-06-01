@@ -55,26 +55,26 @@ pub(super) fn infix_operator_evaluation(
                 &right_value.to_string(),
             ),
             Object::String(ref right_value) => {
-                string_infix_evaluation(operator, &left_value.to_string(), &right_value)
+                string_infix_evaluation(operator, &left_value.to_string(), right_value)
             }
             _ => None,
         },
         _ => None,
     };
-    return some_value.unwrap_or_else(|| {
+    some_value.unwrap_or_else(|| {
         error_at(
             format!(
                 "Cannot use {} on {}({}) and {}({})",
-                operator.to_string(),
+                operator,
                 type_of(&left),
-                left.to_string(),
+                left,
                 type_of(&right),
-                right.to_string()
+                right
             )
             .as_str(),
             token,
         )
-    });
+    })
 }
 
 fn string_infix_evaluation(
@@ -85,7 +85,7 @@ fn string_infix_evaluation(
     match operator {
         InfixOperatorType::Plus => {
             let result = format!("{}{}", left, right);
-            return Some(string_value(result));
+            Some(string_value(result))
         }
         InfixOperatorType::Equal => Some(boolean_value(left == right)),
         InfixOperatorType::NotEqual => Some(boolean_value(left != right)),
@@ -100,7 +100,7 @@ fn int_to_string_infix_evaluation(
     match operator {
         InfixOperatorType::Plus => {
             let result = format!("{}{}", left_value, right_value);
-            return Some(string_value(result));
+            Some(string_value(result))
         }
         _ => None,
     }
@@ -114,14 +114,14 @@ fn string_to_int_infix_evaluation(
     match operator {
         InfixOperatorType::Plus => {
             let result = format!("{}{}", left, right_value);
-            return Some(string_value(result));
+            Some(string_value(result))
         }
         InfixOperatorType::Multiply => {
             let mut result = String::new();
             for _ in 0..right_value {
                 result.push_str(left);
             }
-            return Some(string_value(result));
+            Some(string_value(result))
         }
         _ => None,
     }

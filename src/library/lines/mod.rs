@@ -1,4 +1,4 @@
-use std::{env, ops::Add};
+use std::{env, fmt::Display, ops::Add};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct LineNumber(pub u16);
@@ -52,15 +52,16 @@ impl TextPosition {
         TokenPosition::new(*self, TextPosition::new(line_number, column_number))
     }
 }
-impl ToString for TextPosition {
-    fn to_string(&self) -> String {
+impl Display for TextPosition {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if env::var("DEBUG").is_ok() {
-            return format!(
+            write!(
+                f,
                 "Line: {}, Column: {}",
                 self.line_number.0, self.column_number.0
-            );
+            )
         } else {
-            return format!("{},{}", self.line_number.0, self.column_number.0);
+            write!(f, "{},{}", self.line_number.0, self.column_number.0)
         }
     }
 }
@@ -87,17 +88,21 @@ impl TokenPosition {
             },
         }
     }
-}
-impl ToString for TokenPosition {
-    fn to_string(&self) -> String {
-        if self.start.line_number == self.end.line_number
+    fn is_single_character(&self) -> bool {
+        self.start.line_number == self.end.line_number
             && self.start.column_number == self.end.column_number
-        {
-            return format!(
+    }
+}
+impl Display for TokenPosition {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if self.is_single_character() {
+            write!(
+                f,
                 "({},{})",
                 self.start.line_number.0, self.start.column_number.0
-            );
+            )
+        } else {
+            write!(f, "({})->({})", self.start, self.end)
         }
-        format!("({})->({})", self.start.to_string(), self.end.to_string())
     }
 }

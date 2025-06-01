@@ -19,23 +19,17 @@ pub(super) fn reading_identifier(
             character if character.is_alphanumeric() => {
                 let mut chars = chars.clone();
                 chars.push(character);
-                return (
+                (
                     LexerState::ReadingIdentifier {
                         starting_position: *starting_position,
                         chars,
                     },
                     vec![],
-                );
+                )
             }
             _ => {
                 let result = finish_it(line_number, column_number - 1, state);
-                return delegate_to_next_position(
-                    character,
-                    column_number,
-                    line_number,
-                    result.0,
-                    result.1,
-                );
+                delegate_to_next_position(character, column_number, line_number, result.0, result.1)
             }
         },
         _ => unreachable!(),
@@ -65,10 +59,10 @@ fn finish_it(
                 _ => TokenKind::Identifier(text),
             };
             let position = starting_position.token_ends_with(line_number, column_number);
-            return (token_kind, position);
+            (token_kind, position)
         }
         _ => unreachable!(),
-    };
+    }
 }
 
 pub(super) fn identifier_end_of_line(
@@ -77,7 +71,7 @@ pub(super) fn identifier_end_of_line(
     column_number: u16,
 ) -> (Option<LexerState>, Vec<Token>) {
     let result = finish_it(line_number, column_number, state);
-    return (Some(LexerState::Idle), vec![Token::new(result.1, result.0)]);
+    (Some(LexerState::Idle), vec![Token::new(result.1, result.0)])
 }
 
 pub(super) fn finish_identifier(
@@ -91,7 +85,7 @@ pub(super) fn finish_identifier(
             chars: _,
         } => {
             let result = finish_it(line_number, column_number, state);
-            return Some(Token::new(result.1, result.0));
+            Some(Token::new(result.1, result.0))
         }
         _ => unreachable!(),
     }

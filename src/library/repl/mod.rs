@@ -26,8 +26,8 @@ pub fn start() {
             continue;
         }
 
-        println!("Parsed program: {}", program.to_string());
+        println!("Parsed program: {}", program);
         let result = crate::evaluator::evaluate(&program, environemnt.clone());
-        println!("Evaluation result: {}", result.to_string());
+        println!("Evaluation result: {}", result);
     }
 }

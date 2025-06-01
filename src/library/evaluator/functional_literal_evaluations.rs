@@ -35,6 +35,6 @@ pub fn function_literal_evaluation(
             }),
             env: env.clone(),
         }),
-        _ => return error_at("Function body must be a block statement.", token),
+        _ => error_at("Function body must be a block statement.", token),
     }
 }

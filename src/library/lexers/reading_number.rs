@@ -15,35 +15,31 @@ pub(super) fn reading_number(
         } => match character {
             '0'..='9' => {
                 let next_digit = character.to_digit(10).unwrap();
-                let new_value = *value * 10 + next_digit as u32;
-                return (
+                let new_value = *value * 10 + next_digit;
+                (
                     LexerState::ReadingNumber {
                         starting_position: *starting_position,
                         value: new_value,
                     },
                     vec![],
-                );
+                )
             }
 
-            character if character.is_alphabetic() || character == '_' => {
-                return (
-                    LexerState::ReadingInvalid {
-                        starting_position: *starting_position,
-                        reason: format!("Unexpected character '{}' in number", character),
-                    },
-                    vec![],
-                );
-            }
+            character if character.is_alphabetic() || character == '_' => (
+                LexerState::ReadingInvalid {
+                    starting_position: *starting_position,
+                    reason: format!("Unexpected character '{}' in number", character),
+                },
+                vec![],
+            ),
 
-            _ => {
-                return delegate_to_next(
-                    character,
-                    column_number,
-                    line_number,
-                    TokenKind::Integer(*value as u32),
-                    || starting_position.token_ends_with(line_number, column_number - 1),
-                );
-            }
+            _ => delegate_to_next(
+                character,
+                column_number,
+                line_number,
+                TokenKind::Integer(*value),
+                || starting_position.token_ends_with(line_number, column_number - 1),
+            ),
         },
         _ => unreachable!(),
     }
@@ -61,9 +57,9 @@ pub(super) fn finish_number(
         } => {
             let token = Token::new(
                 starting_position.token_ends_with(line_number, column_number),
-                TokenKind::Integer(*value as u32),
+                TokenKind::Integer(*value),
             );
-            return Some(token);
+            Some(token)
         }
         _ => unreachable!(),
     }

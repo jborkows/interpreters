@@ -25,24 +25,18 @@ pub(super) fn evaluate_expression(
                 TokenKind::Integer(value) => {
                     // Handle integer literal evaluation
                     let value = value as i64;
-                    return allocation_counting!(int_value(value), value);
+                    allocation_counting!(int_value(value), value)
                 }
                 _ => unreachable!("Expected an integer token, got: {:?}", token),
             }
         }
         Expression::BooleanLiteral { token, value: _ } => match token.as_ref().kind {
-            TokenKind::True => {
-                return true_value();
-            }
-            TokenKind::False => {
-                return false_value();
-            }
+            TokenKind::True => true_value(),
+            TokenKind::False => false_value(),
             _ => unreachable!("Expected a boolean token, got: {:?}", token),
         },
         Expression::StringLiteral(token) => match token.as_ref().kind {
-            TokenKind::StringLiteral(ref value) => {
-                return string_value(value.to_string());
-            }
+            TokenKind::StringLiteral(ref value) => string_value(value.to_string()),
             _ => unreachable!("Expected a string token, got: {:?}", token),
         },
         Expression::PrefixOperator {
@@ -60,7 +54,7 @@ pub(super) fn evaluate_expression(
             end_flow!(left_value);
             let right_value = evaluate_expression(right, env.clone());
             end_flow!(right_value);
-            return infix_operator_evaluation(token, operator, left_value, right_value);
+            infix_operator_evaluation(token, operator, left_value, right_value)
         }
         Expression::IfExpression {
             token: _,
@@ -70,11 +64,11 @@ pub(super) fn evaluate_expression(
         } => {
             let condition_value = evaluate_expression(condition, env.clone());
             if is_truthy(condition_value.as_ref()) {
-                return evaluate(consequence.as_ref(), env.clone());
+                evaluate(consequence.as_ref(), env.clone())
             } else if let Some(alternative) = alternative {
-                return evaluate(alternative.as_ref(), env.clone());
+                evaluate(alternative.as_ref(), env.clone())
             } else {
-                return null_value();
+                null_value()
             }
         }
         Expression::Identifier(token) => evaluate_indentifier(token, env.clone()),

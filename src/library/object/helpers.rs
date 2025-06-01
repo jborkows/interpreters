@@ -14,7 +14,7 @@ pub fn null_value() -> Rc<Object> {
 }
 
 pub fn int_value(int: i64) -> Rc<Object> {
-    if int >= 0 && int <= 255 {
+    if (0..=255).contains(&int) {
         // Use the preallocated small integer pool for small integers
         // no real benefit looking at allocation counting here, but it is for fun of generating the
         // code
@@ -39,5 +39,5 @@ pub fn is_truthy(condition_value: &Object) -> bool {
     if *condition_value == FALSE {
         return false;
     }
-    return true;
+    true
 }

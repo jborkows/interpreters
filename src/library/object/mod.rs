@@ -1,4 +1,4 @@
-use std::{cell::RefCell, rc::Rc};
+use std::{cell::RefCell, fmt::Display, rc::Rc};
 
 use crate::{ast::statements::Statement, join_collection, tokens::Token};
 mod builtins;
@@ -59,9 +59,9 @@ impl PartialEq for Object {
 pub struct Identifier {
     pub name: String,
 }
-impl ToString for Identifier {
-    fn to_string(&self) -> String {
-        self.name.clone()
+impl Display for Identifier {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.name)
     }
 }
 
@@ -86,39 +86,27 @@ pub fn type_of(object: &Object) -> String {
             parameters,
             body: _,
             env: _,
-        } => {
-            let params = join_collection!(parameters, ", ");
-            return format!("Function  {}", params);
-        }
+        } => join_collection!(parameters, ", "),
         Object::Builtin(built_in_function) => {
             "BuiltInFunction: ".to_string() + &built_in_function.to_string()
         }
     }
 }
-
-impl ToString for Object {
-    fn to_string(&self) -> String {
+impl Display for Object {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Object::Int(i) => i.to_string(),
-            Object::String(s) => s.clone(),
-            Object::Boolean(value) => {
-                if *value {
-                    "true".to_string()
-                } else {
-                    "false".to_string()
-                }
-            }
-            Object::Null => "NULL".to_string(),
-            Object::ReturnValue(object) => object.to_string(),
+            Object::Int(i) => write!(f, "{}", i),
+            Object::String(s) => write!(f, "{}", s),
+            Object::Boolean(value) => write!(f, "{}", value),
+            Object::Null => write!(f, "NULL"),
+            Object::ReturnValue(object) => write!(f, "{}", object),
             Object::Error {
                 message,
                 line,
                 column,
-            } => {
-                format!("Error at {}:{} -> {}", line, column, message)
-            }
-            Object::Function { .. } => type_of(self),
-            Object::Builtin(built_in_function) => built_in_function.to_string(),
+            } => write!(f, "Error at {}:{} -> {}", line, column, message),
+            Object::Function { .. } => write!(f, "{}", type_of(self)),
+            Object::Builtin(built_in_function) => write!(f, "{}", built_in_function),
         }
     }
 }

@@ -80,7 +80,7 @@ fn evaluate_statement(statement: &Statement, env: Rc<RefCell<Environment>>) -> R
             return_value,
         } => {
             let return_value = evaluate_expression(return_value, env.clone());
-            return Rc::new(Object::ReturnValue(return_value));
+            Rc::new(Object::ReturnValue(return_value))
         }
         Statement::Let { token, name, value } => let_statement(token, name, value, env.clone()),
     }
