@@ -75,30 +75,6 @@ impl TokenPosition {
     pub fn new(start: TextPosition, end: TextPosition) -> Self {
         Self { start, end }
     }
-    pub fn from_range(start_line: u16, start_column: u16, end_line: u16, end_column: u16) -> Self {
-        Self {
-            start: TextPosition {
-                line_number: LineNumber(start_line),
-                column_number: ColumnNumber(start_column),
-            },
-            end: TextPosition {
-                line_number: LineNumber(end_line),
-                column_number: ColumnNumber(end_column),
-            },
-        }
-    }
-    pub fn single(line_number: u16, column_number: u16) -> Self {
-        Self {
-            start: TextPosition {
-                line_number: LineNumber(line_number),
-                column_number: ColumnNumber(column_number),
-            },
-            end: TextPosition {
-                line_number: LineNumber(line_number),
-                column_number: ColumnNumber(column_number),
-            },
-        }
-    }
     pub fn single_character(line_number: LineNumber, column_number: ColumnNumber) -> Self {
         Self {
             start: TextPosition {

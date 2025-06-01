@@ -1,12 +1,19 @@
+#[cfg(not(feature = "track-allocation"))]
+use std::alloc::System;
+#[cfg(feature = "track-allocation")]
 use std::alloc::{GlobalAlloc, Layout, System};
 #[cfg(feature = "track-allocation")]
 use std::backtrace::Backtrace;
+#[cfg(feature = "track-allocation")]
 use std::sync::atomic::{AtomicUsize, Ordering};
 
+#[cfg(feature = "track-allocation")]
 struct CountingAllocator;
 
+#[cfg(feature = "track-allocation")]
 static ALLOC_COUNT: AtomicUsize = AtomicUsize::new(0);
 
+#[cfg(feature = "track-allocation")]
 unsafe impl GlobalAlloc for CountingAllocator {
     unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
         unsafe {

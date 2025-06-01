@@ -84,8 +84,8 @@ pub fn type_of(object: &Object) -> String {
         Object::Null => "Null".to_string(),
         Object::Function {
             parameters,
-            body,
-            env,
+            body: _,
+            env: _,
         } => {
             let params = join_collection!(parameters, ", ");
             return format!("Function  {}", params);

@@ -33,6 +33,7 @@ pub enum Expression {
     },
     StringLiteral(Rc<Token>),
     IfExpression {
+        #[allow(dead_code)]
         token: Rc<Token>,
         condition: Box<Expression>,
         consequence: Box<Statement>,
@@ -119,7 +120,7 @@ impl ToString for Expression {
                 result
             }
             Expression::FunctionLiteral {
-                token,
+                token: _,
                 parameters,
                 body,
             } => {

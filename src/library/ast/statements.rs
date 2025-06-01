@@ -16,6 +16,7 @@ pub enum Statement {
         return_value: Expression,
     },
     ExpressionStatement {
+        #[allow(dead_code)]
         token: Rc<Token>,
         expression: Expression,
     },

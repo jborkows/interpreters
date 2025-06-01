@@ -91,15 +91,6 @@ pub struct LexingIterator<I: Iterator<Item = String>> {
     lexer: Lexer,
 }
 
-impl<I: Iterator<Item = String>> LexingIterator<I> {
-    pub fn new(lines: I) -> Self {
-        LexingIterator {
-            lines: lines.peekable(),
-            lexer: Lexer::new(),
-        }
-    }
-}
-
 impl<I: Iterator<Item = String>> Iterator for LexingIterator<I> {
     type Item = Rc<Token>;
 

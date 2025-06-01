@@ -19,6 +19,8 @@ pub(super) fn read_special_character(c: char) -> Option<TokenKind> {
         '<' => Some(TokenKind::LessThen),
         '>' => Some(TokenKind::GreaterThen),
         '/' => Some(TokenKind::Slash),
+        ']' => Some(TokenKind::RightBracket),
+        '[' => Some(TokenKind::LeftBracket),
         _ => None,
     }
 }

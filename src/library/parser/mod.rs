@@ -494,8 +494,3 @@ enum Precedence {
     Prefix,
     Call,
 }
-
-enum FailIfPrefixNotFound {
-    Yes,
-    No,
-}
