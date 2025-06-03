@@ -545,6 +545,55 @@ fn parse_call_expression_with_literals() {
     }
 }
 
+#[test]
+fn parse_array_literal() {
+    let input = "[1, 2*2, 3-1];";
+    let mut parser = Parser::from_string(input);
+    let program = parser.parse_program();
+    check_parser_errors(&parser);
+    assert_eq!(program.statements.len(), 1);
+
+    match &program.statements[0] {
+        Statement::AExpression {
+            token: _,
+            expression,
+        } => match expression {
+            Expression::ArrayLiteral { token: _, elements } => {
+                assert_eq!(elements.len(), 3);
+                check_if_integer_literal_equals(&elements[0], 1);
+                match &elements[1] {
+                    Expression::Infix {
+                        token: _,
+                        left,
+                        operator,
+                        right,
+                    } => {
+                        assert_eq!(*operator, InfixOperatorType::Multiply);
+                        check_if_integer_literal_equals(left, 2);
+                        check_if_integer_literal_equals(right, 2);
+                    }
+                    _ => panic!("Expected InfixExpression for second element"),
+                }
+                match &elements[2] {
+                    Expression::Infix {
+                        token: _,
+                        left,
+                        operator,
+                        right,
+                    } => {
+                        assert_eq!(*operator, InfixOperatorType::Minus);
+                        check_if_integer_literal_equals(left, 3);
+                        check_if_integer_literal_equals(right, 1);
+                    }
+                    _ => panic!("Expected InfixExpression for third element"),
+                }
+            }
+            _ => panic!("Expected ArrayLiteral, got {:?}", expression),
+        },
+        _ => panic!("Expected ExpressionStatement"),
+    }
+}
+
 fn check_parser_errors(parser: &Parser) {
     if !parser.errors.is_empty() {
         panic!(

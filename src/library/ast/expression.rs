@@ -44,6 +44,10 @@ pub enum Expression {
         parameters: Rc<Vec<Expression>>, // Identifier
         body: Box<Statement>,
     },
+    ArrayLiteral {
+        token: Rc<Token>,
+        elements: Vec<Expression>,
+    },
 }
 
 impl Node for Expression {
@@ -118,6 +122,10 @@ impl Display for Expression {
             } => {
                 let params = join_rc_collection!(parameters, ", ");
                 write!(f, "fn({}){{ {} }}", params, body)
+            }
+            Expression::ArrayLiteral { token: _, elements } => {
+                let elems = join_collection!(elements, ", ");
+                write!(f, "[{}]", elems)
             }
         }
     }

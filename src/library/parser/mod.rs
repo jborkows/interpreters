@@ -192,6 +192,7 @@ impl Parser {
             TokenKind::LeftParen => self.parse_grouped_expression(),
             TokenKind::If => self.parse_if_expression(),
             TokenKind::Function => self.parse_function_expression(),
+            TokenKind::LeftBracket => self.parse_array_literal(),
             _ => None,
         }
     }
@@ -397,7 +398,7 @@ impl Parser {
 
     fn parse_call_expression(&mut self, left_exp: Expression) -> Option<Expression> {
         let current_token = self.current_token.clone();
-        let arguments = self.parse_call_arguments();
+        let arguments = self.parse_expression_list(&PureTokenKind::RightParen);
         Some(Expression::Call {
             token: current_token,
             function: Box::new(left_exp),
@@ -405,8 +406,8 @@ impl Parser {
         })
     }
 
-    fn parse_call_arguments(&mut self) -> Vec<Expression> {
-        if self.peek_token_is(&PureTokenKind::RightParen) {
+    fn parse_expression_list(&mut self, ending: &PureTokenKind) -> Vec<Expression> {
+        if self.peek_token_is(ending) {
             self.save_next_token();
             return vec![];
         }
@@ -426,11 +427,20 @@ impl Parser {
                     .push("Expected expression after comma".to_string());
             }
         }
-        if !self.expect_peek_and_move_into(&PureTokenKind::RightParen) {
+        if !self.expect_peek_and_move_into(ending) {
             self.errors
                 .push("Expected right parenthesis after call arguments".to_string());
         }
         arguments
+    }
+
+    fn parse_array_literal(&mut self) -> Option<Expression> {
+        let elements = self.parse_expression_list(&PureTokenKind::RightBracket);
+        let current_token = self.current_token.clone();
+        Some(Expression::ArrayLiteral {
+            token: current_token,
+            elements,
+        })
     }
 }
 
