@@ -300,6 +300,10 @@ fn test_precedense_parsing() {
         ("a + (b + c) + d", "((a + (b + c)) + d)"),
         ("-(a + b)", "(-(a + b))"),
         ("a + add(b*c) + d", "((a + add((b * c))) + d)"),
+        (
+            "a * [1, 2, 3][b * c] *d",
+            "((a * ([1, 2, 3][(b * c)])) * d)",
+        ),
     ];
     for (input, expected) in inputs {
         let mut parser = Parser::from_string(input);
@@ -589,6 +593,45 @@ fn parse_array_literal() {
                 }
             }
             _ => panic!("Expected ArrayLiteral, got {:?}", expression),
+        },
+        _ => panic!("Expected ExpressionStatement"),
+    }
+}
+
+#[test]
+fn parse_index_expression() {
+    let input = "myArray[1+1];";
+    let mut parser = Parser::from_string(input);
+    let program = parser.parse_program();
+    check_parser_errors(&parser);
+    assert_eq!(program.statements.len(), 1);
+
+    match &program.statements[0] {
+        Statement::AExpression {
+            token: _,
+            expression,
+        } => match expression {
+            Expression::Index {
+                token: _,
+                array,
+                index,
+            } => {
+                assert_eq!(array.to_string(), "myArray");
+                match index.as_ref() {
+                    Expression::Infix {
+                        token: _,
+                        left,
+                        operator,
+                        right,
+                    } => {
+                        assert_eq!(*operator, InfixOperatorType::Plus);
+                        check_if_integer_literal_equals(left, 1);
+                        check_if_integer_literal_equals(right, 1);
+                    }
+                    _ => panic!("Expected InfixExpression for index"),
+                }
+            }
+            _ => panic!("Expected IndexExpression, got {:?}", expression),
         },
         _ => panic!("Expected ExpressionStatement"),
     }

@@ -48,6 +48,11 @@ pub enum Expression {
         token: Rc<Token>,
         elements: Vec<Expression>,
     },
+    Index {
+        token: Rc<Token>,
+        array: Box<Expression>,
+        index: Box<Expression>,
+    },
 }
 
 impl Node for Expression {
@@ -126,6 +131,13 @@ impl Display for Expression {
             Expression::ArrayLiteral { token: _, elements } => {
                 let elems = join_collection!(elements, ", ");
                 write!(f, "[{}]", elems)
+            }
+            Expression::Index {
+                token: _,
+                array,
+                index,
+            } => {
+                write!(f, "{}[{}]", array, index)
             }
         }
     }
