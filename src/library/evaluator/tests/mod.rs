@@ -11,4 +11,6 @@ mod prefixs_tests;
 mod return_tests;
 
 mod arrays_tests;
-mod builtin_tests;
+mod builtin_first_tests;
+mod builtin_last_tests;
+mod builtin_len_tests;

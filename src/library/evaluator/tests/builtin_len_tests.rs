@@ -4,6 +4,7 @@ expected_integer_as_result_tests! {
     len: ("len(\"xx\")", 2),
     len_with_spaces: ("len(\"xx  \")", 4),
     len_expression: ("len(\"x\"*3)", 3),
+    len_for_array: ("len([1, 2, 3])", 3),
 }
 
 expected_error_with_text! { "Invalid argument",
