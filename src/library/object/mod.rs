@@ -28,6 +28,9 @@ pub enum Object {
         env: Rc<RefCell<Environment>>,
     },
     Builtin(BuiltInFunction),
+    Array {
+        elements: Vec<Rc<Object>>,
+    },
 }
 
 impl PartialEq for Object {
@@ -90,6 +93,7 @@ pub fn type_of(object: &Object) -> String {
         Object::Builtin(built_in_function) => {
             "BuiltInFunction: ".to_string() + &built_in_function.to_string()
         }
+        Object::Array { .. } => "Array".to_string(),
     }
 }
 impl Display for Object {
@@ -107,6 +111,10 @@ impl Display for Object {
             } => write!(f, "Error at {}:{} -> {}", line, column, message),
             Object::Function { .. } => write!(f, "{}", type_of(self)),
             Object::Builtin(built_in_function) => write!(f, "{}", built_in_function),
+            Object::Array { elements } => {
+                let elements_str: Vec<String> = elements.iter().map(|e| e.to_string()).collect();
+                write!(f, "[{}]", join_collection!(elements_str, ", "))
+            }
         }
     }
 }

@@ -13,7 +13,9 @@ use crate::{
 };
 use evaluator_expression::evaluate_expression;
 
+mod arrays;
 mod evaluate_call;
+mod evaluate_expressions;
 mod evaluate_identifier;
 mod evaluator_expression;
 mod functional_literal_evaluations;

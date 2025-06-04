@@ -3,7 +3,7 @@ use std::{cell::RefCell, rc::Rc};
 use crate::{
     ast::expression::Expression,
     end_flow,
-    evaluator::evaluate,
+    evaluator::{evaluate, evaluate_expressions::evaluate_expressions},
     object::{Environment, Identifier, Object, error_at},
     tokens::Token,
 };
@@ -73,22 +73,4 @@ fn extend_env(
         .zip(arguments.iter())
         .for_each(|(param, arg)| new_env.borrow_mut().set(param.name.clone(), arg.clone()));
     new_env
-}
-
-fn evaluate_expressions(
-    expressions: &[Expression],
-    env: Rc<RefCell<Environment>>,
-) -> Result<Vec<Rc<Object>>, Rc<Object>> {
-    let mut evaluated = Vec::with_capacity(expressions.len());
-    for expression in expressions {
-        let value = evaluate_expression(expression, env.clone());
-        if let Object::Error { .. } = *value {
-            return Err(value);
-        }
-        if let Object::ReturnValue(_) = *value {
-            return Err(value);
-        }
-        evaluated.push(value);
-    }
-    Ok(evaluated)
 }

@@ -9,9 +9,15 @@ use crate::{
 };
 
 use super::{
-    evaluate, evaluate_call::evaluate_call_expression, evaluate_identifier::evaluate_indentifier,
-    functional_literal_evaluations::function_literal_evaluation, infixs::infix_operator_evaluation,
-    int_value, prefixs::prefix_operator_evaluation, string_value,
+    arrays::{parse_array_literal, parse_index_expression},
+    evaluate,
+    evaluate_call::evaluate_call_expression,
+    evaluate_identifier::evaluate_indentifier,
+    functional_literal_evaluations::function_literal_evaluation,
+    infixs::infix_operator_evaluation,
+    int_value,
+    prefixs::prefix_operator_evaluation,
+    string_value,
 };
 use crate::object::*;
 
@@ -82,11 +88,11 @@ pub(super) fn evaluate_expression(
             parameters,
             body,
         } => function_literal_evaluation(token, parameters, body, env.clone()),
-        Expression::ArrayLiteral { token, elements } => todo!(),
+        Expression::ArrayLiteral { token, elements } => parse_array_literal(elements, env.clone()),
         Expression::Index {
             token,
             array,
             index,
-        } => todo!(),
+        } => parse_index_expression(token, array, index, env.clone()),
     }
 }
