@@ -210,6 +210,11 @@ impl Parser {
                 self.save_next_token();
                 self.parse_infix_expression(left_exp)
             }
+            //it easier to act like it is a infix operator, like call expression
+            TokenKind::LeftBracket => {
+                self.save_next_token();
+                self.parse_index_expression(left_exp)
+            }
             TokenKind::LeftParen => {
                 self.save_next_token();
                 self.parse_call_expression(left_exp)
@@ -442,6 +447,24 @@ impl Parser {
             elements,
         })
     }
+
+    fn parse_index_expression(&mut self, left_exp: Expression) -> Option<Expression> {
+        self.save_next_token();
+        let index = self.parse_expression(Precedence::Lowest);
+        if index.is_none() {
+            return None;
+        }
+        if !self.expect_peek_and_move_into(&PureTokenKind::RightBracket) {
+            self.errors
+                .push("Expected right bracket after index expression".to_string());
+            return None;
+        }
+        return Some(Expression::Index {
+            token: self.current_token.clone(),
+            array: Box::new(left_exp),
+            index: Box::new(index.unwrap()),
+        });
+    }
 }
 
 fn token_into_operator(token: &Token) -> Option<InfixOperatorType> {
@@ -471,6 +494,7 @@ fn precedence_from(token: &Token) -> Precedence {
         PureTokenKind::LessThen => Precedence::LessThan,
         PureTokenKind::GreaterThen => Precedence::LessThan,
         PureTokenKind::LeftParen => Precedence::Call,
+        PureTokenKind::LeftBracket => Precedence::Index,
         _ => Precedence::Lowest,
     }
 }
@@ -484,4 +508,5 @@ enum Precedence {
     Product,
     Prefix,
     Call,
+    Index,
 }

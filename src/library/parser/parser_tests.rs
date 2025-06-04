@@ -300,6 +300,7 @@ fn test_precedense_parsing() {
         ("a + (b + c) + d", "((a + (b + c)) + d)"),
         ("-(a + b)", "(-(a + b))"),
         ("a + add(b*c) + d", "((a + add((b * c))) + d)"),
+        ("add(a*b[2],b[1])", "add((a * (b[2])), (b[1]))"),
         (
             "a * [1, 2, 3][b * c] *d",
             "((a * ([1, 2, 3][(b * c)])) * d)",
@@ -628,7 +629,7 @@ fn parse_index_expression() {
                         check_if_integer_literal_equals(left, 1);
                         check_if_integer_literal_equals(right, 1);
                     }
-                    _ => panic!("Expected InfixExpression for index"),
+                    _ => panic!("Expected InfixExpression for index got {:?}", index),
                 }
             }
             _ => panic!("Expected IndexExpression, got {:?}", expression),

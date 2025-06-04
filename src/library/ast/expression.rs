@@ -137,7 +137,7 @@ impl Display for Expression {
                 array,
                 index,
             } => {
-                write!(f, "{}[{}]", array, index)
+                write!(f, "({}[{}])", array, index)
             }
         }
     }
