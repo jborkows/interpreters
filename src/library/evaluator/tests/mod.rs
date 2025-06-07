@@ -14,4 +14,5 @@ mod arrays_tests;
 mod builtin_first_tests;
 mod builtin_last_tests;
 mod builtin_len_tests;
+mod builtin_push_tests;
 mod builtin_rest_tests;

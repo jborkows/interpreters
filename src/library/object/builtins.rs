@@ -58,6 +58,7 @@ pub enum BuiltInFunction {
     First,
     Last,
     Rest,
+    Push,
 }
 impl BuiltInFunction {
     pub(crate) fn apply(
@@ -70,8 +71,22 @@ impl BuiltInFunction {
             BuiltInFunction::First => apply_first(token, arguments),
             BuiltInFunction::Last => apply_last(token, arguments),
             BuiltInFunction::Rest => apply_rest(token, arguments),
+            BuiltInFunction::Push => apply_push(token, arguments),
         }
     }
+}
+
+fn apply_push(
+    token: &Token,
+    arguments: &[std::rc::Rc<super::Object>],
+) -> std::rc::Rc<super::Object> {
+    end_flow!(accept_n_arguments("push", 2, token, arguments));
+    let an_array = &arguments[0];
+    let value = end_flow!(expecting_array!(an_array, token, "push", 1));
+    let new_value = &arguments[1];
+    let mut copied = value.clone();
+    copied.push(new_value.clone());
+    std::rc::Rc::new(super::Object::Array { elements: copied })
 }
 
 fn apply_rest(
@@ -182,6 +197,7 @@ pub fn parse_built_in_function(function_name: &str) -> Option<BuiltInFunction> {
         "last" => Some(BuiltInFunction::Last),
         "first" => Some(BuiltInFunction::First),
         "rest" => Some(BuiltInFunction::Rest),
+        "push" => Some(BuiltInFunction::Push),
         _ => None,
     }
 }
@@ -193,6 +209,7 @@ impl Display for BuiltInFunction {
             BuiltInFunction::First => write!(f, "first"),
             BuiltInFunction::Last => write!(f, "last"),
             BuiltInFunction::Rest => write!(f, "rest"),
+            BuiltInFunction::Push => write!(f, "push"),
         }
     }
 }
