@@ -6,7 +6,7 @@ use crate::tokens::{Token, TokenKind};
 
 #[test]
 fn next_sign() {
-    let input = vec!["=+(){},;*<;>/;"];
+    let input = vec!["=+(){},;*<;>/;:"];
 
     let expected = vec![
         (single(1, 1), TokenKind::Assign),
@@ -23,6 +23,7 @@ fn next_sign() {
         (single(1, 12), TokenKind::GreaterThen),
         (single(1, 13), TokenKind::Slash),
         (single(1, 14), TokenKind::Semicolon),
+        (single(1, 15), TokenKind::Collon),
     ];
 
     perform_test(input, expected);
@@ -214,6 +215,24 @@ fn more_complex_text() {
         (single(8, 28), TokenKind::Semicolon),
     ];
 
+    perform_test(input, expected);
+}
+#[test]
+fn should_be_able_to_parse_map() {
+    let input = vec![r#"{"foo": "bar"}"#];
+    let expected = vec![
+        (single(1, 1), TokenKind::LeftBrace),
+        (
+            position(1, 2, 1, 6),
+            TokenKind::StringLiteral(String::from("foo")),
+        ),
+        (single(1, 7), TokenKind::Collon),
+        (
+            position(1, 9, 1, 13),
+            TokenKind::StringLiteral(String::from("bar")),
+        ),
+        (single(1, 14), TokenKind::RightBrace),
+    ];
     perform_test(input, expected);
 }
 

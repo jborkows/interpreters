@@ -82,6 +82,7 @@ pub enum TokenKind {
     If,
     Else,
     Return,
+    Collon,
 }
 
 impl TokenKind {
@@ -116,6 +117,7 @@ impl TokenKind {
             TokenKind::Minus => "-".to_string(),
             TokenKind::LeftBracket => "[".to_string(),
             TokenKind::RightBracket => "]".to_string(),
+            TokenKind::Collon => ":".to_string(),
         }
     }
 }
@@ -157,6 +159,7 @@ impl From<&TokenKind> for PureTokenKind {
             TokenKind::Minus => PureTokenKind::Minus,
             TokenKind::LeftBracket => PureTokenKind::LeftBracket,
             TokenKind::RightBracket => PureTokenKind::RightBracket,
+            TokenKind::Collon => PureTokenKind::Collon,
         }
     }
 }
@@ -196,4 +199,5 @@ pub enum PureTokenKind {
     Return,
     LeftBracket,
     RightBracket,
+    Collon,
 }
