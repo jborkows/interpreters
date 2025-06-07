@@ -16,3 +16,4 @@ mod builtin_last_tests;
 mod builtin_len_tests;
 mod builtin_push_tests;
 mod builtin_rest_tests;
+mod using_builtins_to_make_map;
