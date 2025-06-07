@@ -18,5 +18,5 @@ fn creating_map() {
     map(a, double);
     "#;
     let object = eval_input(input);
-    assert_eq!(object.to_string(), "[2, 4, 7]");
+    assert_eq!(object.to_string(), "[2, 4, 6]");
 }
