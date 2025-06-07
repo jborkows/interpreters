@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod parser_tests;
 
-use std::rc::Rc;
+use std::{collections::HashMap, rc::Rc};
 
 use crate::{
     ast::{
@@ -193,6 +193,7 @@ impl Parser {
             TokenKind::If => self.parse_if_expression(),
             TokenKind::Function => self.parse_function_expression(),
             TokenKind::LeftBracket => self.parse_array_literal(),
+            TokenKind::LeftBrace => self.parse_map_literal(),
             _ => None,
         }
     }
@@ -463,6 +464,50 @@ impl Parser {
             token: self.current_token.clone(),
             array: Box::new(left_exp),
             index: Box::new(index.unwrap()),
+        });
+    }
+
+    fn parse_map_literal(&mut self) -> Option<Expression> {
+        let mut expresssions: Vec<(Expression, Expression)> = vec![];
+        while !self.is_finished() && !self.peek_token_is(&PureTokenKind::RightBrace) {
+            self.save_next_token();
+            if self.peek_token_is(&PureTokenKind::RightBrace) {
+                self.save_next_token();
+                break;
+            }
+            let key = self.parse_expression(Precedence::Lowest);
+            if !self.expect_peek_and_move_into(&PureTokenKind::Collon) {
+                return None;
+            }
+            self.save_next_token();
+            let value = self.parse_expression(Precedence::Lowest);
+            if value.is_none() {
+                self.errors
+                    .push("Expected expression after colon in map literal".to_string());
+                return None;
+            }
+
+            expresssions.push((key.unwrap(), value.unwrap()));
+            if self.is_finished() {
+                self.errors
+                    .push("Unexpected end of input in map literal".to_string());
+                return None;
+            }
+            if self.peek_token_is(&PureTokenKind::RightBrace) {
+                self.save_next_token();
+                break;
+            }
+            if !self.expect_peek_and_move_into(&PureTokenKind::Comma) {
+                self.errors
+                    .push("Expected comma after map entry".to_string());
+                return None;
+            }
+        }
+        // Move from } token to the next token
+        self.save_next_token();
+        return Some(Expression::MapLiteral {
+            token: self.current_token.clone(),
+            elements: expresssions,
         });
     }
 }

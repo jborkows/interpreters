@@ -53,6 +53,10 @@ pub enum Expression {
         array: Box<Expression>,
         index: Box<Expression>,
     },
+    MapLiteral {
+        token: Rc<Token>,
+        elements: Vec<(Expression, Expression)>,
+    },
 }
 
 impl Node for Expression {
@@ -138,6 +142,15 @@ impl Display for Expression {
                 index,
             } => {
                 write!(f, "({}[{}])", array, index)
+            }
+            Expression::MapLiteral { token: _, elements } => {
+                let mut elems: Vec<String> = elements
+                    .iter()
+                    .map(|(key, value)| format!("{}: {}", key, value))
+                    .collect();
+                elems.sort();
+                let elems_str = elems.join(", ");
+                write!(f, "{{{}}}", elems_str)
             }
         }
     }

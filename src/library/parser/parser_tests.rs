@@ -638,6 +638,74 @@ fn parse_index_expression() {
     }
 }
 
+#[test]
+fn parse_map_literal() {
+    let input = r#"{"one":1, "two":2,"three":3+5}"#;
+    let mut parser = Parser::from_string(input);
+    let program = parser.parse_program();
+    check_parser_errors(&parser);
+    assert_eq!(program.statements.len(), 1);
+    match &program.statements[0] {
+        Statement::AExpression {
+            token: _,
+            expression,
+        } => match expression {
+            Expression::MapLiteral { token: _, elements } => {
+                assert_eq!(elements.len(), 3);
+                for (key, value) in elements {
+                    match key {
+                        Expression::StringLiteral(token) => match token.as_ref().kind {
+                            TokenKind::StringLiteral(ref s) => match s.as_str() {
+                                "one" => check_if_integer_literal_equals(value, 1),
+                                "two" => check_if_integer_literal_equals(value, 2),
+                                "three" => match value {
+                                    Expression::Infix {
+                                        token: _,
+                                        left,
+                                        operator,
+                                        right,
+                                    } => {
+                                        assert_eq!(*operator, InfixOperatorType::Plus);
+                                        check_if_integer_literal_equals(left, 3);
+                                        check_if_integer_literal_equals(right, 5);
+                                    }
+                                    _ => panic!("Expected InfixExpression for value of 'three'"),
+                                },
+                                _ => panic!("Unexpected key: {}", s),
+                            },
+                            _ => panic!("Expected StringLiteral for key, got {:?}", key),
+                        },
+                        _ => panic!("Expected StringLiteral for key, got {:?}", key),
+                    }
+                }
+            }
+            _ => panic!("Expected MapLiteral, got {:?}", expression),
+        },
+        _ => panic!("Expected ExpressionStatement"),
+    }
+}
+
+#[test]
+fn parse_empty_map_literal() {
+    let input = r#"{}"#;
+    let mut parser = Parser::from_string(input);
+    let program = parser.parse_program();
+    check_parser_errors(&parser);
+    assert_eq!(program.statements.len(), 1);
+    match &program.statements[0] {
+        Statement::AExpression {
+            token: _,
+            expression,
+        } => match expression {
+            Expression::MapLiteral { token: _, elements } => {
+                assert_eq!(elements.len(), 0);
+            }
+            _ => panic!("Expected MapLiteral, got {:?}", expression),
+        },
+        _ => panic!("Expected ExpressionStatement"),
+    }
+}
+
 fn check_parser_errors(parser: &Parser) {
     if !parser.errors.is_empty() {
         panic!(

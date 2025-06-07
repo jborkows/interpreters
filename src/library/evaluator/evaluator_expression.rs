@@ -94,5 +94,7 @@ pub(super) fn evaluate_expression(
             array,
             index,
         } => parse_index_expression(token, array, index, env.clone()),
+        //TODO: implement MapLiteral
+        Expression::MapLiteral { token, elements } => todo!(),
     }
 }
