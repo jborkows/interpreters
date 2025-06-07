@@ -57,6 +57,7 @@ pub enum BuiltInFunction {
     Len,
     First,
     Last,
+    Rest,
 }
 impl BuiltInFunction {
     pub(crate) fn apply(
@@ -68,8 +69,29 @@ impl BuiltInFunction {
             BuiltInFunction::Len => apply_len(token, arguments),
             BuiltInFunction::First => apply_first(token, arguments),
             BuiltInFunction::Last => apply_last(token, arguments),
+            BuiltInFunction::Rest => apply_rest(token, arguments),
         }
     }
+}
+
+fn apply_rest(
+    token: &Token,
+    arguments: &[std::rc::Rc<super::Object>],
+) -> std::rc::Rc<super::Object> {
+    end_flow!(accept_n_arguments("rest", 1, token, arguments));
+    let argument = &arguments[0];
+    let value = end_flow!(expecting_array!(argument, token, "rest", 1));
+    if value.is_empty() {
+        return std::rc::Rc::new(super::Object::Array { elements: vec![] });
+    }
+    value
+        .get(1..)
+        .map(|slice| {
+            std::rc::Rc::new(super::Object::Array {
+                elements: slice.to_vec(),
+            })
+        })
+        .unwrap_or_else(|| error_at("Cannot get rest of array for empty array", token))
 }
 
 fn apply_last(
@@ -159,6 +181,7 @@ pub fn parse_built_in_function(function_name: &str) -> Option<BuiltInFunction> {
         "len" => Some(BuiltInFunction::Len),
         "last" => Some(BuiltInFunction::Last),
         "first" => Some(BuiltInFunction::First),
+        "rest" => Some(BuiltInFunction::Rest),
         _ => None,
     }
 }
@@ -169,6 +192,7 @@ impl Display for BuiltInFunction {
             BuiltInFunction::Len => write!(f, "len"),
             BuiltInFunction::First => write!(f, "first"),
             BuiltInFunction::Last => write!(f, "last"),
+            BuiltInFunction::Rest => write!(f, "rest"),
         }
     }
 }
