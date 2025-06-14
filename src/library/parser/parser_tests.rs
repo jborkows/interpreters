@@ -706,6 +706,38 @@ fn parse_empty_map_literal() {
     }
 }
 
+#[test]
+fn parse_getting_by_key() {
+    let input = r#"{"one": 1, "two": 2}["one"]"#;
+    let mut parser = Parser::from_string(input);
+    let program = parser.parse_program();
+    check_parser_errors(&parser);
+    assert_eq!(program.statements.len(), 1);
+
+    match &program.statements[0] {
+        Statement::AExpression {
+            token: _,
+            expression,
+        } => match expression {
+            Expression::Index {
+                token: _,
+                array,
+                index,
+            } => {
+                match array.as_ref() {
+                    Expression::MapLiteral { token: _, elements } => {
+                        assert_eq!(elements.len(), 2);
+                    }
+                    _ => panic!("Expected MapLiteral for array, got {:?}", array),
+                }
+                check_if_strings_equals(index, "one".to_string());
+            }
+            _ => panic!("Expected IndexExpression, got {:?}", expression),
+        },
+        _ => panic!("Expected ExpressionStatement"),
+    }
+}
+
 fn check_parser_errors(parser: &Parser) {
     if !parser.errors.is_empty() {
         panic!(

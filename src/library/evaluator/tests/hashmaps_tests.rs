@@ -1,6 +1,6 @@
 use crate::{
     evaluator::tests::evaluator_tests::eval_input, expected_boolean_object_to_be_equal,
-    expected_integer_value_to_be, expected_string_to_be_equal,
+    expected_integer_as_result_tests, expected_integer_value_to_be, expected_string_to_be_equal,
 };
 
 macro_rules! expected_hash_map {
@@ -52,4 +52,19 @@ fn integer_can_be_a_key() {
     let (key, value) = expected_hash_map!(r#" {1: 2+2}"#);
     expected_integer_value_to_be!(*key, 1);
     expected_integer_value_to_be!(*value, 4);
+}
+
+expected_integer_as_result_tests! {
+    getting_by_string_key: (r#"let key="foo";{"foo": 2+2}[key]"#, 4),
+    getting_by_number_key: (r#"{2: 6}[2]"#, 6),
+    getting_by_boolean_key: (r#"{true: 6, false:4}[false]"#, 4),
+}
+
+#[test]
+fn expecting_null_when_key_not_found() {
+    let object = eval_input(r#"{}["bar"]"#);
+    match object.as_ref() {
+        crate::object::Object::Null => {}
+        _ => panic!("Expected a Null object, but got: {}", object.to_string()),
+    }
 }

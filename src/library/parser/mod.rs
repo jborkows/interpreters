@@ -468,7 +468,16 @@ impl Parser {
     }
 
     fn parse_map_literal(&mut self) -> Option<Expression> {
+        // empty map literal } immediately after {
+        if self.peek_token_is(&PureTokenKind::RightBrace) {
+            self.save_next_token();
+            return Some(Expression::MapLiteral {
+                token: self.current_token.clone(),
+                elements: vec![],
+            });
+        }
         let mut expresssions: Vec<(Expression, Expression)> = vec![];
+
         while !self.is_finished() && !self.peek_token_is(&PureTokenKind::RightBrace) {
             self.save_next_token();
             if self.peek_token_is(&PureTokenKind::RightBrace) {
@@ -503,8 +512,6 @@ impl Parser {
                 return None;
             }
         }
-        // Move from } token to the next token
-        self.save_next_token();
         return Some(Expression::MapLiteral {
             token: self.current_token.clone(),
             elements: expresssions,

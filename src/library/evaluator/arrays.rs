@@ -4,7 +4,7 @@ use crate::{
     ast::expression::Expression,
     end_flow,
     evaluator::evaluate_expressions::evaluate_expressions,
-    object::{Environment, Object, error_at},
+    object::{Environment, Object, error_at, hash, null_value},
     tokens::Token,
 };
 
@@ -46,7 +46,20 @@ fn evaluate_index_expression(
             }
             error_at("Index must be an integer", token)
         }
+        Object::HashMap(ref a_map) => parse_hashmap_index(a_map, right_value.as_ref()),
         _ => error_at("Index operator can only be applied to arrays", token),
+    }
+}
+
+fn parse_hashmap_index(
+    a_map: &std::collections::HashMap<crate::object::HashValue, Rc<crate::object::HashEntry>>,
+    right_value: &Object,
+) -> Rc<Object> {
+    let key = hash(right_value);
+    if let Some(entry) = a_map.get(&key) {
+        return entry.value.clone();
+    } else {
+        return null_value();
     }
 }
 

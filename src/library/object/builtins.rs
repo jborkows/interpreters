@@ -59,6 +59,7 @@ pub enum BuiltInFunction {
     Last,
     Rest,
     Push,
+    Puts,
 }
 impl BuiltInFunction {
     pub(crate) fn apply(
@@ -72,8 +73,19 @@ impl BuiltInFunction {
             BuiltInFunction::Last => apply_last(token, arguments),
             BuiltInFunction::Rest => apply_rest(token, arguments),
             BuiltInFunction::Push => apply_push(token, arguments),
+            BuiltInFunction::Puts => apply_puts(token, arguments),
         }
     }
+}
+
+fn apply_puts(
+    _token: &Token,
+    arguments: &[std::rc::Rc<super::Object>],
+) -> std::rc::Rc<super::Object> {
+    arguments.into_iter().for_each(|arg| {
+        println!(">> {}", arg.to_string());
+    });
+    std::rc::Rc::new(super::Object::Null)
 }
 
 fn apply_push(
@@ -198,6 +210,7 @@ pub fn parse_built_in_function(function_name: &str) -> Option<BuiltInFunction> {
         "first" => Some(BuiltInFunction::First),
         "rest" => Some(BuiltInFunction::Rest),
         "push" => Some(BuiltInFunction::Push),
+        "puts" => Some(BuiltInFunction::Puts),
         _ => None,
     }
 }
@@ -210,6 +223,7 @@ impl Display for BuiltInFunction {
             BuiltInFunction::Last => write!(f, "last"),
             BuiltInFunction::Rest => write!(f, "rest"),
             BuiltInFunction::Push => write!(f, "push"),
+            BuiltInFunction::Puts => write!(f, "puts"),
         }
     }
 }
