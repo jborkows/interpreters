@@ -60,6 +60,7 @@ pub enum BuiltInFunction {
     Rest,
     Push,
     Puts,
+    Quote,
 }
 impl BuiltInFunction {
     pub(crate) fn apply(
@@ -74,8 +75,17 @@ impl BuiltInFunction {
             BuiltInFunction::Rest => apply_rest(token, arguments),
             BuiltInFunction::Push => apply_push(token, arguments),
             BuiltInFunction::Puts => apply_puts(token, arguments),
+            BuiltInFunction::Quote => apply_quote(token, arguments),
         }
     }
+}
+
+fn apply_quote(
+    token: &Token,
+    arguments: &[std::rc::Rc<super::Object>],
+) -> std::rc::Rc<super::Object> {
+    end_flow!(accept_n_arguments("quote", 1, token, arguments));
+    todo!()
 }
 
 fn apply_puts(
@@ -211,6 +221,7 @@ pub fn parse_built_in_function(function_name: &str) -> Option<BuiltInFunction> {
         "rest" => Some(BuiltInFunction::Rest),
         "push" => Some(BuiltInFunction::Push),
         "puts" => Some(BuiltInFunction::Puts),
+        "quote" => Some(BuiltInFunction::Quote),
         _ => None,
     }
 }
@@ -224,6 +235,7 @@ impl Display for BuiltInFunction {
             BuiltInFunction::Rest => write!(f, "rest"),
             BuiltInFunction::Push => write!(f, "push"),
             BuiltInFunction::Puts => write!(f, "puts"),
+            BuiltInFunction::Quote => write!(f, "quote"),
         }
     }
 }

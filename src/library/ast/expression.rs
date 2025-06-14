@@ -7,7 +7,7 @@ use crate::{
 
 use super::{base::Node, statements::Statement};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Expression {
     Identifier(Rc<Token>),
     IntegerLiteral(Rc<Token>),
@@ -227,7 +227,7 @@ impl Display for PrefixOperatorType {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub(crate) enum InfixOperatorType {
     Plus,
     Minus,

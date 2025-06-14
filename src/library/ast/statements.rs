@@ -4,7 +4,7 @@ use crate::{join_collection, join_rc_collection, tokens::Token};
 
 use super::{base::Node, expression::Expression};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Statement {
     Let {
         token: Rc<Token>,

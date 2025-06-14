@@ -1,6 +1,7 @@
 use std::hash::{Hash, Hasher};
 use std::{cell::RefCell, fmt::Display, rc::Rc};
 
+use crate::ast::expression::Expression;
 use crate::{ast::statements::Statement, join_collection, tokens::Token};
 mod builtins;
 mod environment;
@@ -36,6 +37,7 @@ pub enum Object {
     },
     //TODO: Implement collision mechanics, probably using a linked list
     HashMap(std::collections::HashMap<HashValue, Rc<HashEntry>>),
+    Quote(Rc<Expression>),
 }
 
 impl PartialEq for Object {
@@ -100,6 +102,7 @@ pub fn type_of(object: &Object) -> String {
         }
         Object::Array { .. } => "Array".to_string(),
         Object::HashMap(_) => "HashMap".to_string(),
+        Object::Quote(statement) => "Quote: ".to_string(),
     }
 }
 impl Display for Object {
@@ -128,6 +131,7 @@ impl Display for Object {
                     .collect();
                 write!(f, "{{{}}}", join_collection!(entries, ", "))
             }
+            Object::Quote(statement) => write!(f, "Quote: {}", statement),
         }
     }
 }
@@ -175,6 +179,7 @@ pub fn hash(object: &Object) -> HashValue {
             elements.iter().for_each(|e| hash(e).0.hash(&mut hasher));
         }
         Object::HashMap(map) => panic!("Cannot hash HashMap directly: {}", map.len()),
+        Object::Quote(statement) => panic!("Cannot hash Quote directly: {}", statement),
     }
     HashValue(hasher.finish() as i64)
 }

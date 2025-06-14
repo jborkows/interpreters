@@ -6,6 +6,7 @@ use crate::ast::{
 };
 use crate::tokens::TokenKind;
 use crate::{join_collection, print_bash_error};
+#[macro_export]
 macro_rules! check_expression_value {
     ($expression:expr, $variant:ident, $token_kind:ident, $expected:expr) => {
         match $expression {

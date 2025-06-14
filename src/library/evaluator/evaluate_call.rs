@@ -5,7 +5,7 @@ use crate::{
     end_flow,
     evaluator::{evaluate, evaluate_expressions::evaluate_expressions},
     object::{Environment, Identifier, Object, error_at},
-    tokens::Token,
+    tokens::{Token, TokenKind},
 };
 
 use super::evaluate_expression;
@@ -16,6 +16,18 @@ pub fn evaluate_call_expression(
     arguments: &[Expression],
     env: Rc<RefCell<Environment>>,
 ) -> Rc<Object> {
+    match function {
+        Expression::Identifier(id) => match &id.kind {
+            TokenKind::Identifier(name) => {
+                if name == "quote" {
+                    let first = &arguments[0];
+                    return Rc::new(Object::Quote(Rc::new(first.clone())));
+                }
+            }
+            _ => {}
+        },
+        _ => {}
+    }
     let function = evaluate_expression(function, env.clone());
     end_flow!(function);
 
