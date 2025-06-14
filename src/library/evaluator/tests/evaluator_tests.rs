@@ -32,6 +32,71 @@ macro_rules! should_be_equal_parsed {
 }
 
 #[macro_export]
+macro_rules! expected_string_to_be_equal {
+    ($object:expr, $expected:expr) => {
+        match $object.as_ref() {
+            $crate::object::Object::String(value) => {
+                assert_eq!(
+                    value.to_string(),
+                    $expected.to_string(),
+                    "Expected String with value {}, but got {} for input {}",
+                    $expected,
+                    value,
+                    $object.to_string()
+                );
+            }
+            _ => panic!(
+                "Expected a HashMap object, but got: {}",
+                $object.to_string()
+            ),
+        }
+    };
+}
+#[macro_export]
+macro_rules! expected_boolean_object_to_be_equal {
+    ($object:expr, $expected:expr) => {
+        match $object.as_ref() {
+            $crate::object::Object::Boolean(value) => {
+                assert_eq!(
+                    value,
+                    &$expected,
+                    "Expected Boolean with value {}, but got {} for input {}",
+                    $expected,
+                    value,
+                    $object.to_string()
+                );
+            }
+            _ => panic!(
+                "Expected a HashMap object, but got: {}",
+                $object.to_string()
+            ),
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! expected_integer_value_to_be {
+    ($object:expr, $expected:expr) => {
+        match $object {
+            $crate::object::Object::Int(value) => {
+                assert_eq!(
+                    value,
+                    $expected,
+                    "Expected Int with value {}, but got {} for input {}",
+                    $expected,
+                    value,
+                    $object.to_string()
+                );
+            }
+            _ => panic!(
+                "Expected a HashMap object, but got: {}",
+                $object.to_string()
+            ),
+        }
+    };
+}
+
+#[macro_export]
 macro_rules! expected_integer_as_result_tests {
     ($($name:ident: ($input:expr, $expected:expr),)*) => {
         $(

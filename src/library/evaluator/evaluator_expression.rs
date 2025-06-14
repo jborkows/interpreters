@@ -16,6 +16,7 @@ use super::{
     functional_literal_evaluations::function_literal_evaluation,
     infixs::infix_operator_evaluation,
     int_value,
+    maps::parse_map_literal,
     prefixs::prefix_operator_evaluation,
     string_value,
 };
@@ -94,7 +95,6 @@ pub(super) fn evaluate_expression(
             array,
             index,
         } => parse_index_expression(token, array, index, env.clone()),
-        //TODO: implement MapLiteral
-        Expression::MapLiteral { token, elements } => todo!(),
+        Expression::MapLiteral { token, elements } => parse_map_literal(elements, env.clone()),
     }
 }

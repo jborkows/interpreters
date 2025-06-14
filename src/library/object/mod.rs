@@ -1,3 +1,4 @@
+use std::hash::{Hash, Hasher};
 use std::{cell::RefCell, fmt::Display, rc::Rc};
 
 use crate::{ast::statements::Statement, join_collection, tokens::Token};
@@ -9,6 +10,8 @@ use builtins::BuiltInFunction;
 pub use builtins::parse_built_in_function;
 pub use environment::Environment;
 pub use helpers::*;
+#[cfg(test)]
+mod testing;
 
 #[derive(Debug, Clone)]
 pub enum Object {
@@ -31,6 +34,8 @@ pub enum Object {
     Array {
         elements: Vec<Rc<Object>>,
     },
+    //TODO: Implement collision mechanics, probably using a linked list
+    HashMap(std::collections::HashMap<HashValue, Rc<HashEntry>>),
 }
 
 impl PartialEq for Object {
@@ -94,6 +99,7 @@ pub fn type_of(object: &Object) -> String {
             "BuiltInFunction: ".to_string() + &built_in_function.to_string()
         }
         Object::Array { .. } => "Array".to_string(),
+        Object::HashMap(_) => "HashMap".to_string(),
     }
 }
 impl Display for Object {
@@ -115,6 +121,60 @@ impl Display for Object {
                 let elements_str: Vec<String> = elements.iter().map(|e| e.to_string()).collect();
                 write!(f, "[{}]", join_collection!(elements_str, ", "))
             }
+            Object::HashMap(map) => {
+                let entries: Vec<String> = map
+                    .iter()
+                    .map(|(_, entry)| format!("{}: {}", entry.key, entry.value))
+                    .collect();
+                write!(f, "{{{}}}", join_collection!(entries, ", "))
+            }
         }
     }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct HashValue(i64);
+impl Display for HashValue {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Hash({})", self.0)
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct HashEntry {
+    pub key: Rc<Object>,
+    pub value: Rc<Object>,
+}
+
+pub fn hash(object: &Object) -> HashValue {
+    let mut hasher = std::collections::hash_map::DefaultHasher::new();
+    match object {
+        Object::Int(i) => i.hash(&mut hasher),
+        Object::String(s) => s.hash(&mut hasher),
+        Object::Boolean(b) => b.hash(&mut hasher),
+        Object::ReturnValue(rv) => panic!("Cannot, hash ReturnValue directly: {}", rv),
+        Object::Error {
+            message,
+            line,
+            column,
+        } => {
+            message.hash(&mut hasher);
+            line.hash(&mut hasher);
+            column.hash(&mut hasher);
+        }
+        Object::Null => 0.hash(&mut hasher),
+        Object::Function {
+            parameters,
+            body: _,
+            env: _,
+        } => {
+            parameters.iter().for_each(|p| p.name.hash(&mut hasher));
+        }
+        Object::Builtin(built_in_function) => built_in_function.to_string().hash(&mut hasher),
+        Object::Array { elements } => {
+            elements.iter().for_each(|e| hash(e).0.hash(&mut hasher));
+        }
+        Object::HashMap(map) => panic!("Cannot hash HashMap directly: {}", map.len()),
+    }
+    HashValue(hasher.finish() as i64)
 }

@@ -21,6 +21,7 @@ mod evaluator_expression;
 mod functional_literal_evaluations;
 mod infixs;
 mod macros;
+mod maps;
 mod prefixs;
 #[cfg(test)]
 mod tests;

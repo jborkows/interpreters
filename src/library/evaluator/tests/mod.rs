@@ -1,4 +1,5 @@
 mod evaluator_tests;
+mod hashmaps_tests;
 
 mod functions_tests;
 mod if_expression_tests;
