@@ -1,4 +1,4 @@
-use std::{ops::Deref, rc::Rc};
+use std::rc::Rc;
 
 use crate::ast::{
     base::Node,
@@ -17,7 +17,18 @@ macro_rules! modify_box_expression {
     }};
 }
 
-//FIXME: too much reflection and assumptions about return values
+macro_rules! modify_box_statement {
+    ($node:expr, $fun:expr) => {{
+        let x = modify(Rc::new((**$node).clone()), $fun)
+            .as_any()
+            .downcast_ref::<Statement>()
+            .unwrap()
+            .clone();
+        Box::new(x)
+    }};
+}
+
+// TODO add error handling instead of ignoring with unwrap
 pub fn modify<'a>(
     node: Rc<dyn Node + 'a>,
     fun: fn(Rc<dyn Node + 'a>) -> Rc<dyn Node + 'a>,
@@ -45,6 +56,39 @@ pub fn modify<'a>(
     let statement = node.as_any().downcast_ref::<Statement>();
     if let Some(statement) = statement {
         match statement {
+            Statement::Block { token, statements } => {
+                let modified_statements = statements
+                    .as_ref()
+                    .into_iter()
+                    .map(|s| {
+                        let modified = modify(Rc::new(s.clone()), fun);
+                        modified
+                            .as_any()
+                            .downcast_ref::<Statement>()
+                            .unwrap()
+                            .clone()
+                    })
+                    .collect::<Vec<_>>();
+                return Rc::new(Statement::Block {
+                    token: token.clone(),
+                    statements: Rc::new(modified_statements),
+                });
+            }
+            Statement::Return {
+                token,
+                return_value,
+            } => {
+                let new_value = modify(Rc::new(return_value.clone()), fun);
+                let expression = new_value
+                    .as_any()
+                    .downcast_ref::<Expression>()
+                    .unwrap()
+                    .clone();
+                return Rc::new(Statement::Return {
+                    token: token.clone(),
+                    return_value: expression,
+                });
+            }
             Statement::AExpression { token, expression } => {
                 let expression_value = match expression {
                     Expression::Infix {
@@ -79,6 +123,20 @@ pub fn modify<'a>(
                         token: token.clone(),
                         array: modify_box_expression!(array, fun),
                         index: modify_box_expression!(index, fun),
+                    }),
+                    Expression::AIf {
+                        token,
+                        condition,
+                        consequence,
+                        alternative,
+                    } => Rc::new(Expression::AIf {
+                        token: token.clone(),
+                        condition: modify_box_expression!(condition, fun),
+                        consequence: modify_box_statement!(consequence, fun),
+                        alternative: match alternative {
+                            Some(v) => Some(modify_box_statement!(v, fun)),
+                            None => None,
+                        },
                     }),
                     _ => modify(Rc::new(expression.clone()), fun),
                 };

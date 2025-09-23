@@ -50,6 +50,25 @@ fn turn_one_into_two<'a>(node: Rc<dyn Node + 'a>) -> Rc<dyn Node + 'a> {
     }
     return node;
 }
+fn double_integer<'a>(node: Rc<dyn Node + 'a>) -> Rc<dyn Node + 'a> {
+    let expression = node.as_any().downcast_ref::<Expression>();
+    if let Some(expression) = expression {
+        return match expression {
+            Expression::IntegerLiteral(token) => match token.kind {
+                crate::tokens::TokenKind::Integer(value) => {
+                    let token = Token {
+                        context: Option::None,
+                        kind: crate::tokens::TokenKind::Integer(value * 2),
+                    };
+                    Rc::new(Expression::IntegerLiteral(Rc::new(token)))
+                }
+                _ => node,
+            },
+            _ => node,
+        };
+    }
+    return node;
+}
 
 #[test]
 fn should_be_able_modify() {
@@ -261,6 +280,151 @@ should_traverse_index_expression! {
     should_modify_array_part_of_index_expression:(four(), one(), 4,2),
     should_modify_both_parts_of_index_expression:(one(), one(), 2,2),
     should_not_modify_both_parts_of_index_expression:(four(), four(), 4,4),
+}
+
+#[test]
+fn should_traverse_if_expresion() {
+    let token = Rc::new(Token {
+        context: Option::None,
+        kind: crate::tokens::TokenKind::Integer(1),
+    });
+    let program = Program {
+        statements: vec![Statement::AExpression {
+            token: token.clone(),
+            expression: Expression::AIf {
+                token: token.clone(),
+                condition: Box::new(one()),
+                consequence: Box::new(Statement::Block {
+                    token: token.clone(),
+                    statements: Rc::new(vec![Statement::AExpression {
+                        token: token.clone(),
+                        expression: (Expression::PrefixOperator {
+                            token: token.clone(),
+                            operator: PrefixOperatorType::Bang,
+                            right: Box::new(two()),
+                        }),
+                    }]),
+                }),
+                alternative: Some(Box::new(Statement::Block {
+                    token: token.clone(),
+                    statements: Rc::new(vec![Statement::AExpression {
+                        token: token.clone(),
+                        expression: (Expression::PrefixOperator {
+                            token: token.clone(),
+                            operator: PrefixOperatorType::Bang,
+                            right: Box::new(one()),
+                        }),
+                    }]),
+                })),
+            },
+        }],
+    };
+    let result = modify(Rc::new(program), double_integer);
+    let output_program = result.as_any().downcast_ref::<Program>();
+    let output = output_program.unwrap();
+    assert_eq!(output.statements.len(), 1);
+    let first_statement = output.statements[0].clone();
+    match first_statement {
+        Statement::AExpression {
+            token: _,
+            expression,
+        } => match expression {
+            Expression::AIf {
+                token: _,
+                condition,
+                consequence,
+                alternative,
+            } => {
+                check_if_integer_literal_equals(&condition, 2);
+                match *consequence {
+                    Statement::Block {
+                        token: _,
+                        statements,
+                    } => {
+                        assert_eq!(statements.len(), 1);
+                        match statements.get(0).unwrap() {
+                            Statement::AExpression {
+                                token: _,
+                                expression,
+                            } => match expression {
+                                Expression::PrefixOperator {
+                                    token: _,
+                                    operator: _,
+                                    right,
+                                } => check_if_integer_literal_equals(&right, 4),
+                                _ => panic!("Expected prefix got {:?}", expression),
+                            },
+                            _ => panic!("Expected block got {:?}", statements),
+                        }
+                    }
+                    _ => panic!("Expected block got {:?}", consequence),
+                }
+                match *alternative.unwrap() {
+                    Statement::Block {
+                        token: _,
+                        statements,
+                    } => {
+                        assert_eq!(statements.len(), 1);
+                        match statements.get(0).unwrap() {
+                            Statement::AExpression {
+                                token: _,
+                                expression,
+                            } => match expression {
+                                Expression::PrefixOperator {
+                                    token: _,
+                                    operator: _,
+                                    right,
+                                } => check_if_integer_literal_equals(&right, 2),
+                                _ => panic!("Expected prefix operator got {:?}", expression),
+                            },
+
+                            _ => panic!("Expected block got unwrap"),
+                        }
+                    }
+                    _ => panic!("Expected block got unwrap"),
+                }
+            }
+            _ => panic!("Expected if expression got {:?}", expression),
+        },
+        _ => panic!("Expected if expression got {:?}", first_statement),
+    }
+}
+
+macro_rules! should_modify_return_statements {
+    ($($name:ident: ($return:expr, $output:expr ),)*) => {
+        $(
+            #[test]
+            fn $name() {
+     let token = Rc::new(Token {
+        context: Option::None,
+        kind: crate::tokens::TokenKind::Integer(0),
+    });
+    let program = Program {
+        statements: vec![Statement::Return {
+            token: token.clone(),
+            return_value: $return,
+        }],
+    };
+    let result = modify(Rc::new(program), turn_one_into_two);
+    let output_program = result.as_any().downcast_ref::<Program>();
+    let output = output_program.unwrap();
+    assert_eq!(output.statements.len(), 1);
+    let first_statement = output.statements[0].clone();
+    match first_statement {
+        Statement::Return {
+            token: _,
+            return_value,
+        } => check_if_integer_literal_equals(&return_value, $output),
+        _ => panic!("Expected expression statement got {:?}", first_statement),
+    }
+            }
+        )*
+    };
+}
+
+should_modify_return_statements! {
+    should_modify_return_node:(one(),  2),
+    should_not_modify_return_node:(four(),  4),
 }
 
 macro_rules! check_expression_value {
