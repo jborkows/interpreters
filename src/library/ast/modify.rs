@@ -50,6 +50,7 @@ pub fn modify<'a>(
 
         let output = Program { statements };
 
+        println!("Program finished with {:?}", output);
         return Rc::new(output);
     }
 
@@ -87,6 +88,19 @@ pub fn modify<'a>(
                 return Rc::new(Statement::Return {
                     token: token.clone(),
                     return_value: expression,
+                });
+            }
+            Statement::Let { token, name, value } => {
+                let new_value = modify(Rc::new(value.clone()), fun);
+                let expression = new_value
+                    .as_any()
+                    .downcast_ref::<Expression>()
+                    .unwrap()
+                    .clone();
+                return Rc::new(Statement::Let {
+                    token: token.clone(),
+                    name: name.clone(),
+                    value: expression,
                 });
             }
             Statement::AExpression { token, expression } => {
@@ -138,6 +152,29 @@ pub fn modify<'a>(
                             None => None,
                         },
                     }),
+                    Expression::FunctionLiteral {
+                        token,
+                        parameters,
+                        body,
+                    } => {
+                        let modified_parameter = parameters
+                            .as_ref()
+                            .into_iter()
+                            .map(|s| {
+                                let modified = modify(Rc::new(s.clone()), fun);
+                                modified
+                                    .as_any()
+                                    .downcast_ref::<Expression>()
+                                    .unwrap()
+                                    .clone()
+                            })
+                            .collect::<Vec<_>>();
+                        Rc::new(Expression::FunctionLiteral {
+                            token: token.clone(),
+                            parameters: modified_parameter.into(),
+                            body: modify_box_statement!(body, fun),
+                        })
+                    }
                     _ => modify(Rc::new(expression.clone()), fun),
                 };
                 let should_be_expression = expression_value
@@ -150,7 +187,6 @@ pub fn modify<'a>(
                 };
                 return Rc::new(modified);
             }
-            _ => {}
         }
     }
 

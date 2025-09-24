@@ -427,6 +427,118 @@ should_modify_return_statements! {
     should_not_modify_return_node:(four(),  4),
 }
 
+macro_rules! should_modify_let_statements {
+    ($($name:ident: ($let_value:expr, $output:expr ),)*) => {
+        $(
+            #[test]
+            fn $name() {
+     let token = Rc::new(Token {
+        context: Option::None,
+        kind: crate::tokens::TokenKind::Integer(0),
+    });
+        let name = Rc::new(Token{
+        context: Option::None,
+        kind: crate::tokens::TokenKind::Identifier(String::from("aaa")),
+        });
+    let program = Program {
+        statements: vec![Statement::Let {
+            token: token.clone(),
+            name: Expression::Identifier(name.clone()),
+            value: $let_value,
+        }],
+    };
+    let result = modify(Rc::new(program), turn_one_into_two);
+    let output_program = result.as_any().downcast_ref::<Program>();
+    let output = output_program.unwrap();
+    assert_eq!(output.statements.len(), 1);
+    let first_statement = output.statements[0].clone();
+    match first_statement {
+        Statement::Let {
+            token: _,
+            name:_,
+            value,
+        } => check_if_integer_literal_equals(&value, $output),
+        _ => panic!("Expected expression statement got {:?}", first_statement),
+    }
+            }
+        )*
+    };
+}
+
+should_modify_let_statements! {
+    should_modify_let_node:(one(),  2),
+    should_not_let_node:(four(),  4),
+}
+
+#[test]
+fn should_traverse_functional() {
+    let token = Rc::new(Token {
+        context: Option::None,
+        kind: crate::tokens::TokenKind::Integer(1),
+    });
+    let program = Program {
+        statements: vec![Statement::AExpression {
+            token: token.clone(),
+            expression: Expression::FunctionLiteral {
+                token: token.clone(),
+                parameters: Rc::new(vec![]),
+                body: Box::new(Statement::Block {
+                    token: token.clone(),
+                    statements: Rc::new(vec![Statement::AExpression {
+                        token: token.clone(),
+                        expression: (Expression::PrefixOperator {
+                            token: token.clone(),
+                            operator: PrefixOperatorType::Bang,
+                            right: Box::new(two()),
+                        }),
+                    }]),
+                }),
+            },
+        }],
+    };
+    let result = modify(Rc::new(program), double_integer);
+    let output_program = result.as_any().downcast_ref::<Program>();
+    let output = output_program.unwrap();
+    assert_eq!(output.statements.len(), 1);
+    let first_statement = output.statements[0].clone();
+    match first_statement {
+        Statement::AExpression {
+            token: _,
+            expression,
+        } => match expression {
+            Expression::FunctionLiteral {
+                token: _,
+                parameters: _,
+                body,
+            } => match *body {
+                Statement::Block {
+                    token: _,
+                    statements,
+                } => {
+                    assert_eq!(statements.len(), 1);
+                    match statements.get(0).unwrap() {
+                        Statement::AExpression {
+                            token: _,
+                            expression,
+                        } => match expression {
+                            Expression::PrefixOperator {
+                                token: _,
+                                operator: _,
+                                right,
+                            } => check_if_integer_literal_equals(&right, 4),
+                            _ => panic!("Expected prefix got {:?}", expression),
+                        },
+                        _ => panic!("Expected block got {:?}", statements),
+                    }
+                }
+                _ => panic!("Expected block got {:?}", body),
+            },
+            _ => panic!("Expected if expression got {:?}", expression),
+        },
+        _ => panic!("Expected if expression got {:?}", first_statement),
+    }
+}
+
 macro_rules! check_expression_value {
     ($expression:expr, $variant:ident, $token_kind:ident, $expected:expr) => {
         match $expression {
