@@ -539,6 +539,42 @@ fn should_traverse_functional() {
     }
 }
 
+#[test]
+fn should_traverse_array() {
+    let token = Rc::new(Token {
+        context: Option::None,
+        kind: crate::tokens::TokenKind::Integer(1),
+    });
+    let program = Program {
+        statements: vec![Statement::AExpression {
+            token: token.clone(),
+            expression: Expression::ArrayLiteral {
+                token: token.clone(),
+                elements: vec![one(), four(), one()],
+            },
+        }],
+    };
+    let result = modify(Rc::new(program), turn_one_into_two);
+    let output_program = result.as_any().downcast_ref::<Program>();
+    let output = output_program.unwrap();
+    assert_eq!(output.statements.len(), 1);
+    let first_statement = output.statements[0].clone();
+    match first_statement {
+        Statement::AExpression {
+            token: _,
+            expression,
+        } => match expression {
+            Expression::ArrayLiteral { token: _, elements } => {
+                check_if_integer_literal_equals(&elements[0], 2);
+                check_if_integer_literal_equals(&elements[1], 4);
+                check_if_integer_literal_equals(&elements[2], 2);
+            }
+            _ => panic!("Expected array literal got {:?}", expression),
+        },
+        _ => panic!("Expected if expression got {:?}", first_statement),
+    }
+}
+
 macro_rules! check_expression_value {
     ($expression:expr, $variant:ident, $token_kind:ident, $expected:expr) => {
         match $expression {

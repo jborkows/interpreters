@@ -17,6 +17,17 @@ macro_rules! modify_box_expression {
     }};
 }
 
+macro_rules! modify_expression {
+    ($node:expr, $fun:expr) => {{
+        let modified = modify(Rc::new($node.clone()), $fun);
+        modified
+            .as_any()
+            .downcast_ref::<Expression>()
+            .unwrap()
+            .clone()
+    }};
+}
+
 macro_rules! modify_box_statement {
     ($node:expr, $fun:expr) => {{
         let x = modify(Rc::new((**$node).clone()), $fun)
@@ -79,24 +90,14 @@ pub fn modify<'a>(
                 token,
                 return_value,
             } => {
-                let new_value = modify(Rc::new(return_value.clone()), fun);
-                let expression = new_value
-                    .as_any()
-                    .downcast_ref::<Expression>()
-                    .unwrap()
-                    .clone();
+                let expression = modify_expression!(return_value, fun);
                 return Rc::new(Statement::Return {
                     token: token.clone(),
                     return_value: expression,
                 });
             }
             Statement::Let { token, name, value } => {
-                let new_value = modify(Rc::new(value.clone()), fun);
-                let expression = new_value
-                    .as_any()
-                    .downcast_ref::<Expression>()
-                    .unwrap()
-                    .clone();
+                let expression = modify_expression!(value, fun);
                 return Rc::new(Statement::Let {
                     token: token.clone(),
                     name: name.clone(),
@@ -160,19 +161,22 @@ pub fn modify<'a>(
                         let modified_parameter = parameters
                             .as_ref()
                             .into_iter()
-                            .map(|s| {
-                                let modified = modify(Rc::new(s.clone()), fun);
-                                modified
-                                    .as_any()
-                                    .downcast_ref::<Expression>()
-                                    .unwrap()
-                                    .clone()
-                            })
+                            .map(|s| modify_expression!(s, fun))
                             .collect::<Vec<_>>();
                         Rc::new(Expression::FunctionLiteral {
                             token: token.clone(),
                             parameters: modified_parameter.into(),
                             body: modify_box_statement!(body, fun),
+                        })
+                    }
+                    Expression::ArrayLiteral { token, elements } => {
+                        let modified_elements = elements
+                            .into_iter()
+                            .map(|s| modify_expression!(s, fun))
+                            .collect::<Vec<_>>();
+                        Rc::new(Expression::ArrayLiteral {
+                            token: token.clone(),
+                            elements: modified_elements,
                         })
                     }
                     _ => modify(Rc::new(expression.clone()), fun),
