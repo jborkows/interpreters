@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::{rc::Rc, vec};
 
 use crate::{
     ast::{
@@ -568,6 +568,45 @@ fn should_traverse_array() {
                 check_if_integer_literal_equals(&elements[0], 2);
                 check_if_integer_literal_equals(&elements[1], 4);
                 check_if_integer_literal_equals(&elements[2], 2);
+            }
+            _ => panic!("Expected array literal got {:?}", expression),
+        },
+        _ => panic!("Expected if expression got {:?}", first_statement),
+    }
+}
+
+#[test]
+fn should_traverse_map_literal() {
+    let token = Rc::new(Token {
+        context: Option::None,
+        kind: crate::tokens::TokenKind::Integer(1),
+    });
+    let program = Program {
+        statements: vec![Statement::AExpression {
+            token: token.clone(),
+            expression: Expression::MapLiteral {
+                token: token.clone(),
+                elements: vec![(one(), one()), (four(), four())],
+            },
+        }],
+    };
+    let result = modify(Rc::new(program), turn_one_into_two);
+    let output_program = result.as_any().downcast_ref::<Program>();
+    let output = output_program.unwrap();
+    assert_eq!(output.statements.len(), 1);
+    let first_statement = output.statements[0].clone();
+    match first_statement {
+        Statement::AExpression {
+            token: _,
+            expression,
+        } => match expression {
+            Expression::MapLiteral { token: _, elements } => {
+                let (a1, a2) = &elements[0];
+                check_if_integer_literal_equals(a1, 2);
+                check_if_integer_literal_equals(a2, 2);
+                let (b1, b2) = &elements[1];
+                check_if_integer_literal_equals(b1, 4);
+                check_if_integer_literal_equals(b2, 4);
             }
             _ => panic!("Expected array literal got {:?}", expression),
         },

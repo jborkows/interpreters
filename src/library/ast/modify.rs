@@ -179,6 +179,16 @@ pub fn modify<'a>(
                             elements: modified_elements,
                         })
                     }
+                    Expression::MapLiteral { token, elements } => {
+                        let modified_elements = elements
+                            .into_iter()
+                            .map(|(k, v)| (modify_expression!(k, fun), modify_expression!(v, fun)))
+                            .collect::<Vec<_>>();
+                        Rc::new(Expression::MapLiteral {
+                            token: token.clone(),
+                            elements: modified_elements,
+                        })
+                    }
                     _ => modify(Rc::new(expression.clone()), fun),
                 };
                 let should_be_expression = expression_value
