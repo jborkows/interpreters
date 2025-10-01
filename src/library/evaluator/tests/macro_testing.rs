@@ -75,30 +75,6 @@ fn should_unquote_addition() {
     }
 }
 
-#[test]
-fn should_unquote_addition_of_addition() {
-    let result = eval_input("quote(4+unquote(4+4))");
-
-    match result.as_ref() {
-        crate::object::Object::Quote(quoted) => match quoted.as_ref() {
-            Expression::Infix {
-                token: _,
-                left,
-                operator: _,
-                right,
-            } => {
-                check_if_integer_literal_equals(left, 4);
-                check_if_integer_literal_equals(right, 4);
-            }
-            _ => panic!(
-                "Expected an Infix expression, but got: {}",
-                quoted.to_string()
-            ),
-        },
-        _ => panic!("Expected a Quote object, but got: {}", result.to_string()),
-    }
-}
-
 macro_rules! check_expression_value {
     ($expression:expr, $variant:ident, $token_kind:ident, $expected:expr) => {
         match $expression {

@@ -1,7 +1,11 @@
 use std::{cell::RefCell, rc::Rc};
 
 use crate::{
-    ast::expression::Expression,
+    ast::{
+        base::Node,
+        expression::{self, Expression},
+        modify,
+    },
     end_flow,
     evaluator::{evaluate, evaluate_expressions::evaluate_expressions},
     object::{Environment, Identifier, Object, error_at},
@@ -20,8 +24,7 @@ pub fn evaluate_call_expression(
         Expression::Identifier(id) => match &id.kind {
             TokenKind::Identifier(name) => {
                 if name == "quote" {
-                    let first = &arguments[0];
-                    return Rc::new(Object::Quote(Rc::new(first.clone())));
+                    return evaluate_quote(&arguments[0], &token, env.clone());
                 }
             }
             _ => {}
@@ -85,4 +88,96 @@ fn extend_env(
         .zip(arguments.iter())
         .for_each(|(param, arg)| new_env.borrow_mut().set(param.name.clone(), arg.clone()));
     new_env
+}
+
+fn evaluate_quote(
+    argument: &Expression,
+    token: &Token,
+    env: Rc<RefCell<Environment>>,
+) -> Rc<Object> {
+    let modified_argument = if is_unquote_call(&argument) {
+        evaluate_unqote(argument.clone(), &token, env)
+    } else {
+        Rc::new(argument.clone())
+    };
+    return Rc::new(Object::Quote(modified_argument));
+}
+
+fn evaluate_unqote(
+    expression: Expression,
+    token: &Token,
+    env: Rc<RefCell<Environment>>,
+) -> Rc<Expression> {
+    fn traverse<'a>(
+        node: Rc<dyn Node + 'a>,
+        token: &Token,
+        env: Rc<RefCell<Environment>>,
+    ) -> Rc<dyn Node + 'a> {
+        let expression = node.as_any().downcast_ref::<Expression>();
+        let expression = match expression {
+            Some(v) => v,
+            None => return node,
+        };
+        return match expression {
+            Expression::Call {
+                token: _,
+                function: _,
+                arguments,
+            } => {
+                if arguments.len() != 1 {
+                    return node;
+                }
+
+                let unqoted = evaluate(&arguments[0], env);
+                return convert_unqoted_into_ast(unqoted, token);
+            }
+            _ => node,
+        };
+    }
+    let node = modify(Rc::new(expression), |n| traverse(n, token, env.clone()))
+        .as_any()
+        .downcast_ref::<Expression>()
+        .unwrap()
+        .clone();
+    Rc::new(node)
+}
+
+fn convert_unqoted_into_ast(unqoted: Rc<Object>, token: &Token) -> Rc<Expression> {
+    let position = token.position();
+    let position =
+        crate::lines::TokenPosition::single_character(position.0.into(), position.1.into());
+    let expression = match *unqoted {
+        Object::Int(v) => {
+            if v > 0 {
+                Expression::IntegerLiteral(Rc::new(Token::new(
+                    position,
+                    TokenKind::Integer(v.try_into().unwrap()),
+                )))
+            } else {
+                todo!("minus case")
+            }
+        }
+        _ => todo!("To fill"),
+    };
+    Rc::new(expression)
+}
+
+fn is_unquote_call(expression: &Expression) -> bool {
+    match expression {
+        Expression::Call {
+            token: _,
+            function,
+            arguments: _,
+        } => {
+            if let Expression::Identifier(token) = *function.clone() {
+                match &token.kind {
+                    TokenKind::Identifier(function_name) => function_name == "unquote",
+                    _ => false,
+                }
+            } else {
+                false
+            }
+        }
+        _ => false,
+    }
 }
