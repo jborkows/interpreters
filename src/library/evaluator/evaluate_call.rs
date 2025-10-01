@@ -109,7 +109,6 @@ fn evaluate_unqote(
         token: &Token,
         env: Rc<RefCell<Environment>>,
     ) -> Rc<dyn Node + 'a> {
-        println!("Traversing {:?}", &node.as_ref());
         let expression = node.as_any().downcast_ref::<Expression>();
         let expression = match expression {
             Some(v) => v,

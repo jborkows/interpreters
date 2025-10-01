@@ -44,7 +44,6 @@ pub fn modify<'a, F>(node: Rc<dyn Node + 'a>, fun: F) -> Rc<dyn Node + 'a>
 where
     F: Fn(Rc<dyn Node + 'a>) -> Rc<dyn Node + 'a> + Clone,
 {
-    println!("Traversing {:?}", &node.as_ref());
     let program = node.as_any().downcast_ref::<Program>();
     if let Some(program) = program {
         let statements = program
