@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use crate::ast::{
     base::Node,
-    expression::Expression,
+    expression::{self, Expression},
     statements::{Program, Statement},
 };
 
@@ -44,6 +44,7 @@ pub fn modify<'a, F>(node: Rc<dyn Node + 'a>, fun: F) -> Rc<dyn Node + 'a>
 where
     F: Fn(Rc<dyn Node + 'a>) -> Rc<dyn Node + 'a> + Clone,
 {
+    println!("Traversing {:?}", &node.as_ref());
     let program = node.as_any().downcast_ref::<Program>();
     if let Some(program) = program {
         let statements = program
@@ -63,6 +64,101 @@ where
 
         println!("Program finished with {:?}", output);
         return Rc::new(output);
+    }
+
+    let expression = node.as_any().downcast_ref::<Expression>();
+    if let Some(expression) = expression {
+        return match expression {
+            Expression::Infix {
+                token,
+                left,
+                operator,
+                right,
+            } => {
+                let left_as_expression = modify_box_expression!(left, fun.clone());
+                let right_as_expression = modify_box_expression!(right, fun);
+                Rc::new(Expression::Infix {
+                    token: token.clone(),
+                    left: left_as_expression,
+                    operator: operator.clone(),
+                    right: right_as_expression,
+                })
+            }
+            Expression::PrefixOperator {
+                token,
+                operator,
+                right,
+            } => Rc::new(Expression::PrefixOperator {
+                token: token.clone(),
+                operator: operator.clone(),
+                right: modify_box_expression!(right, fun.clone()),
+            }),
+            Expression::Index {
+                token,
+                array,
+                index,
+            } => Rc::new(Expression::Index {
+                token: token.clone(),
+                array: modify_box_expression!(array, fun.clone()),
+                index: modify_box_expression!(index, fun.clone()),
+            }),
+            Expression::AIf {
+                token,
+                condition,
+                consequence,
+                alternative,
+            } => Rc::new(Expression::AIf {
+                token: token.clone(),
+                condition: modify_box_expression!(condition, fun.clone()),
+                consequence: modify_box_statement!(consequence, fun.clone()),
+                alternative: match alternative {
+                    Some(v) => Some(modify_box_statement!(v, fun.clone())),
+                    None => None,
+                },
+            }),
+            Expression::FunctionLiteral {
+                token,
+                parameters,
+                body,
+            } => {
+                let modified_parameter = parameters
+                    .as_ref()
+                    .into_iter()
+                    .map(|s| modify_expression!(s, fun.clone()))
+                    .collect::<Vec<_>>();
+                Rc::new(Expression::FunctionLiteral {
+                    token: token.clone(),
+                    parameters: modified_parameter.into(),
+                    body: modify_box_statement!(body, fun.clone()),
+                })
+            }
+            Expression::ArrayLiteral { token, elements } => {
+                let modified_elements = elements
+                    .into_iter()
+                    .map(|s| modify_expression!(s, fun.clone()))
+                    .collect::<Vec<_>>();
+                Rc::new(Expression::ArrayLiteral {
+                    token: token.clone(),
+                    elements: modified_elements,
+                })
+            }
+            Expression::MapLiteral { token, elements } => {
+                let modified_elements = elements
+                    .into_iter()
+                    .map(|(k, v)| {
+                        (
+                            modify_expression!(k, fun.clone()),
+                            modify_expression!(v, fun.clone()),
+                        )
+                    })
+                    .collect::<Vec<_>>();
+                Rc::new(Expression::MapLiteral {
+                    token: token.clone(),
+                    elements: modified_elements,
+                })
+            }
+            _ => fun(node),
+        };
     }
 
     let statement = node.as_any().downcast_ref::<Statement>();
@@ -105,97 +201,7 @@ where
                 });
             }
             Statement::AExpression { token, expression } => {
-                let expression_value = match expression {
-                    Expression::Infix {
-                        token,
-                        left,
-                        operator,
-                        right,
-                    } => {
-                        let left_as_expression = modify_box_expression!(left, fun.clone());
-                        let right_as_expression = modify_box_expression!(right, fun);
-                        Rc::new(Expression::Infix {
-                            token: token.clone(),
-                            left: left_as_expression,
-                            operator: operator.clone(),
-                            right: right_as_expression,
-                        })
-                    }
-                    Expression::PrefixOperator {
-                        token,
-                        operator,
-                        right,
-                    } => Rc::new(Expression::PrefixOperator {
-                        token: token.clone(),
-                        operator: operator.clone(),
-                        right: modify_box_expression!(right, fun.clone()),
-                    }),
-                    Expression::Index {
-                        token,
-                        array,
-                        index,
-                    } => Rc::new(Expression::Index {
-                        token: token.clone(),
-                        array: modify_box_expression!(array, fun.clone()),
-                        index: modify_box_expression!(index, fun.clone()),
-                    }),
-                    Expression::AIf {
-                        token,
-                        condition,
-                        consequence,
-                        alternative,
-                    } => Rc::new(Expression::AIf {
-                        token: token.clone(),
-                        condition: modify_box_expression!(condition, fun.clone()),
-                        consequence: modify_box_statement!(consequence, fun.clone()),
-                        alternative: match alternative {
-                            Some(v) => Some(modify_box_statement!(v, fun.clone())),
-                            None => None,
-                        },
-                    }),
-                    Expression::FunctionLiteral {
-                        token,
-                        parameters,
-                        body,
-                    } => {
-                        let modified_parameter = parameters
-                            .as_ref()
-                            .into_iter()
-                            .map(|s| modify_expression!(s, fun.clone()))
-                            .collect::<Vec<_>>();
-                        Rc::new(Expression::FunctionLiteral {
-                            token: token.clone(),
-                            parameters: modified_parameter.into(),
-                            body: modify_box_statement!(body, fun.clone()),
-                        })
-                    }
-                    Expression::ArrayLiteral { token, elements } => {
-                        let modified_elements = elements
-                            .into_iter()
-                            .map(|s| modify_expression!(s, fun.clone()))
-                            .collect::<Vec<_>>();
-                        Rc::new(Expression::ArrayLiteral {
-                            token: token.clone(),
-                            elements: modified_elements,
-                        })
-                    }
-                    Expression::MapLiteral { token, elements } => {
-                        let modified_elements = elements
-                            .into_iter()
-                            .map(|(k, v)| {
-                                (
-                                    modify_expression!(k, fun.clone()),
-                                    modify_expression!(v, fun.clone()),
-                                )
-                            })
-                            .collect::<Vec<_>>();
-                        Rc::new(Expression::MapLiteral {
-                            token: token.clone(),
-                            elements: modified_elements,
-                        })
-                    }
-                    _ => modify(Rc::new(expression.clone()), fun),
-                };
+                let expression_value = modify(Rc::new(expression.clone()), fun.clone());
                 let should_be_expression = expression_value
                     .as_any()
                     .downcast_ref::<Expression>()

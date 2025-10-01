@@ -95,11 +95,7 @@ fn evaluate_quote(
     token: &Token,
     env: Rc<RefCell<Environment>>,
 ) -> Rc<Object> {
-    let modified_argument = if is_unquote_call(&argument) {
-        evaluate_unqote(argument.clone(), &token, env)
-    } else {
-        Rc::new(argument.clone())
-    };
+    let modified_argument = evaluate_unqote(argument.clone(), &token, env);
     return Rc::new(Object::Quote(modified_argument));
 }
 
@@ -113,11 +109,16 @@ fn evaluate_unqote(
         token: &Token,
         env: Rc<RefCell<Environment>>,
     ) -> Rc<dyn Node + 'a> {
+        println!("Traversing {:?}", &node.as_ref());
         let expression = node.as_any().downcast_ref::<Expression>();
         let expression = match expression {
             Some(v) => v,
             None => return node,
         };
+        if !is_unquote_call(expression) {
+            return node;
+        }
+
         return match expression {
             Expression::Call {
                 token: _,
@@ -128,6 +129,7 @@ fn evaluate_unqote(
                     return node;
                 }
 
+                println!("unquoting {:?}", &arguments[0]);
                 let unqoted = evaluate(&arguments[0], env);
                 return convert_unqoted_into_ast(unqoted, token);
             }
