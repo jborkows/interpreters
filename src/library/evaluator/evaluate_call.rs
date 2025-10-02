@@ -158,6 +158,17 @@ fn convert_unqoted_into_ast(unqoted: Rc<Object>, token: &Token) -> Rc<Expression
                 todo!("minus case")
             }
         }
+        Object::Boolean(value) => Expression::BooleanLiteral {
+            token: Rc::new(Token::new(
+                position,
+                if value {
+                    TokenKind::True
+                } else {
+                    TokenKind::False
+                },
+            )),
+            value: value,
+        },
         _ => todo!("To fill"),
     };
     Rc::new(expression)

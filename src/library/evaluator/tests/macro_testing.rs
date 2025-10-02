@@ -1,3 +1,5 @@
+use std::panic;
+
 use crate::{
     ast::expression::Expression, evaluator::tests::evaluator_tests::eval_input, tokens::TokenKind,
 };
@@ -99,6 +101,32 @@ fn should_unquote_addition_of_addition() {
     }
 }
 
+#[test]
+fn should_unquote_boolean_literal() {
+    let result = eval_input("quote(unquote(true))");
+
+    match result.as_ref() {
+        crate::object::Object::Quote(quoted) => check_if_boolean_literal(&quoted, true),
+        _ => panic!("Expected a Quote object, but got: {}", result.to_string()),
+    }
+    let result = eval_input("quote(unquote(false))");
+
+    match result.as_ref() {
+        crate::object::Object::Quote(quoted) => check_if_boolean_literal(&quoted, false),
+        _ => panic!("Expected a Quote object, but got: {}", result.to_string()),
+    }
+}
+
+#[test]
+fn should_unquote_bolean_expression() {
+    let result = eval_input("quote(unquote(true == false))");
+
+    match result.as_ref() {
+        crate::object::Object::Quote(quoted) => check_if_boolean_literal(&quoted, false),
+        _ => panic!("Expected a Quote object, but got: {}", result.to_string()),
+    }
+}
+
 macro_rules! check_expression_value {
     ($expression:expr, $variant:ident, $token_kind:ident, $expected:expr) => {
         match $expression {
@@ -130,6 +158,26 @@ macro_rules! check_expression_value {
 
 fn check_if_integer_literal_equals(expression: &Expression, expected_value: u32) {
     check_expression_value!(expression, IntegerLiteral, Integer, expected_value);
+}
+
+fn check_if_boolean_literal(expression: &Expression, expected_value: bool) {
+    match expression {
+        Expression::BooleanLiteral { token, value: _ } => match token.kind {
+            TokenKind::True => {
+                if expected_value == false {
+                    panic!("Expected false got true")
+                }
+            }
+            TokenKind::False => {
+                if expected_value == true {
+                    panic!("Expected true got false")
+                }
+            }
+
+            _ => panic!("Expected boolean got {:?}", token.kind),
+        },
+        _ => panic!("Expected boolean got {:?}", expression),
+    }
 }
 
 fn check_if_identifiers_equals(expression: &Expression, expected_value: String) {
