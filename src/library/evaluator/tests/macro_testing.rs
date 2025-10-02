@@ -69,10 +69,44 @@ fn should_unquote_literal() {
 }
 
 #[test]
+fn should_unquote_funny_literal() {
+    let result = eval_input("quote(unquote(--8))");
+    match result.as_ref() {
+        crate::object::Object::Quote(quoted) => check_if_integer_literal_equals(quoted, 8),
+        _ => panic!("Expected a Quote object, but got: {}", result.to_string()),
+    }
+}
+
+#[test]
 fn should_unquote_addition() {
     let result = eval_input("quote(unquote(4+4))");
     match result.as_ref() {
         crate::object::Object::Quote(quoted) => check_if_integer_literal_equals(quoted, 8),
+        _ => panic!("Expected a Quote object, but got: {}", result.to_string()),
+    }
+}
+
+#[test]
+fn should_unquote_negative_value() {
+    let result = eval_input("quote(unquote(-4))");
+    match result.as_ref() {
+        crate::object::Object::Quote(quoted) => match quoted.as_ref() {
+            Expression::PrefixOperator {
+                token: _,
+                operator,
+                right,
+            } => {
+                match operator {
+                    crate::ast::expression::PrefixOperatorType::Minus => {}
+                    _ => panic!("Expected a minus operator, but got: {}", operator),
+                }
+                check_if_integer_literal_equals(&right, 4);
+            }
+            _ => panic!(
+                "Expected a prefix operator, but got: {}",
+                result.to_string()
+            ),
+        },
         _ => panic!("Expected a Quote object, but got: {}", result.to_string()),
     }
 }

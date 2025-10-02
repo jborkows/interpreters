@@ -155,7 +155,14 @@ fn convert_unqoted_into_ast(unqoted: Rc<Object>, token: &Token) -> Rc<Expression
                     TokenKind::Integer(v.try_into().unwrap()),
                 )))
             } else {
-                todo!("minus case")
+                Expression::PrefixOperator {
+                    token: Rc::new(Token::new(position, TokenKind::Negation)),
+                    operator: expression::PrefixOperatorType::Minus,
+                    right: Box::new(Expression::IntegerLiteral(Rc::new(Token::new(
+                        position,
+                        TokenKind::Integer((-v).try_into().unwrap()),
+                    )))),
+                }
             }
         }
         Object::Boolean(value) => Expression::BooleanLiteral {
