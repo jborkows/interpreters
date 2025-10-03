@@ -262,6 +262,21 @@ macro_rules! check_expression_value {
     };
 }
 
+#[test]
+fn should_unquote_string() {
+    let result = eval_input("quote(unquote(\"a\"))");
+    match result.as_ref() {
+        crate::object::Object::Quote(quoted) => match quoted.as_ref() {
+            Expression::StringLiteral(token) => match &token.kind {
+                TokenKind::StringLiteral(v) => assert_eq!(v, "a"),
+                _ => panic!("Expected String {:?}", token.kind),
+            },
+            _ => panic!("Expected String {:?}", quoted),
+        },
+        _ => panic!("Expected a Quote object, but got: {}", result.to_string()),
+    }
+}
+
 fn check_if_integer_literal_equals(expression: &Expression, expected_value: u32) {
     check_expression_value!(expression, IntegerLiteral, Integer, expected_value);
 }

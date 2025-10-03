@@ -177,6 +177,10 @@ fn convert_unqoted_into_ast(unqoted: Rc<Object>, token: &Token) -> Rc<Expression
             value: value,
         }),
         Object::Quote(ref value) => value.clone(),
+        Object::String(ref value) => Rc::new(Expression::StringLiteral(Rc::new(Token::new(
+            position,
+            TokenKind::StringLiteral(value.clone()),
+        )))),
         _ => todo!("To fill"),
     }
 }
