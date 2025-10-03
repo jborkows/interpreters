@@ -147,25 +147,25 @@ fn convert_unqoted_into_ast(unqoted: Rc<Object>, token: &Token) -> Rc<Expression
     let position = token.position();
     let position =
         crate::lines::TokenPosition::single_character(position.0.into(), position.1.into());
-    let expression = match *unqoted {
+    match *unqoted {
         Object::Int(v) => {
             if v > 0 {
-                Expression::IntegerLiteral(Rc::new(Token::new(
+                Rc::new(Expression::IntegerLiteral(Rc::new(Token::new(
                     position,
                     TokenKind::Integer(v.try_into().unwrap()),
-                )))
+                ))))
             } else {
-                Expression::PrefixOperator {
+                Rc::new(Expression::PrefixOperator {
                     token: Rc::new(Token::new(position, TokenKind::Negation)),
                     operator: expression::PrefixOperatorType::Minus,
                     right: Box::new(Expression::IntegerLiteral(Rc::new(Token::new(
                         position,
                         TokenKind::Integer((-v).try_into().unwrap()),
                     )))),
-                }
+                })
             }
         }
-        Object::Boolean(value) => Expression::BooleanLiteral {
+        Object::Boolean(value) => Rc::new(Expression::BooleanLiteral {
             token: Rc::new(Token::new(
                 position,
                 if value {
@@ -175,10 +175,10 @@ fn convert_unqoted_into_ast(unqoted: Rc<Object>, token: &Token) -> Rc<Expression
                 },
             )),
             value: value,
-        },
+        }),
+        Object::Quote(ref value) => value.clone(),
         _ => todo!("To fill"),
-    };
-    Rc::new(expression)
+    }
 }
 
 fn is_unquote_call(expression: &Expression) -> bool {

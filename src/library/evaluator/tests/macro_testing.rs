@@ -1,7 +1,9 @@
 use std::panic;
 
 use crate::{
-    ast::expression::Expression, evaluator::tests::evaluator_tests::eval_input, tokens::TokenKind,
+    ast::expression::{Expression, InfixOperatorType},
+    evaluator::tests::evaluator_tests::eval_input,
+    tokens::TokenKind,
 };
 
 #[test]
@@ -157,6 +159,76 @@ fn should_unquote_bolean_expression() {
 
     match result.as_ref() {
         crate::object::Object::Quote(quoted) => check_if_boolean_literal(&quoted, false),
+        _ => panic!("Expected a Quote object, but got: {}", result.to_string()),
+    }
+}
+
+#[test]
+fn should_unquote_quote_value() {
+    let result = eval_input("quote(unquote(quote(4+4)))");
+    match result.as_ref() {
+        crate::object::Object::Quote(quoted) => match quoted.as_ref() {
+            Expression::Infix {
+                token: _,
+                left,
+                operator,
+                right,
+            } => {
+                match operator {
+                    InfixOperatorType::Plus => {}
+                    _ => panic!("Expected plus got {:?}", operator),
+                }
+                check_if_integer_literal_equals(&left, 4);
+                check_if_integer_literal_equals(&right, 4);
+            }
+            _ => panic!(
+                "Expected a prefix operator, but got: {}",
+                result.to_string()
+            ),
+        },
+        _ => panic!("Expected a Quote object, but got: {}", result.to_string()),
+    }
+}
+
+#[test]
+fn should_unquote_quote_with_addition_avalue() {
+    let result = eval_input("quote(unquote(4+4)+unquote(quote(4+4)))");
+    match result.as_ref() {
+        crate::object::Object::Quote(quoted) => match quoted.as_ref() {
+            Expression::Infix {
+                token: _,
+                left,
+                operator,
+                right,
+            } => {
+                match operator {
+                    InfixOperatorType::Plus => {}
+                    _ => panic!("Expected plus got {:?}", operator),
+                }
+                check_if_integer_literal_equals(&left, 8);
+                match right.as_ref() {
+                    Expression::Infix {
+                        token: _,
+                        left,
+                        operator,
+                        right,
+                    } => {
+                        match operator {
+                            InfixOperatorType::Plus => {}
+                            _ => panic!("Expected plus got {:?}", operator),
+                        }
+
+                        check_if_integer_literal_equals(&left, 4);
+                        check_if_integer_literal_equals(&right, 4);
+                    }
+                    _ => panic!("expected right to be quoted infix {:?}", right),
+                }
+            }
+            _ => panic!(
+                "Expected a prefix operator, but got: {}",
+                result.to_string()
+            ),
+        },
         _ => panic!("Expected a Quote object, but got: {}", result.to_string()),
     }
 }
