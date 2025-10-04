@@ -739,6 +739,58 @@ fn parse_getting_by_key() {
     }
 }
 
+#[test]
+fn parse_macro() {
+    let input = "macro(x, y) { x + y; }";
+    let mut parser = Parser::from_string(input);
+    let program = parser.parse_program();
+    check_parser_errors(&parser);
+    assert_eq!(program.statements.len(), 1);
+
+    match &program.statements[0] {
+        Statement::AExpression {
+            token: _,
+            expression,
+        } => match expression {
+            Expression::MacroLiteral {
+                token: _,
+                parameters,
+                body,
+            } => {
+                assert_eq!(parameters.len(), 2);
+                assert_eq!(parameters[0].to_string(), "x");
+                assert_eq!(parameters[1].to_string(), "y");
+                let block = match body.as_ref() {
+                    Statement::Block { statements, .. } => &statements[0],
+                    _ => panic!("Expected BlockStatement in function body"),
+                };
+                let expression = match block {
+                    Statement::AExpression {
+                        token: _,
+                        expression,
+                    } => expression,
+                    _ => panic!("Expected ExpressionStatement in function body"),
+                };
+                match expression {
+                    Expression::Infix {
+                        token: _,
+                        left,
+                        operator,
+                        right,
+                    } => {
+                        assert_eq!(*operator, InfixOperatorType::Plus);
+                        check_if_identifiers_equals(left, "x".to_string());
+                        check_if_identifiers_equals(right, "y".to_string());
+                    }
+                    _ => panic!("Expected InfixExpression in function body"),
+                }
+            }
+            _ => panic!("Expected FunctionLiteral, got {:?}", expression),
+        },
+        _ => panic!("Expected ExpressionStatement"),
+    }
+}
+
 fn check_parser_errors(parser: &Parser) {
     if !parser.errors.is_empty() {
         panic!(

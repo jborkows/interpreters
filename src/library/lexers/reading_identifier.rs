@@ -56,6 +56,7 @@ fn finish_it(
                 "else" => TokenKind::Else,
                 "return" => TokenKind::Return,
                 "fn" => TokenKind::Function,
+                "macro" => TokenKind::Macro,
                 _ => TokenKind::Identifier(text),
             };
             let position = starting_position.token_ends_with(line_number, column_number);

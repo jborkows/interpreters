@@ -96,5 +96,10 @@ pub(super) fn evaluate_expression(
             index,
         } => parse_index_expression(token, array, index, env.clone()),
         Expression::MapLiteral { token, elements } => parse_map_literal(elements, env.clone()),
+        Expression::MacroLiteral {
+            token,
+            parameters,
+            body,
+        } => todo!(),
     }
 }

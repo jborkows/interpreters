@@ -44,6 +44,11 @@ pub enum Expression {
         parameters: Rc<Vec<Expression>>, // Identifier
         body: Box<Statement>,
     },
+    MacroLiteral {
+        token: Rc<Token>,
+        parameters: Rc<Vec<Expression>>, // Identifier
+        body: Box<Statement>,
+    },
     ArrayLiteral {
         token: Rc<Token>,
         elements: Vec<Expression>,
@@ -152,6 +157,14 @@ impl Display for Expression {
                 let elems_str = elems.join(", ");
                 write!(f, "{{{}}}", elems_str)
             }
+            Expression::MacroLiteral {
+                token: _,
+                parameters,
+                body,
+            } => {
+                let params = join_rc_collection!(parameters, ", ");
+                write!(f, "macro({}){{ {} }}", params, body)
+            }
         }
     }
 }
@@ -199,6 +212,29 @@ pub fn function_literal(
         }
     });
     Expression::FunctionLiteral {
+        token,
+        parameters,
+        body: Box::new(body),
+    }
+}
+
+pub fn macro_literal(
+    token: Rc<Token>,
+    parameters: Rc<Vec<Expression>>,
+    body: Statement,
+) -> Expression {
+    match body {
+        Statement::Block { .. } => {}
+        _ => {
+            panic!("Body must be a BlockStatement");
+        }
+    }
+    parameters.iter().for_each(|param| {
+        if !matches!(param, Expression::Identifier(_)) {
+            panic!("Parameters must be Identifier expressions");
+        }
+    });
+    Expression::MacroLiteral {
         token,
         parameters,
         body: Box::new(body),

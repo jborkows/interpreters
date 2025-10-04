@@ -236,6 +236,25 @@ fn should_be_able_to_parse_map() {
     perform_test(input, expected);
 }
 
+#[test]
+fn should_parse_macro() {
+    let input = vec![r#"macro(x,y){x+y}"#];
+    let expected = vec![
+        (position(1, 1, 1, 5), TokenKind::Macro),
+        (single(1, 6), TokenKind::LeftParen),
+        (single(1, 7), TokenKind::Identifier("x".to_string())),
+        (single(1, 8), TokenKind::Comma),
+        (single(1, 9), TokenKind::Identifier("y".to_string())),
+        (single(1, 10), TokenKind::RightParen),
+        (single(1, 11), TokenKind::LeftBrace),
+        (single(1, 12), TokenKind::Identifier("x".to_string())),
+        (single(1, 13), TokenKind::Plus),
+        (single(1, 14), TokenKind::Identifier("y".to_string())),
+        (single(1, 15), TokenKind::RightBrace),
+    ];
+    perform_test(input, expected);
+}
+
 fn perform_test(input: Vec<&str>, expected: Vec<(TokenPosition, TokenKind)>) {
     println!("Expected:");
     for exp in expected.iter() {

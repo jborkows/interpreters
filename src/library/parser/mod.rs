@@ -1,12 +1,15 @@
 #[cfg(test)]
 mod parser_tests;
 
-use std::{collections::HashMap, rc::Rc};
+use std::rc::Rc;
 
 use crate::{
     ast::{
         self,
-        expression::{Expression, InfixOperatorType, function_literal, identifier, if_expression},
+        expression::{
+            Expression, InfixOperatorType, function_literal, identifier, if_expression,
+            macro_literal,
+        },
         statements::{Program, Statement},
     },
     lexers::Lexer,
@@ -192,6 +195,7 @@ impl Parser {
             TokenKind::LeftParen => self.parse_grouped_expression(),
             TokenKind::If => self.parse_if_expression(),
             TokenKind::Function => self.parse_function_expression(),
+            TokenKind::Macro => self.parse_macro_expression(),
             TokenKind::LeftBracket => self.parse_array_literal(),
             TokenKind::LeftBrace => self.parse_map_literal(),
             _ => None,
@@ -370,6 +374,24 @@ impl Parser {
         }
         let body = self.parse_block_statement();
         Some(function_literal(current_token, Rc::new(parameters), body))
+    }
+
+    fn parse_macro_expression(&mut self) -> Option<Expression> {
+        let current_token = self.current_token.clone();
+        if !self.expect_peek_and_move_into(&PureTokenKind::LeftParen) {
+            return None;
+        }
+        let parameters = self.parse_function_parameters();
+        if !self.expect_peek_and_move_into(&PureTokenKind::RightParen) {
+            self.errors
+                .push("Expected right parenthesis after function parameters".to_string());
+            return None;
+        }
+        if !self.expect_peek_and_move_into(&PureTokenKind::LeftBrace) {
+            return None;
+        }
+        let body = self.parse_block_statement();
+        Some(macro_literal(current_token, Rc::new(parameters), body))
     }
 
     fn parse_function_parameters(&mut self) -> Vec<Expression> {

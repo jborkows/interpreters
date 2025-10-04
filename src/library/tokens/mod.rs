@@ -83,6 +83,7 @@ pub enum TokenKind {
     Else,
     Return,
     Collon,
+    Macro,
 }
 
 impl TokenKind {
@@ -118,6 +119,7 @@ impl TokenKind {
             TokenKind::LeftBracket => "[".to_string(),
             TokenKind::RightBracket => "]".to_string(),
             TokenKind::Collon => ":".to_string(),
+            TokenKind::Macro => "macro".to_string(),
         }
     }
 }
@@ -160,6 +162,7 @@ impl From<&TokenKind> for PureTokenKind {
             TokenKind::LeftBracket => PureTokenKind::LeftBracket,
             TokenKind::RightBracket => PureTokenKind::RightBracket,
             TokenKind::Collon => PureTokenKind::Collon,
+            TokenKind::Macro => PureTokenKind::Macro,
         }
     }
 }
@@ -200,4 +203,5 @@ pub enum PureTokenKind {
     LeftBracket,
     RightBracket,
     Collon,
+    Macro,
 }
