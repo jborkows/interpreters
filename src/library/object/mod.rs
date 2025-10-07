@@ -31,6 +31,11 @@ pub enum Object {
         body: Rc<Statement>,
         env: Rc<RefCell<Environment>>,
     },
+    Macro {
+        parameters: Vec<Identifier>,
+        body: Rc<Statement>,
+        env: Rc<RefCell<Environment>>,
+    },
     Builtin(BuiltInFunction),
     Array {
         elements: Vec<Rc<Object>>,
@@ -97,12 +102,17 @@ pub fn type_of(object: &Object) -> String {
             body: _,
             env: _,
         } => join_collection!(parameters, ", "),
+        Object::Macro {
+            parameters,
+            body: _,
+            env: _,
+        } => "macro: ".to_string() + &(join_collection!(parameters, ", ")).to_string(),
         Object::Builtin(built_in_function) => {
             "BuiltInFunction: ".to_string() + &built_in_function.to_string()
         }
         Object::Array { .. } => "Array".to_string(),
         Object::HashMap(_) => "HashMap".to_string(),
-        Object::Quote(statement) => "Quote: ".to_string(),
+        Object::Quote(_) => "Quote: ".to_string(),
     }
 }
 impl Display for Object {
@@ -119,6 +129,7 @@ impl Display for Object {
                 column,
             } => write!(f, "Error at {}:{} -> {}", line, column, message),
             Object::Function { .. } => write!(f, "{}", type_of(self)),
+            Object::Macro { .. } => write!(f, "{}", type_of(self)),
             Object::Builtin(built_in_function) => write!(f, "{}", built_in_function),
             Object::Array { elements } => {
                 let elements_str: Vec<String> = elements.iter().map(|e| e.to_string()).collect();
@@ -173,6 +184,15 @@ pub fn hash(object: &Object) -> HashValue {
             env: _,
         } => {
             parameters.iter().for_each(|p| p.name.hash(&mut hasher));
+        }
+
+        Object::Macro {
+            parameters,
+            body: _,
+            env: _,
+        } => {
+            parameters.iter().for_each(|p| p.name.hash(&mut hasher));
+            "macro".hash(&mut hasher);
         }
         Object::Builtin(built_in_function) => built_in_function.to_string().hash(&mut hasher),
         Object::Array { elements } => {

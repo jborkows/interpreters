@@ -105,3 +105,84 @@ fn let_statement(
     env.borrow_mut().set(name, value.clone());
     value
 }
+
+//TODO: make more then top level macros
+pub fn define_macros(program: Program, env: Rc<RefCell<Environment>>) -> Program {
+    let macros = program
+        .statements
+        .iter()
+        .filter(|s| is_macro(s))
+        .collect::<Vec<_>>();
+    let rest = program
+        .statements
+        .iter()
+        .filter(|s| !is_macro(s))
+        .map(|f| f.to_owned())
+        .collect::<Vec<_>>();
+    macros.iter().for_each(|m| match m {
+        Statement::Let {
+            token: _,
+            name,
+            value,
+        } => match value {
+            Expression::MacroLiteral {
+                token: _,
+                parameters,
+                body,
+            } => {
+                println!("Processing {:?}", &m);
+                let name_value = match name {
+                    Expression::Identifier(token) => match &token.kind {
+                        TokenKind::Identifier(v) => v.to_string(),
+                        _ => panic!("It has to be Identifier but found {:?}", token.kind),
+                    },
+                    _ => panic!("It has to be Identifier but found {:?}", name),
+                };
+
+                let mut parsed_parameters: Vec<Identifier> = vec![];
+
+                for parameter in parameters.as_ref() {
+                    match parameter {
+                        Expression::Identifier(id_token) => match &id_token.kind {
+                            TokenKind::Identifier(value) => {
+                                parsed_parameters.push(Identifier {
+                                    name: value.clone(),
+                                });
+                            }
+                            _ => {}
+                        },
+                        _ => {}
+                    }
+                }
+
+                let a_macro = Object::Macro {
+                    parameters: parsed_parameters,
+                    body: Rc::new(body.as_ref().clone()),
+                    env: env.clone(),
+                };
+                env.borrow_mut().set(name_value, Rc::new(a_macro));
+            }
+            _ => {}
+        },
+        _ => {}
+    });
+    return Program { statements: rest };
+}
+
+fn is_macro(statement: &Statement) -> bool {
+    match statement {
+        Statement::Let {
+            token: _,
+            name: _,
+            value,
+        } => match value {
+            Expression::MacroLiteral {
+                token: _,
+                parameters: _,
+                body: _,
+            } => true,
+            _ => false,
+        },
+        _ => false,
+    }
+}
