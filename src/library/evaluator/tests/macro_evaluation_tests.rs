@@ -1,6 +1,8 @@
 use std::{cell::RefCell, panic, rc::Rc};
 
 use crate::ast::expression::Expression;
+use crate::evaluator::evaluate;
+use crate::object::{self, Object};
 use crate::tokens::TokenKind;
 
 use crate::{
@@ -167,5 +169,37 @@ fn expand_macro_for_complex_infixc() {
             _ => panic!("Expected infix got {:?}", expression),
         },
         _ => panic!("Expected expression got {:?}", statement),
+    }
+}
+
+fn evaluate_input(input: &str) -> Rc<Object> {
+    let mut parser = Parser::from_string(input);
+    let program = parser.parse_program();
+    check_parser_errors(&parser);
+    let env = Rc::new(RefCell::new(crate::object::Environment::new()));
+    let after_macro_population_to_env = define_macros(program, env.clone());
+    let expended_macro = expand_macros(after_macro_population_to_env, env.clone());
+    return evaluate(&expended_macro, env.clone());
+}
+
+#[test]
+fn unless_macro() {
+    let program = r#"
+        let unless = macro(condition,consequence,alternative) { 
+          quote(
+            if (!(unquote(condition))){
+               unquote(consequence);
+            }else{
+               unquote(alternative);
+            }
+          );
+        };
+        let x = 5;
+        unless(x > 10,1+1,1-1);
+    "#;
+    let result = evaluate_input(program);
+    match result.as_ref() {
+        Object::Int(v) => assert_eq!(2, v.clone()),
+        _ => panic!("Expected int got {:?}", result),
     }
 }
