@@ -14,25 +14,6 @@ macro_rules! end_flow {
         }
     };
 }
-macro_rules! argument_should_be {
-    ($left:ident, $token:expr, $function_name:expr, $argument_no:expr, $variant:ident) => {
-        (match $left.as_ref() {
-            super::Object::$variant(s) => Ok(s),
-            _ => Err(error_at(
-                format!(
-                    "Invalid argument {} for {}: {}({}) expected {}",
-                    $argument_no,
-                    $function_name,
-                    super::type_of($left),
-                    $left.to_string(),
-                    stringify!($variant)
-                )
-                .as_str(),
-                $token,
-            )),
-        })
-    };
-}
 macro_rules! expecting_array {
     ($left:ident, $token:expr, $function_name:expr, $argument_no:expr ) => {
         (match $left.as_ref() {

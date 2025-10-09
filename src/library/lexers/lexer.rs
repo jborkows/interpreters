@@ -1,4 +1,3 @@
-use std::iter::Peekable;
 use std::rc::Rc;
 use std::{cmp, collections::VecDeque, env};
 
@@ -80,33 +79,5 @@ impl Iterator for Lexer {
 
     fn next(&mut self) -> Option<Self::Item> {
         self.next()
-    }
-}
-
-pub struct LexingIterator<I: Iterator<Item = String>> {
-    lines: Peekable<I>,
-    lexer: Lexer,
-}
-
-impl<I: Iterator<Item = String>> Iterator for LexingIterator<I> {
-    type Item = Rc<Token>;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        loop {
-            // Try getting next token from current lexer state
-            if let Some(token) = self.lexer.next() {
-                return Some(token);
-            }
-
-            // If no more tokens, try to process next line
-            match self.lines.next() {
-                Some(line) => {
-                    self.lexer.process(&line);
-                }
-                None => {
-                    self.lexer.finish();
-                }
-            }
-        }
     }
 }

@@ -89,17 +89,19 @@ pub(super) fn evaluate_expression(
             parameters,
             body,
         } => function_literal_evaluation(token, parameters, body, env.clone()),
-        Expression::ArrayLiteral { token, elements } => parse_array_literal(elements, env.clone()),
+        Expression::ArrayLiteral { token: _, elements } => {
+            parse_array_literal(elements, env.clone())
+        }
         Expression::Index {
             token,
             array,
             index,
         } => parse_index_expression(token, array, index, env.clone()),
-        Expression::MapLiteral { token, elements } => parse_map_literal(elements, env.clone()),
+        Expression::MapLiteral { token: _, elements } => parse_map_literal(elements, env.clone()),
         Expression::MacroLiteral {
-            token,
-            parameters,
-            body,
-        } => todo!(),
+            token: _,
+            parameters: _,
+            body: _,
+        } => todo!("Should not go into macro literal"),
     }
 }

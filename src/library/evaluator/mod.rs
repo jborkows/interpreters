@@ -1,7 +1,6 @@
 use std::{cell::RefCell, rc::Rc};
 
 use crate::ast::modify;
-use crate::lines::TokenPosition;
 use crate::object::*;
 use crate::{
     ast::{
@@ -179,7 +178,7 @@ pub fn expand_macros(program: Program, env: Rc<RefCell<Environment>>) -> Program
         };
         match expression {
             Expression::Call {
-                token,
+                token: _,
                 function,
                 arguments,
             } => {

@@ -2,7 +2,7 @@ use std::{cell::RefCell, panic, rc::Rc};
 
 use crate::ast::expression::Expression;
 use crate::evaluator::evaluate;
-use crate::object::{self, Object};
+use crate::object::Object;
 use crate::tokens::TokenKind;
 
 use crate::{

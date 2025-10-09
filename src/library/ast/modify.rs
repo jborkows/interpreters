@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use crate::ast::{
     base::Node,
-    expression::{self, Expression},
+    expression::Expression,
     statements::{Program, Statement},
 };
 
