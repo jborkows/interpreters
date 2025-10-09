@@ -1,5 +1,7 @@
 use std::{cell::RefCell, rc::Rc};
 
+use crate::ast::modify;
+use crate::lines::TokenPosition;
 use crate::object::*;
 use crate::{
     ast::{
@@ -130,7 +132,6 @@ pub fn define_macros(program: Program, env: Rc<RefCell<Environment>>) -> Program
                 parameters,
                 body,
             } => {
-                println!("Processing {:?}", &m);
                 let name_value = match name {
                     Expression::Identifier(token) => match &token.kind {
                         TokenKind::Identifier(v) => v.to_string(),
@@ -167,6 +168,93 @@ pub fn define_macros(program: Program, env: Rc<RefCell<Environment>>) -> Program
         _ => {}
     });
     return Program { statements: rest };
+}
+
+pub fn expand_macros(program: Program, env: Rc<RefCell<Environment>>) -> Program {
+    let modified = modify(Rc::new(program), |node| {
+        let maybe_expression = node.as_any().downcast_ref::<Expression>();
+        let expression = match maybe_expression {
+            Some(v) => v,
+            None => return node,
+        };
+        match expression {
+            Expression::Call {
+                token,
+                function,
+                arguments,
+            } => {
+                let obj = match is_macro_call(function, env.clone()) {
+                    Some(v) => v,
+                    None => return node,
+                };
+
+                return match obj.as_ref() {
+                    Object::Macro {
+                        parameters,
+                        body,
+                        env,
+                    } => {
+                        let mut extended_env = Environment::enclosed(env.clone());
+                        let arguments = quote_arguments(arguments);
+                        for (i, parameter) in parameters.iter().enumerate() {
+                            extended_env
+                                .set(parameter.name.clone(), arguments.get(i).unwrap().clone());
+                        }
+                        let evaluated =
+                            evaluate(body.as_ref(), Rc::new(RefCell::new(extended_env)));
+                        match evaluated.as_ref() {
+                            Object::Quote(expression) => expression.clone(),
+                            _ => panic!(
+                                "You can only return AST node from macro. Returned {:?}",
+                                evaluated
+                            ),
+                        }
+                    }
+                    _ => return node,
+                };
+            }
+            _ => return node,
+        }
+    });
+    let modified_program = modified
+        .as_any()
+        .downcast_ref::<Program>()
+        .unwrap()
+        .statements
+        .clone();
+    return Program {
+        statements: modified_program,
+    };
+}
+
+fn quote_arguments(arguments: &Vec<Expression>) -> Vec<Rc<Object>> {
+    return arguments
+        .iter()
+        .map(|expression| Object::Quote(Rc::new(expression.clone())))
+        .map(|obj| Rc::new(obj))
+        .collect::<Vec<_>>();
+}
+
+fn is_macro_call(function: &Expression, env: Rc<RefCell<Environment>>) -> Option<Rc<Object>> {
+    let identifier = match function {
+        Expression::Identifier(token) => match &token.kind {
+            TokenKind::Identifier(v) => v,
+            _ => return None,
+        },
+        _ => return None,
+    };
+
+    return match env.borrow().get(&identifier) {
+        Some(obj) => match obj.as_ref() {
+            Object::Macro {
+                parameters: _,
+                body: _,
+                env: _,
+            } => Some(obj),
+            _ => None,
+        },
+        None => return None,
+    };
 }
 
 fn is_macro(statement: &Statement) -> bool {
