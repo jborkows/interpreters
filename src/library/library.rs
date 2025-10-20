@@ -1,5 +1,6 @@
 mod allocator;
 mod ast;
+mod code;
 mod evaluator;
 mod lexers;
 mod lines;
