@@ -3,6 +3,7 @@ use std::collections::HashMap;
 
 use std::sync::LazyLock;
 
+mod compiler;
 mod definitions;
 mod make;
 #[cfg(test)]

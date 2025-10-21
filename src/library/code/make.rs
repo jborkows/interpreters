@@ -9,10 +9,6 @@ pub(crate) fn make(opcode: OpCode, operands: Vec<u16>) -> Instructions {
     };
     let mut instruction_size = 1;
     for val in &definition.operands_widths {
-        println!(
-            "Instruction size increasing {:?} + {:?}",
-            instruction_size, val
-        );
         instruction_size += val;
     }
 

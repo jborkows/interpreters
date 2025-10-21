@@ -18,7 +18,7 @@ use crate::{
 
 pub struct Parser {
     lexer: Lexer,
-    errors: Vec<String>,
+    pub errors: Vec<String>,
     current_token: Rc<Token>,
     peek_token: Option<Rc<Token>>,
 }

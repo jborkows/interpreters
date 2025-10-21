@@ -1,11 +1,22 @@
-use std::fmt::Display;
+use std::fmt::{Debug, Display};
 
-#[derive(PartialEq, Eq, Hash, Clone, Debug)]
+#[derive(PartialEq, Eq, Hash, Clone)]
 pub struct Byte(pub u8);
+
+impl Byte {
+    fn string(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:#04X}", self.0)
+    }
+}
 
 impl Display for Byte {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
+        self.string(f)
+    }
+}
+impl Debug for Byte {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.string(f)
     }
 }
 
@@ -28,6 +39,16 @@ impl From<&u8> for Byte {
 }
 
 pub struct Instructions(pub Vec<Byte>);
+
+impl Instructions {
+    pub fn length(&self) -> usize {
+        self.0.len()
+    }
+
+    pub fn bytes(&self) -> Vec<Byte> {
+        self.0.clone()
+    }
+}
 
 impl From<Vec<Byte>> for Instructions {
     fn from(value: Vec<Byte>) -> Self {
