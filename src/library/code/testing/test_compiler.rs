@@ -73,11 +73,8 @@ pub(crate) fn test_instructions(input: InstructionTest) {
     let expected = concat_instructions(&input.expected);
     if expected.length() != input.actual.length() {
         panic!(
-            "Expected instructions length was {:?}({:?}) and actual was {:?}({:?}) ",
-            expected.length(),
-            expected.bytes(),
-            input.actual.length(),
-            input.actual.bytes()
+            "Expected instructions:\n{expected}\nactual was:\n{}",
+            input.actual
         )
     }
 
@@ -87,10 +84,11 @@ pub(crate) fn test_instructions(input: InstructionTest) {
         .zip(input.actual.bytes())
         .enumerate()
     {
-        let (expected, actual) = value;
-        panic!(
-            "Expected {:?} but got {:?} at {:?}",
-            expected, actual, index
+        let (expected_byte, actual) = value;
+        assert_eq!(
+            expected_byte, &actual,
+            "Expected {:?} but got {:?} at {:?}\nExpected instructions:\n{expected}\nactual was:\n{}",
+            expected_byte, actual, index, input.actual
         );
     }
 }
