@@ -54,22 +54,25 @@ impl Instructions {
 impl Display for Instructions {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut index = 0;
-        while index < self.0.len() {
-            let definition = match lookup(&OpCode(self.0[index].clone())) {
-                Ok(v) => v,
-                Err(e) => panic!("While parsing expression at index = {:?}: {:?}", index, e),
-            };
-            let (operands, read) = read_operands(definition, &self.0[(index + 1)..]);
-            write!(f, "{:#06X} {}", index, definition.name)?;
 
-            for operand in operands {
-                write!(f, " {}", operand)?;
+        while index < self.0.len() {
+            let definition = lookup(&OpCode(self.0[index].clone())).unwrap_or_else(|e| {
+                panic!("While parsing expression at index = {index:#06X}: {e:?}")
+            });
+
+            let (operands, read) = read_operands(definition, &self.0[index + 1..]);
+
+            write!(f, "{index:#06X} {}", definition.name)?;
+
+            for operand in &operands {
+                write!(f, " {operand}")?;
             }
 
-            write!(f, "\n")?;
+            writeln!(f)?;
             index += read + 1;
         }
-        write!(f, "")
+
+        Ok(())
     }
 }
 
