@@ -95,7 +95,7 @@ pub(crate) fn test_instructions(input: InstructionTest) {
     }
 }
 
-fn concat_instructions(instructions: &Vec<Instructions>) -> Instructions {
+pub(crate) fn concat_instructions(instructions: &Vec<Instructions>) -> Instructions {
     let bytes: Vec<Byte> = instructions.iter().flat_map(|x| x.bytes()).collect();
     return Instructions(bytes);
 }

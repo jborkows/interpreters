@@ -8,8 +8,8 @@ generate_tests_for_compiler! {
 addition_of_two_integer: (
         "1+2",
         vec![
-            make(OpCodes::Constant.into(), vec![0]),
-            make(OpCodes::Constant.into(), vec![1]),
+            make(OpCodes::Constant.into(), &[0]),
+            make(OpCodes::Constant.into(), &[1]),
         ],
         vec![test_be_integer(1),test_be_integer(2)]),
 }

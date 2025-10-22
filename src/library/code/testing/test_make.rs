@@ -1,7 +1,7 @@
 use crate::code::{definitions::OpCodes, make::make};
 
 fn compare_bytecode(incoming: OpCodes, incoming_operands: Vec<u16>, expected_bytes: Vec<u8>) {
-    let instructions = make(incoming.into(), incoming_operands).0;
+    let instructions = make(incoming.into(), &incoming_operands).0;
     assert_eq!(
         instructions.len(),
         expected_bytes.len(),

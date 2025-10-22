@@ -1,6 +1,9 @@
-use crate::code::{definitions::Byte, definitions::Instructions, definitions::OpCode, lookup};
+use crate::code::{
+    definitions::{Byte, Definition, Instructions, OpCode},
+    lookup,
+};
 
-pub(crate) fn make(opcode: OpCode, operands: Vec<u16>) -> Instructions {
+pub(crate) fn make(opcode: OpCode, operands: &[u16]) -> Instructions {
     let maybe_definition = lookup(&opcode);
     let definition = match maybe_definition {
         Ok(v) => v,
@@ -28,6 +31,24 @@ pub(crate) fn make(opcode: OpCode, operands: Vec<u16>) -> Instructions {
         offset += current_width
     }
     return convert(instructions);
+}
+
+pub(crate) fn read_operands(definition: &Definition, operands: &[Byte]) -> (Vec<u16>, usize) {
+    let mut values: Vec<u16> = vec![0; definition.operands_widths.len()];
+    let mut offset: usize = 0;
+    for (index, operand_width) in definition.operands_widths.iter().enumerate() {
+        match operand_width {
+            2 => {
+                let value: u16 =
+                    (operands[offset].0 as u16) * 256 + (operands[offset + 1].0 as u16);
+                values[index] = value;
+                offset += operand_width;
+            }
+            _ => todo!(),
+        }
+    }
+
+    (values, offset)
 }
 
 fn convert(incoming: Vec<u8>) -> Instructions {

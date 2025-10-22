@@ -14,7 +14,7 @@ static DEFINITIONS: LazyLock<HashMap<OpCode, Definition>> = LazyLock::new(|| {
     m.insert(
         OpCode(Byte(OpCodes::Constant as u8)),
         Definition {
-            name: "OpConstant".to_string(),
+            name: "Constant".to_string(),
             operands_widths: vec![2],
         },
     );
