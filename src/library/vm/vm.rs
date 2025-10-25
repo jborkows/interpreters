@@ -1,0 +1,72 @@
+use std::rc::Rc;
+
+use crate::{
+    code::{Bytecode, Instructions, OpCode, OpCodes, read_u_16},
+    object::Object,
+};
+
+const STACK_SIZE: usize = 2048;
+pub struct VM {
+    constants: Rc<Vec<Rc<Object>>>,
+    instructions: Instructions,
+    stack: [Rc<Object>; STACK_SIZE],
+    stack_pointer: usize, //points to the next value. Top of stack is stack[stack_pointer-1]
+}
+
+const CONSTANT: u8 = OpCodes::Constant as u8;
+
+const NIL: Object = Object::Null;
+impl VM {
+    pub fn new(byte_code: Bytecode) -> Self {
+        let constants: Vec<Rc<Object>> = byte_code
+            .constants
+            .iter()
+            .map(|o| o.clone())
+            .map(Rc::new)
+            .collect::<Vec<_>>();
+        VM {
+            constants: Rc::new(constants),
+            instructions: byte_code.instructions,
+            stack: std::array::from_fn(|_| Rc::new(NIL)),
+            stack_pointer: 0,
+        }
+    }
+
+    pub fn run(&mut self) {
+        let bytes = self.instructions.bytes();
+        let mut instruction_pointer = 0;
+        while instruction_pointer < bytes.len() {
+            let instruction: u8 = bytes.get(instruction_pointer).unwrap().into();
+
+            match instruction {
+                CONSTANT => {
+                    let constant_index = read_u_16(&bytes[instruction_pointer + 1..]);
+                    instruction_pointer += 2;
+                    let cloned = self.constants.clone();
+                    let constant = cloned.get(constant_index as usize).expect(
+                        format!("Can not find constant at index {constant_index}").as_str(),
+                    );
+                    self.push(constant.clone());
+                }
+                _ => panic!("Don't know what to do with {instruction}"),
+            }
+            instruction_pointer += 1;
+        }
+    }
+
+    pub(crate) fn stack_top(&self) -> Option<&Object> {
+        if self.stack_pointer == 0 {
+            Option::None
+        } else {
+            self.stack.get(self.stack_pointer - 1).map(|x| x.as_ref())
+        }
+    }
+
+    fn push(&mut self, object: Rc<Object>) {
+        if self.stack_pointer >= STACK_SIZE {
+            panic!("stack overflow")
+        }
+        self.stack[self.stack_pointer] = object;
+        self.stack_pointer += 1;
+    }
+}

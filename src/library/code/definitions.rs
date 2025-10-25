@@ -82,12 +82,24 @@ impl From<Vec<Byte>> for Instructions {
     }
 }
 
+impl From<Byte> for OpCode {
+    fn from(value: Byte) -> Self {
+        OpCode(value)
+    }
+}
+
 #[derive(PartialEq, Eq, Hash, Debug, Clone)]
 pub struct OpCode(pub Byte);
 
 pub struct Definition {
     pub name: String,
     pub operands_widths: Vec<usize>, //can have multiple operands with different width
+}
+
+impl From<&Byte> for u8 {
+    fn from(value: &Byte) -> Self {
+        value.0
+    }
 }
 
 impl From<OpCode> for u8 {

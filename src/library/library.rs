@@ -8,6 +8,7 @@ mod object;
 mod parser;
 mod repl;
 mod tokens;
+mod vm;
 
 #[macro_export]
 macro_rules! print_bash_error {

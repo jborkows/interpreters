@@ -1,6 +1,6 @@
 use crate::code::{
     definitions::{Byte, Definition, Instructions, OpCode},
-    lookup,
+    lookup, read_u_16,
 };
 
 pub(crate) fn make(opcode: OpCode, operands: &[u16]) -> Instructions {
@@ -39,8 +39,7 @@ pub(crate) fn read_operands(definition: &Definition, operands: &[Byte]) -> (Vec<
     for (index, operand_width) in definition.operands_widths.iter().enumerate() {
         match operand_width {
             2 => {
-                let value: u16 =
-                    (operands[offset].0 as u16) * 256 + (operands[offset + 1].0 as u16);
+                let value: u16 = read_u_16(&operands[offset..]);
                 values[index] = value;
                 offset += operand_width;
             }
