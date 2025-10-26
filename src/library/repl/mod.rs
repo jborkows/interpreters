@@ -7,6 +7,7 @@ use std::{
 use crate::{
     evaluator::{define_macros, expand_macros},
     lexers::Lexer,
+    object::new_environment,
     parser::Parser,
 };
 
@@ -14,8 +15,8 @@ pub fn start() {
     let stdin = io::stdin();
     let reader = stdin.lock();
 
-    let environemnt = Rc::new(RefCell::new(crate::object::Environment::new()));
-    let macro_environemnt = Rc::new(RefCell::new(crate::object::Environment::new()));
+    let environemnt = new_environment();
+    let macro_environemnt = new_environment();
     for line_result in reader.lines() {
         let mut lexer = Lexer::new();
         let line = line_result.unwrap();

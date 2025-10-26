@@ -112,12 +112,14 @@ impl From<OpCode> for u8 {
 #[derive(PartialEq, Eq, Hash, Clone, Copy)]
 pub enum OpCodes {
     Constant,
+    Add,
 }
 
 impl Display for OpCodes {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             OpCodes::Constant => f.write_str("Constant"),
+            OpCodes::Add => f.write_str("+"),
         }
     }
 }

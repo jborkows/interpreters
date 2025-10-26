@@ -9,22 +9,24 @@ mod make;
 #[cfg(test)]
 mod testing;
 
-pub use compiler::{Bytecode, compile};
+pub use compiler::{Bytecode, CompilationError, compile};
 pub use definitions::Instructions;
 pub use definitions::OpCode;
 pub use definitions::OpCodes;
 
 static DEFINITIONS: LazyLock<HashMap<OpCode, Definition>> = LazyLock::new(|| {
-    let mut m = HashMap::new();
-    m.insert(
-        OpCode(Byte(OpCodes::Constant as u8)),
-        Definition {
-            name: "Constant".to_string(),
-            operands_widths: vec![2],
-        },
-    );
-    m
+    return HashMap::from([pair(OpCodes::Constant, vec![2]), pair(OpCodes::Add, vec![])]);
 });
+
+fn pair(op_code: OpCodes, operand_widths: Vec<usize>) -> (OpCode, Definition) {
+    (
+        op_code.into(),
+        Definition {
+            name: op_code.to_string(),
+            operands_widths: operand_widths,
+        },
+    )
+}
 
 #[derive(Debug)]
 pub enum LookupError {

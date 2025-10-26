@@ -37,3 +37,7 @@ impl Environment {
         None
     }
 }
+
+pub fn new_environment() -> Rc<RefCell<Environment>> {
+    Rc::new(RefCell::new(crate::object::Environment::new()))
+}

@@ -2,6 +2,7 @@
 name = "interpreter"
 version = "0.1.0"
 edition = "2024"
+default-run="interpreter"
 
 [features]
 track-allocation = []
@@ -9,6 +10,10 @@ track-allocation = []
 
 [dependencies]
 indoc = "2"
+anyhow = "1.0"
+clap = { version = "4.5", features = ["derive"] }
+thiserror = "2"
+zip = "6.0.0"
 
 
 [lib]
@@ -18,3 +23,7 @@ path = "src/library/library.rs"
 [[bin]]
 name = "interpreter"
 path = "src/main.rs"
+
+[[bin]]
+name = "compiler"
+path = "src/compiler.rs"

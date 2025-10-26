@@ -1,9 +1,0 @@
-use crate::code::Bytecode;
-
-pub struct VM {}
-
-impl VM {
-    pub fn new(byte_code: Bytecode) -> Self {
-        VM {}
-    }
-}

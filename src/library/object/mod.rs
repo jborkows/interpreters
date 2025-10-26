@@ -9,7 +9,7 @@ mod helpers;
 mod object_pool;
 use builtins::BuiltInFunction;
 pub use builtins::parse_built_in_function;
-pub use environment::Environment;
+pub use environment::{Environment, new_environment};
 pub use helpers::*;
 #[cfg(test)]
 mod testing;

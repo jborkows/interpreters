@@ -13,9 +13,6 @@ pub struct VM {
     stack_pointer: usize, //points to the next value. Top of stack is stack[stack_pointer-1]
 }
 
-const CONSTANT: u8 = OpCodes::Constant as u8;
-
-const NIL: Object = Object::Null;
 impl VM {
     pub fn new(byte_code: Bytecode) -> Self {
         let constants: Vec<Rc<Object>> = byte_code
@@ -70,3 +67,7 @@ impl VM {
         self.stack_pointer += 1;
     }
 }
+
+const CONSTANT: u8 = OpCodes::Constant as u8;
+
+const NIL: Object = Object::Null;
