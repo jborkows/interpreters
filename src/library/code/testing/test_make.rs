@@ -1,6 +1,6 @@
 use crate::code::{definitions::OpCodes, make::make};
 
-fn compare_bytecode(incoming: OpCodes, incoming_operands: Vec<u16>, expected_bytes: Vec<u8>) {
+fn compare_bytecode(incoming: OpCodes, incoming_operands: &[u16], expected_bytes: &[u8]) {
     let instructions = make(incoming.into(), &incoming_operands).0;
     assert_eq!(
         instructions.len(),
@@ -34,5 +34,6 @@ macro_rules! expect_comparing {
 }
 
 expect_comparing! {
-        should_create_constant: (OpCodes::Constant, vec![65534], vec![OpCodes::Constant.into(), 255,254]),
+        should_create_constant: (OpCodes::Constant, &[65534], &[OpCodes::Constant.into(), 255,254]),
+        should_create_add: (OpCodes::Add, &[], &[OpCodes::Add.into()]),
 }

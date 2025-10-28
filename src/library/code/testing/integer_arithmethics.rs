@@ -10,7 +10,7 @@ addition_of_two_integer: (
         vec![
             make(OpCodes::Constant.into(), &[0]),
             make(OpCodes::Constant.into(), &[1]),
+            make(OpCodes::Add.into(), &[]),
         ],
         vec![test_be_integer(1),test_be_integer(2)]),
 }
-

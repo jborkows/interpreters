@@ -25,6 +25,23 @@ fn should_display_opcodes_for_constants() {
     assert_eq!(expected, flatten.to_string())
 }
 
+macro_rules! generate_for_display {
+
+    ($($name:ident: ($op_codes:expr,$operands:expr, $expected:expr),)*) => {
+        $(
+            #[test]
+            fn $name() {
+                let instruction = make($op_codes.into(), &$operands);
+                assert_eq!($expected.to_string()+"\n", instruction.to_string())
+            }
+        )*
+    };
+}
+
+generate_for_display! {
+   should_display_add: (OpCodes::Add, [], "0x0000 +"),
+}
+
 fn helper_read(op_codes: OpCodes, operands: &[u16], read_bytes: usize) {
     let op_code: OpCode = op_codes.into();
     let instructions = make(op_code.clone(), operands);

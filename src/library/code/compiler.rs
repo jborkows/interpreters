@@ -3,7 +3,7 @@ use std::{cell::RefCell, rc::Rc, vec};
 use crate::{
     ast::{
         base::Node,
-        expression::Expression,
+        expression::{Expression, InfixOperatorType},
         statements::{Program, Statement},
     },
     code::{
@@ -18,6 +18,7 @@ use crate::{
 pub enum CompilationError {
     UnexpectedSymbol(Rc<Token>),
     NotImplementedYet(Rc<Expression>),
+    UnknownOperator(Rc<Token>, InfixOperatorType),
 }
 
 pub fn compile<T: Node>(node: T) -> Result<Bytecode, Vec<CompilationError>> {
@@ -27,35 +28,40 @@ pub fn compile<T: Node>(node: T) -> Result<Bytecode, Vec<CompilationError>> {
 }
 
 struct Worker {
-    instructions: RefCell<Vec<Byte>>,
-    constants: RefCell<Vec<Object>>,
-    errors: RefCell<Vec<CompilationError>>,
+    instructions: Vec<Byte>,
+    constants: Vec<Object>,
+    errors: Vec<CompilationError>,
 }
 
 impl Worker {
     fn new() -> Self {
         Worker {
-            instructions: RefCell::new(vec![]),
-            constants: RefCell::new(vec![]),
-            errors: RefCell::new(vec![]),
+            instructions: vec![],
+            constants: vec![],
+            errors: vec![],
         }
     }
 
     fn add_errors(&mut self, error: CompilationError) {
-        self.errors.borrow_mut().push(error);
+        self.errors.push(error);
     }
     fn add_constant(&mut self, object: Object) -> u16 {
-        self.constants.borrow_mut().push(object);
-        return (self.constants.borrow().len() - 1) as u16;
+        self.constants.push(object);
+        return (self.constants.len() - 1) as u16;
     }
+
+    fn emit_op_code(&mut self, op_codes: OpCodes) {
+        self.emit(op_codes.into(), &[]);
+    }
+
     fn emit(&mut self, op_codes: OpCodes, operands: &[u16]) -> usize {
         let instructions = make(op_codes.into(), operands);
         return self.add_instruction(instructions);
     }
     fn add_instruction(&mut self, instructions: Instructions) -> usize {
-        let previous_position = self.instructions.borrow().len();
+        let previous_position = self.instructions.len();
         for byte in instructions.bytes() {
-            self.instructions.borrow_mut().push(byte.clone());
+            self.instructions.push(byte.clone());
         }
         previous_position
     }
@@ -129,6 +135,15 @@ impl Worker {
             } => {
                 self.compile_expression(&left);
                 self.compile_expression(&right);
+                match operator {
+                    crate::ast::expression::InfixOperatorType::Plus => {
+                        self.emit_op_code(OpCodes::Add)
+                    }
+                    _ => self.errors.push(CompilationError::UnknownOperator(
+                        token.clone(),
+                        operator.clone(),
+                    )),
+                }
             }
             _ => self.add_errors(CompilationError::NotImplementedYet(Rc::new(
                 expression.clone(),
@@ -139,13 +154,13 @@ impl Worker {
 
 impl From<Worker> for Result<Bytecode, Vec<CompilationError>> {
     fn from(value: Worker) -> Self {
-        let errors = value.errors.take();
+        let errors = value.errors;
         if errors.len() > 0 {
             return Result::Err(errors);
         }
         Result::Ok(Bytecode {
-            instructions: Instructions(value.instructions.take()),
-            constants: value.constants.take(),
+            instructions: Instructions(value.instructions),
+            constants: value.constants,
         })
     }
 }
