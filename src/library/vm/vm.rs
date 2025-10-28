@@ -1,13 +1,14 @@
-use std::rc::Rc;
+use std::{panic, rc::Rc};
 
 use crate::{
+    ast::expression::InfixOperatorType,
     code::{Bytecode, Instructions, OpCode, OpCodes, read_u_16},
     object::Object,
 };
 
 const STACK_SIZE: usize = 2048;
 pub struct VM {
-    constants: Rc<Vec<Rc<Object>>>,
+    constants: Vec<Rc<Object>>,
     instructions: Instructions,
     stack: [Rc<Object>; STACK_SIZE],
     stack_pointer: usize, //points to the next value. Top of stack is stack[stack_pointer-1]
@@ -22,7 +23,7 @@ impl VM {
             .map(Rc::new)
             .collect::<Vec<_>>();
         VM {
-            constants: Rc::new(constants),
+            constants: constants,
             instructions: byte_code.instructions,
             stack: std::array::from_fn(|_| Rc::new(NIL)),
             stack_pointer: 0,
@@ -45,9 +46,33 @@ impl VM {
                     );
                     self.push(constant.clone());
                 }
+                ADD => {
+                    self.binary_operation(InfixOperatorType::Plus);
+                }
                 _ => panic!("Don't know what to do with {instruction}"),
             }
             instruction_pointer += 1;
+        }
+    }
+
+    fn binary_operation(&mut self, operator: InfixOperatorType) {
+        let right = self.pop();
+        let left = self.pop();
+        match *right {
+            Object::Int(r) => match *left {
+                Object::Int(l) => match operator {
+                    InfixOperatorType::Plus => {
+                        let result = r + l;
+                        self.push(Rc::new(Object::Int(result)));
+                    }
+                    _ => panic!(
+                        "Don't know how to deal with {right:?} and {left:?} for {operator:?}"
+                    ),
+                },
+
+                _ => panic!("Don't know how to deal with {right:?} and {left:?} for {operator:?}"),
+            },
+            _ => panic!("Don't know how to deal with {right:?} for {operator:?}"),
         }
     }
 
@@ -66,8 +91,18 @@ impl VM {
         self.stack[self.stack_pointer] = object;
         self.stack_pointer += 1;
     }
+
+    fn pop(&mut self) -> Rc<Object> {
+        if self.stack_pointer == 0 {
+            panic!("Cannot move from stack, stack is empty")
+        }
+        let object = self.stack[self.stack_pointer - 1].clone();
+        self.stack_pointer -= 1;
+        return object;
+    }
 }
 
 const CONSTANT: u8 = OpCodes::Constant as u8;
+const ADD: u8 = OpCodes::Add as u8;
 
 const NIL: Object = Object::Null;
