@@ -15,7 +15,11 @@ pub use definitions::OpCode;
 pub use definitions::OpCodes;
 
 static DEFINITIONS: LazyLock<HashMap<OpCode, Definition>> = LazyLock::new(|| {
-    return HashMap::from([pair(OpCodes::Constant, vec![2]), pair(OpCodes::Add, vec![])]);
+    return HashMap::from([
+        pair(OpCodes::Constant, vec![2]),
+        pair(OpCodes::Add, vec![]),
+        pair(OpCodes::Pop, vec![]),
+    ]);
 });
 
 fn pair(op_code: OpCodes, operand_widths: Vec<usize>) -> (OpCode, Definition) {

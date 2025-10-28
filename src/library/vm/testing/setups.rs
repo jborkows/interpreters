@@ -41,9 +41,9 @@ pub(crate) fn run_vm_test(input: &str, checker: impl Fn(&Object)) {
     };
     let mut vm = VM::new(byte_code);
     vm.run();
-    let stack_element = match vm.stack_top() {
+    let stack_element = match vm.last_poped_stack_element() {
         Some(v) => v,
-        None => panic!("Stack was empty"),
+        None => panic!("No object on stack"),
     };
     checker(stack_element);
 }

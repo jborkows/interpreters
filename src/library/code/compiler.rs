@@ -101,7 +101,10 @@ impl Worker {
             Statement::AExpression {
                 token: _,
                 expression,
-            } => self.compile_expression(expression),
+            } => {
+                self.compile_expression(expression);
+                self.emit_op_code(OpCodes::Pop);
+            }
             Statement::Block {
                 token: _,
                 statements,

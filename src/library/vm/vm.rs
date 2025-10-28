@@ -49,6 +49,9 @@ impl VM {
                 ADD => {
                     self.binary_operation(InfixOperatorType::Plus);
                 }
+                POP => {
+                    self.pop();
+                }
                 _ => panic!("Don't know what to do with {instruction}"),
             }
             instruction_pointer += 1;
@@ -76,12 +79,8 @@ impl VM {
         }
     }
 
-    pub(crate) fn stack_top(&self) -> Option<&Object> {
-        if self.stack_pointer == 0 {
-            Option::None
-        } else {
-            self.stack.get(self.stack_pointer - 1).map(|x| x.as_ref())
-        }
+    pub(crate) fn last_poped_stack_element(&self) -> Option<&Object> {
+        self.stack.get(self.stack_pointer).map(|x| x.as_ref())
     }
 
     fn push(&mut self, object: Rc<Object>) {
@@ -104,5 +103,6 @@ impl VM {
 
 const CONSTANT: u8 = OpCodes::Constant as u8;
 const ADD: u8 = OpCodes::Add as u8;
+const POP: u8 = OpCodes::Pop as u8;
 
 const NIL: Object = Object::Null;

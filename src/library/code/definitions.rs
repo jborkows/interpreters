@@ -113,6 +113,7 @@ impl From<OpCode> for u8 {
 pub enum OpCodes {
     Constant,
     Add,
+    Pop,
 }
 
 impl Display for OpCodes {
@@ -120,6 +121,7 @@ impl Display for OpCodes {
         match self {
             OpCodes::Constant => f.write_str("Constant"),
             OpCodes::Add => f.write_str("+"),
+            OpCodes::Pop => f.write_str("Pop"),
         }
     }
 }

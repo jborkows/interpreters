@@ -11,6 +11,16 @@ addition_of_two_integer: (
             make(OpCodes::Constant.into(), &[0]),
             make(OpCodes::Constant.into(), &[1]),
             make(OpCodes::Add.into(), &[]),
+            make(OpCodes::Pop.into(), &[]),
         ],
+        vec![test_be_integer(1),test_be_integer(2)]),
+multiple_expressions: (
+    "1;2",
+    vec![
+            make(OpCodes::Constant.into(), &[0]),
+            make(OpCodes::Pop.into(), &[]),
+            make(OpCodes::Constant.into(), &[1]),
+            make(OpCodes::Pop.into(), &[]),
+    ],
         vec![test_be_integer(1),test_be_integer(2)]),
 }
