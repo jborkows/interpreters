@@ -8,7 +8,7 @@ pub(crate) fn make(opcode: OpCode, operands: &[u16]) -> Instructions {
     let definition = match maybe_definition {
         Ok(v) => v,
         //TODO more useful message
-        Err(_) => return Instructions(vec![]),
+        Err(_) => panic!("Cannot find definition for {opcode:?}"),
     };
     let mut instruction_size = 1;
     for val in &definition.operands_widths {

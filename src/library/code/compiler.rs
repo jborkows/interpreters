@@ -139,9 +139,10 @@ impl Worker {
                 self.compile_expression(&left);
                 self.compile_expression(&right);
                 match operator {
-                    crate::ast::expression::InfixOperatorType::Plus => {
-                        self.emit_op_code(OpCodes::Add)
-                    }
+                    InfixOperatorType::Plus => self.emit_op_code(OpCodes::Add),
+                    InfixOperatorType::Divide => self.emit_op_code(OpCodes::Divide),
+                    InfixOperatorType::Minus => self.emit_op_code(OpCodes::Subtitute),
+                    InfixOperatorType::Multiply => self.emit_op_code(OpCodes::Multiply),
                     _ => self.errors.push(CompilationError::UnknownOperator(
                         token.clone(),
                         operator.clone(),

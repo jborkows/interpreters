@@ -49,6 +49,15 @@ impl VM {
                 ADD => {
                     self.binary_operation(InfixOperatorType::Plus);
                 }
+                SUBSTITUTE => {
+                    self.binary_operation(InfixOperatorType::Minus);
+                }
+                MULTIPLY => {
+                    self.binary_operation(InfixOperatorType::Multiply);
+                }
+                DIVIDE => {
+                    self.binary_operation(InfixOperatorType::Divide);
+                }
                 POP => {
                     self.pop();
                 }
@@ -63,15 +72,10 @@ impl VM {
         let left = self.pop();
         match *right {
             Object::Int(r) => match *left {
-                Object::Int(l) => match operator {
-                    InfixOperatorType::Plus => {
-                        let result = r + l;
-                        self.push(Rc::new(Object::Int(result)));
-                    }
-                    _ => panic!(
-                        "Don't know how to deal with {right:?} and {left:?} for {operator:?}"
-                    ),
-                },
+                Object::Int(l) => {
+                    let value = binary_integer_operation(operator, l, r);
+                    self.push(Rc::new(Object::Int(value)));
+                }
 
                 _ => panic!("Don't know how to deal with {right:?} and {left:?} for {operator:?}"),
             },
@@ -103,6 +107,20 @@ impl VM {
 
 const CONSTANT: u8 = OpCodes::Constant as u8;
 const ADD: u8 = OpCodes::Add as u8;
+const MULTIPLY: u8 = OpCodes::Multiply as u8;
+const DIVIDE: u8 = OpCodes::Divide as u8;
+const SUBSTITUTE: u8 = OpCodes::Subtitute as u8;
 const POP: u8 = OpCodes::Pop as u8;
 
 const NIL: Object = Object::Null;
+
+fn binary_integer_operation(operator: InfixOperatorType, left: i64, right: i64) -> i64 {
+    match operator {
+        InfixOperatorType::Plus => left + right,
+        InfixOperatorType::Minus => left - right,
+        InfixOperatorType::Multiply => left * right,
+        InfixOperatorType::Divide => left / right,
+
+        _ => panic!("Don't know how to deal with {right:?} and {left:?} for {operator:?}"),
+    }
+}

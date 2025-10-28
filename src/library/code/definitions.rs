@@ -114,6 +114,9 @@ pub enum OpCodes {
     Constant,
     Add,
     Pop,
+    Subtitute,
+    Multiply,
+    Divide,
 }
 
 impl Display for OpCodes {
@@ -121,6 +124,9 @@ impl Display for OpCodes {
         match self {
             OpCodes::Constant => f.write_str("Constant"),
             OpCodes::Add => f.write_str("+"),
+            OpCodes::Subtitute => f.write_str("-"),
+            OpCodes::Divide => f.write_str("/"),
+            OpCodes::Multiply => f.write_str("*"),
             OpCodes::Pop => f.write_str("Pop"),
         }
     }
