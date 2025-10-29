@@ -163,6 +163,21 @@ impl Worker {
                     false => self.emit(OpCodes::False, &[]),
                 };
             }
+            Expression::PrefixOperator {
+                token: _,
+                operator,
+                right,
+            } => {
+                self.compile_expression(&right);
+                match operator {
+                    crate::ast::expression::PrefixOperatorType::Bang => {
+                        self.emit_op_code(OpCodes::Bang)
+                    }
+                    crate::ast::expression::PrefixOperatorType::Minus => {
+                        self.emit_op_code(OpCodes::Minus)
+                    }
+                }
+            }
             _ => self.add_errors(CompilationError::NotImplementedYet(Rc::new(
                 expression.clone(),
             ))),

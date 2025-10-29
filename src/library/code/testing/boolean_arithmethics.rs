@@ -70,4 +70,30 @@ not_equal: (
         ],
             vec![test_be_integer(1),test_be_integer(2)]
     ),
+
+bang_false: (
+        "!false;1",
+        vec![
+            make(OpCodes::False.into(), &[]),
+            make(OpCodes::Bang.into(), &[]),
+            make(OpCodes::Pop.into(), &[]),
+            make(OpCodes::Constant.into(), &[0]),
+            make(OpCodes::Pop.into(), &[]),
+        ],
+
+            vec![test_be_integer(1)] //I don't know how to satisfy empty array...
+    ),
+
+bang_true: (
+        "!true;1",
+        vec![
+            make(OpCodes::True.into(), &[]),
+            make(OpCodes::Bang.into(), &[]),
+            make(OpCodes::Pop.into(), &[]),
+            make(OpCodes::Constant.into(), &[0]),
+            make(OpCodes::Pop.into(), &[]),
+        ],
+
+            vec![test_be_integer(1)] //I don't know how to satisfy empty array...
+    ),
 }

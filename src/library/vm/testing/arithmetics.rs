@@ -32,5 +32,11 @@ generate_vm_tests! {
     logical_true_equals_true: (" (1 < 2) == true", should_be_boolean(true)),
     logical_true_not_equals_false: (" (1 < 2) != false", should_be_boolean(true)),
     logical_true_equals_false_not: (" (1 < 2) == false", should_be_boolean(false)),
+    minus_simple: ("-7", should_be_integer(-7)),
+    minus_counting: ("-7 + 2 + -5", should_be_integer(-10)),
+    false_bang: ("!false", should_be_boolean(true)),
+    true_bang: ("!true", should_be_boolean(false)),
+    true_bang_bang: ("!!true", should_be_boolean(true)),
+    false_bang_bang: ("!!false", should_be_boolean(false)),
 
 }

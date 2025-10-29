@@ -1,7 +1,7 @@
-use std::{panic, rc::Rc};
+use std::{panic, path::Prefix, rc::Rc};
 
 use crate::{
-    ast::expression::InfixOperatorType,
+    ast::expression::{InfixOperatorType, PrefixOperatorType},
     code::{Bytecode, Instructions, OpCode, OpCodes, read_u_16},
     object::Object,
 };
@@ -76,6 +76,8 @@ impl VM {
                 FALSE_OP => {
                     self.push(Rc::new(FALSE));
                 }
+                MINUS => self.prefix_operation(PrefixOperatorType::Minus),
+                BANG => self.prefix_operation(PrefixOperatorType::Bang),
                 _ => panic!("Don't know what to do with {instruction}"),
             }
             instruction_pointer += 1;
@@ -127,6 +129,29 @@ impl VM {
         }
     }
 
+    fn prefix_operation(&mut self, operator: PrefixOperatorType) {
+        let right = self.pop();
+        match *right {
+            Object::Int(r) => {
+                let value = {
+                    let operator = operator;
+                    match operator {
+                        PrefixOperatorType::Minus => self.push(Rc::new(Object::Int(-r))),
+                        _ => panic!("Don't know how to deal with {right:?} for {operator:?}"),
+                    }
+                };
+            }
+            Object::Boolean(r) => {
+                let object = match operator {
+                    PrefixOperatorType::Bang => wrap_boolean(!r),
+                    _ => panic!("Don't know how to deal with {right:?} for {operator:?}"),
+                };
+                self.push(Rc::new(object));
+            }
+            _ => panic!("Don't know how to deal with {right:?} for {operator:?}"),
+        }
+    }
+
     pub(crate) fn last_poped_stack_element(&self) -> Option<&Object> {
         self.stack.get(self.stack_pointer).map(|x| x.as_ref())
     }
@@ -161,6 +186,8 @@ const MULTIPLY: u8 = OpCodes::Multiply as u8;
 const DIVIDE: u8 = OpCodes::Divide as u8;
 const SUBSTITUTE: u8 = OpCodes::Subtitute as u8;
 const POP: u8 = OpCodes::Pop as u8;
+const BANG: u8 = OpCodes::Bang as u8;
+const MINUS: u8 = OpCodes::Minus as u8;
 
 const NIL: Object = Object::Null;
 const TRUE_OP: u8 = OpCodes::True as u8;

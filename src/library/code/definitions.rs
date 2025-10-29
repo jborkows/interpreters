@@ -122,6 +122,8 @@ pub enum OpCodes {
     Equal,
     NotEqual,
     GreaterThan,
+    Minus,
+    Bang,
 }
 
 impl Display for OpCodes {
@@ -138,6 +140,8 @@ impl Display for OpCodes {
             OpCodes::Equal => f.write_str("=="),
             OpCodes::NotEqual => f.write_str("!="),
             OpCodes::GreaterThan => f.write_str(">"),
+            OpCodes::Minus => f.write_str("-"),
+            OpCodes::Bang => f.write_str("!"),
         }
     }
 }
