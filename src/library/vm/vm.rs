@@ -58,8 +58,23 @@ impl VM {
                 DIVIDE => {
                     self.binary_operation(InfixOperatorType::Divide);
                 }
+                EQUAL => {
+                    self.binary_operation(InfixOperatorType::Equal);
+                }
+                NOT_EQUAL => {
+                    self.binary_operation(InfixOperatorType::NotEqual);
+                }
+                GRATER => {
+                    self.binary_operation(InfixOperatorType::GreaterThan);
+                }
                 POP => {
                     self.pop();
+                }
+                TRUE_OP => {
+                    self.push(Rc::new(TRUE));
+                }
+                FALSE_OP => {
+                    self.push(Rc::new(FALSE));
                 }
                 _ => panic!("Don't know what to do with {instruction}"),
             }
@@ -73,10 +88,39 @@ impl VM {
         match *right {
             Object::Int(r) => match *left {
                 Object::Int(l) => {
-                    let value = binary_integer_operation(operator, l, r);
-                    self.push(Rc::new(Object::Int(value)));
+                    let value = {
+                        let operator = operator;
+                        let left = l;
+                        let right = r;
+                        match operator {
+                            InfixOperatorType::Plus => Object::Int(left + right),
+                            InfixOperatorType::Minus => Object::Int(left - right),
+                            InfixOperatorType::Multiply => Object::Int(left * right),
+                            InfixOperatorType::Divide => Object::Int(left / right),
+                            InfixOperatorType::NotEqual => wrap_boolean(left != right),
+                            InfixOperatorType::GreaterThan => wrap_boolean(left > right),
+                            InfixOperatorType::Equal => wrap_boolean(left == right),
+                            _ => panic!(
+                                "Don't know how to deal with {right:?} and {left:?} for {operator:?}"
+                            ),
+                        }
+                    };
+                    self.push(Rc::new(value));
                 }
 
+                _ => panic!("Don't know how to deal with {right:?} and {left:?} for {operator:?}"),
+            },
+            Object::Boolean(r) => match *left {
+                Object::Boolean(l) => {
+                    let object = match operator {
+                        InfixOperatorType::NotEqual => wrap_boolean(l != r),
+                        InfixOperatorType::Equal => wrap_boolean(l == r),
+                        _ => panic!(
+                            "Don't know how to deal with {right:?} and {left:?} for {operator:?}"
+                        ),
+                    };
+                    self.push(Rc::new(object));
+                }
                 _ => panic!("Don't know how to deal with {right:?} and {left:?} for {operator:?}"),
             },
             _ => panic!("Don't know how to deal with {right:?} for {operator:?}"),
@@ -104,6 +148,12 @@ impl VM {
         return object;
     }
 }
+fn wrap_boolean(value: bool) -> Object {
+    match value {
+        true => TRUE,
+        false => FALSE,
+    }
+}
 
 const CONSTANT: u8 = OpCodes::Constant as u8;
 const ADD: u8 = OpCodes::Add as u8;
@@ -113,14 +163,10 @@ const SUBSTITUTE: u8 = OpCodes::Subtitute as u8;
 const POP: u8 = OpCodes::Pop as u8;
 
 const NIL: Object = Object::Null;
-
-fn binary_integer_operation(operator: InfixOperatorType, left: i64, right: i64) -> i64 {
-    match operator {
-        InfixOperatorType::Plus => left + right,
-        InfixOperatorType::Minus => left - right,
-        InfixOperatorType::Multiply => left * right,
-        InfixOperatorType::Divide => left / right,
-
-        _ => panic!("Don't know how to deal with {right:?} and {left:?} for {operator:?}"),
-    }
-}
+const TRUE_OP: u8 = OpCodes::True as u8;
+const FALSE_OP: u8 = OpCodes::False as u8;
+const GRATER: u8 = OpCodes::GreaterThan as u8;
+const EQUAL: u8 = OpCodes::Equal as u8;
+const NOT_EQUAL: u8 = OpCodes::NotEqual as u8;
+const TRUE: Object = Object::Boolean(true);
+const FALSE: Object = Object::Boolean(false);

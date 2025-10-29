@@ -1,6 +1,6 @@
 use crate::{
     generate_vm_tests,
-    vm::testing::setups::{run_vm_test, should_be_integer},
+    vm::testing::setups::{run_vm_test, should_be_boolean, should_be_integer},
 };
 
 generate_vm_tests! {
@@ -11,4 +11,26 @@ generate_vm_tests! {
     multiplication: ("2*3", should_be_integer(6)),
     division: ("12/3", should_be_integer(4)),
     complex: ("4+12/3-2*2+(1+2)*2", should_be_integer(10)),
+    false_interpretation: ("false", should_be_boolean(false)),
+    true_interpretation: ("true", should_be_boolean(true)),
+    greater: ("1 < 2", should_be_boolean(true)),
+    less: ("1 > 2", should_be_boolean(false)),
+    less_same: ("1 > 1", should_be_boolean(false)),
+    greater_same: ("1 < 1", should_be_boolean(false)),
+    equal_number: ("1 == 1", should_be_boolean(true)),
+    equal_number_not: ("1 == 2", should_be_boolean(false)),
+    not_equal_number: ("1 != 2", should_be_boolean(true)),
+    not_equal_number_not: ("2 != 2", should_be_boolean(false)),
+    true_equal_true: ("true == true", should_be_boolean(true)),
+    false_equal_false: ("false == false", should_be_boolean(true)),
+    true_not_equal_true: ("true != true", should_be_boolean(false)),
+    false_not_equal_false: ("false != false", should_be_boolean(false)),
+    false_not_equal_true: ("false != true", should_be_boolean(true)),
+    true_not_equal_false: ("true != false", should_be_boolean(true)),
+    true_equal_false: ("true == false", should_be_boolean(false)),
+    false_equal_true: ("false == true", should_be_boolean(false)),
+    logical_true_equals_true: (" (1 < 2) == true", should_be_boolean(true)),
+    logical_true_not_equals_false: (" (1 < 2) != false", should_be_boolean(true)),
+    logical_true_equals_false_not: (" (1 < 2) == false", should_be_boolean(false)),
+
 }

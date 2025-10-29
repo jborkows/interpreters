@@ -22,6 +22,11 @@ static DEFINITIONS: LazyLock<HashMap<OpCode, Definition>> = LazyLock::new(|| {
         pair(OpCodes::Multiply, vec![]),
         pair(OpCodes::Subtitute, vec![]),
         pair(OpCodes::Divide, vec![]),
+        pair(OpCodes::False, vec![]),
+        pair(OpCodes::True, vec![]),
+        pair(OpCodes::Equal, vec![]),
+        pair(OpCodes::NotEqual, vec![]),
+        pair(OpCodes::GreaterThan, vec![]),
     ]);
 });
 

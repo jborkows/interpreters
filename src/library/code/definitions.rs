@@ -117,6 +117,11 @@ pub enum OpCodes {
     Subtitute,
     Multiply,
     Divide,
+    True,
+    False,
+    Equal,
+    NotEqual,
+    GreaterThan,
 }
 
 impl Display for OpCodes {
@@ -128,6 +133,11 @@ impl Display for OpCodes {
             OpCodes::Divide => f.write_str("/"),
             OpCodes::Multiply => f.write_str("*"),
             OpCodes::Pop => f.write_str("Pop"),
+            OpCodes::True => f.write_str("True"),
+            OpCodes::False => f.write_str("False"),
+            OpCodes::Equal => f.write_str("=="),
+            OpCodes::NotEqual => f.write_str("!="),
+            OpCodes::GreaterThan => f.write_str(">"),
         }
     }
 }

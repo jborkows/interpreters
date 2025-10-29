@@ -27,6 +27,12 @@ pub(crate) fn should_be_integer(value: i64) -> impl Fn(&Object) {
         _ => panic!("Expecting int got {:?}", object),
     }
 }
+pub(crate) fn should_be_boolean(value: bool) -> impl Fn(&Object) {
+    move |object: &Object| match object {
+        Object::Boolean(v) => assert_eq!(&value, v, "Expecing {:?} got {:?}", value, v),
+        _ => panic!("Expecting boolean got {:?}", object),
+    }
+}
 
 pub(crate) fn run_vm_test(input: &str, checker: impl Fn(&Object)) {
     let program = parse_program(input);

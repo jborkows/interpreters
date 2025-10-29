@@ -131,23 +131,37 @@ impl Worker {
                 self.emit(OpCodes::Constant, &[constant_possition]);
             }
             Expression::Infix {
-                token,
+                token: _,
                 left,
                 operator,
                 right,
             } => {
-                self.compile_expression(&left);
-                self.compile_expression(&right);
+                match operator {
+                    InfixOperatorType::LessThan => {
+                        self.compile_expression(&right);
+                        self.compile_expression(&left);
+                    }
+                    _ => {
+                        self.compile_expression(&left);
+                        self.compile_expression(&right);
+                    }
+                }
                 match operator {
                     InfixOperatorType::Plus => self.emit_op_code(OpCodes::Add),
                     InfixOperatorType::Divide => self.emit_op_code(OpCodes::Divide),
                     InfixOperatorType::Minus => self.emit_op_code(OpCodes::Subtitute),
                     InfixOperatorType::Multiply => self.emit_op_code(OpCodes::Multiply),
-                    _ => self.errors.push(CompilationError::UnknownOperator(
-                        token.clone(),
-                        operator.clone(),
-                    )),
+                    InfixOperatorType::NotEqual => self.emit_op_code(OpCodes::NotEqual),
+                    InfixOperatorType::LessThan => self.emit_op_code(OpCodes::GreaterThan),
+                    InfixOperatorType::GreaterThan => self.emit_op_code(OpCodes::GreaterThan),
+                    InfixOperatorType::Equal => self.emit_op_code(OpCodes::Equal),
                 }
+            }
+            Expression::BooleanLiteral { token: _, value } => {
+                match *value {
+                    true => self.emit(OpCodes::True, &[]),
+                    false => self.emit(OpCodes::False, &[]),
+                };
             }
             _ => self.add_errors(CompilationError::NotImplementedYet(Rc::new(
                 expression.clone(),
