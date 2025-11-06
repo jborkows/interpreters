@@ -7,6 +7,7 @@ use crate::{
         statements::{Program, Statement},
     },
     code::{
+        OpCode,
         definitions::{Byte, Instructions, OpCodes},
         make::make,
     },
@@ -27,10 +28,19 @@ pub fn compile<T: Node>(node: T) -> Result<Bytecode, Vec<CompilationError>> {
     container.into()
 }
 
+#[derive(Clone)]
+struct EmitedInstruction {
+    opcode: OpCodes,
+    position: usize,
+}
+
 struct Worker {
     instructions: Vec<Byte>,
     constants: Vec<Object>,
     errors: Vec<CompilationError>,
+    last_instruction: Option<EmitedInstruction>,
+    previous_instruction: Option<EmitedInstruction>, //can temporary show not correct values, it is
+                                                     //to eliminate to pops in if statement
 }
 
 impl Worker {
@@ -39,6 +49,8 @@ impl Worker {
             instructions: vec![],
             constants: vec![],
             errors: vec![],
+            last_instruction: None,
+            previous_instruction: None,
         }
     }
 
@@ -56,7 +68,9 @@ impl Worker {
 
     fn emit(&mut self, op_codes: OpCodes, operands: &[u16]) -> usize {
         let instructions = make(op_codes.into(), operands);
-        return self.add_instruction(instructions);
+        let possition = self.add_instruction(instructions);
+        self.set_last_emited(op_codes, possition);
+        return possition;
     }
     fn add_instruction(&mut self, instructions: Instructions) -> usize {
         let previous_position = self.instructions.len();
@@ -178,10 +192,83 @@ impl Worker {
                     }
                 }
             }
+            Expression::AIf {
+                token: _,
+                condition,
+                consequence,
+                alternative,
+            } => {
+                self.compile_expression(&condition);
+                let jump_to_else_branch = self.emit(OpCodes::JumpNotTruthy, &[9999]);
+                self.compile_statement(consequence.as_ref());
+                if self.last_instruction_is_pop() {
+                    self.remove_last_pop();
+                }
+                match alternative {
+                    Some(body) => {
+                        let ajump_to_end_of_conditional = self.emit(OpCodes::Jump, &[9999]);
+                        self.change_operand(jump_to_else_branch, &[self.instructions.len() as u16]);
+                        self.compile_statement(&body);
+                        if self.last_instruction_is_pop() {
+                            self.remove_last_pop();
+                        }
+                        self.change_operand(
+                            ajump_to_end_of_conditional,
+                            &[self.instructions.len() as u16],
+                        );
+                    }
+                    None => {
+                        self.change_operand(jump_to_else_branch, &[self.instructions.len() as u16]);
+                    }
+                }
+            }
             _ => self.add_errors(CompilationError::NotImplementedYet(Rc::new(
                 expression.clone(),
             ))),
         }
+    }
+
+    fn replace_instructions(&mut self, possition: usize, new_instruction: Instructions) {
+        let mut i = 0;
+        let bytes = new_instruction.bytes();
+        while i < new_instruction.length() {
+            self.instructions[possition + i] = bytes[i].clone();
+            i += 1;
+        }
+    }
+
+    /**
+     * assumption:
+     * - same instruction type
+     * - same operands length
+     */
+    fn change_operand(&mut self, operand_possition: usize, operands: &[u16]) {
+        let op_code = OpCode(self.instructions[operand_possition].clone());
+        let new_instruction = make(op_code, operands);
+        self.replace_instructions(operand_possition, new_instruction);
+    }
+
+    fn last_instruction_is_pop(&self) -> bool {
+        match self.last_instruction {
+            Some(ref v) => v.opcode == OpCodes::Pop,
+            None => false,
+        }
+    }
+    fn remove_last_pop(&mut self) {
+        let pop_position = match self.last_instruction {
+            Some(ref v) => v.position,
+            None => return,
+        };
+        self.instructions.remove(pop_position);
+        self.last_instruction = self.previous_instruction.clone();
+    }
+
+    fn set_last_emited(&mut self, op_codes: OpCodes, possition: usize) {
+        self.previous_instruction = self.last_instruction.clone();
+        self.last_instruction = Some(EmitedInstruction {
+            opcode: op_codes,
+            position: possition,
+        });
     }
 }
 

@@ -124,6 +124,8 @@ pub enum OpCodes {
     GreaterThan,
     Minus,
     Bang,
+    Jump,
+    JumpNotTruthy,
 }
 
 impl Display for OpCodes {
@@ -142,6 +144,8 @@ impl Display for OpCodes {
             OpCodes::GreaterThan => f.write_str(">"),
             OpCodes::Minus => f.write_str("-"),
             OpCodes::Bang => f.write_str("!"),
+            OpCodes::Jump => f.write_str("Unconditional jump"),
+            OpCodes::JumpNotTruthy => f.write_str("jump if not True"),
         }
     }
 }
