@@ -38,5 +38,6 @@ generate_vm_tests! {
     true_bang: ("!true", should_be_boolean(false)),
     true_bang_bang: ("!!true", should_be_boolean(true)),
     false_bang_bang: ("!!false", should_be_boolean(false)),
+    false_null: ("!(if (false){5;})", should_be_boolean(true)),
 
 }

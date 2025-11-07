@@ -159,6 +159,12 @@ impl VM {
                 };
                 self.push(object);
             }
+            Object::Null => {
+                match operator {
+                    PrefixOperatorType::Bang => self.push(TRUE),
+                    _ => panic!("Don't know how to deal with {right:?} for {operator:?}"),
+                };
+            }
             _ => panic!("Don't know how to deal with {right:?} for {operator:?}"),
         }
     }
