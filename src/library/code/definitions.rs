@@ -126,6 +126,7 @@ pub enum OpCodes {
     Bang,
     Jump,
     JumpNotTruthy,
+    Null,
 }
 
 impl Display for OpCodes {
@@ -146,6 +147,7 @@ impl Display for OpCodes {
             OpCodes::Bang => f.write_str("!"),
             OpCodes::Jump => f.write_str("Unconditional jump"),
             OpCodes::JumpNotTruthy => f.write_str("jump if not True"),
+            OpCodes::Null => f.write_str("Null"),
         }
     }
 }

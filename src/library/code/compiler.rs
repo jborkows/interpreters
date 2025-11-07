@@ -199,28 +199,28 @@ impl Worker {
                 alternative,
             } => {
                 self.compile_expression(&condition);
-                let jump_to_else_branch = self.emit(OpCodes::JumpNotTruthy, &[9999]);
+                let jump_after_consequences = self.emit(OpCodes::JumpNotTruthy, &[9999]);
                 self.compile_statement(consequence.as_ref());
                 if self.last_instruction_is_pop() {
                     self.remove_last_pop();
                 }
+                let ajump_to_end_of_conditional = self.emit(OpCodes::Jump, &[9999]);
+                self.change_operand(jump_after_consequences, &[self.instructions.len() as u16]);
                 match alternative {
                     Some(body) => {
-                        let ajump_to_end_of_conditional = self.emit(OpCodes::Jump, &[9999]);
-                        self.change_operand(jump_to_else_branch, &[self.instructions.len() as u16]);
                         self.compile_statement(&body);
                         if self.last_instruction_is_pop() {
                             self.remove_last_pop();
                         }
-                        self.change_operand(
-                            ajump_to_end_of_conditional,
-                            &[self.instructions.len() as u16],
-                        );
                     }
                     None => {
-                        self.change_operand(jump_to_else_branch, &[self.instructions.len() as u16]);
+                        self.emit_op_code(OpCodes::Null);
                     }
                 }
+                self.change_operand(
+                    ajump_to_end_of_conditional,
+                    &[self.instructions.len() as u16],
+                );
             }
             _ => self.add_errors(CompilationError::NotImplementedYet(Rc::new(
                 expression.clone(),

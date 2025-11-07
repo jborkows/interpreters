@@ -9,12 +9,14 @@ single_if: (
         "if(true) {10}; 3333",
         vec![
             make(OpCodes::True.into(), &[]), //0000
-            make(OpCodes::JumpNotTruthy.into(), &[7]), //0001 -> jump outside condition if false, so move
+            make(OpCodes::JumpNotTruthy.into(), &[10]), //0001 -> jump outside condition if false, so move
             //to stack position where if is not more -> 3333;
             make(OpCodes::Constant.into(), &[0]), //0004
-            make(OpCodes::Pop.into(), &[]),//0007
-            make(OpCodes::Constant.into(), &[1]),//0008
-            make(OpCodes::Pop.into(), &[]), //0011
+            make(OpCodes::Jump.into(), &[11]), //0007
+            make(OpCodes::Null.into(), &[]), //0010
+            make(OpCodes::Pop.into(), &[]),//0011
+            make(OpCodes::Constant.into(), &[1]),//0012
+            make(OpCodes::Pop.into(), &[]), //0015
         ],
         vec![test_be_integer(10),test_be_integer(3333)]
     ),

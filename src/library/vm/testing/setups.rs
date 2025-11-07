@@ -33,6 +33,12 @@ pub(crate) fn should_be_boolean(value: bool) -> impl Fn(&Object) {
         _ => panic!("Expecting boolean got {:?}", object),
     }
 }
+pub(crate) fn should_be_null() -> impl Fn(&Object) {
+    move |object: &Object| match object {
+        Object::Null => {}
+        _ => panic!("Expecting Null got {:?}", object),
+    }
+}
 
 pub(crate) fn run_vm_test(input: &str, checker: impl Fn(&Object)) {
     let program = parse_program(input);

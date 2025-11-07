@@ -1,8 +1,8 @@
-use std::{panic, path::Prefix, rc::Rc};
+use std::{panic, rc::Rc};
 
 use crate::{
     ast::expression::{InfixOperatorType, PrefixOperatorType},
-    code::{Bytecode, Instructions, OpCode, OpCodes, read_u_16},
+    code::{Bytecode, Instructions, OpCodes, read_u_16},
     object::{Object, is_truthy},
 };
 
@@ -91,6 +91,7 @@ impl VM {
                         instruction_pointer = position - 1; //same as with jump
                     }
                 }
+                NULL_OP => self.push(Rc::new(NIL)),
                 _ => panic!("Don't know what to do with {instruction}"),
             }
             instruction_pointer += 1;
@@ -203,6 +204,7 @@ const BANG: u8 = OpCodes::Bang as u8;
 const MINUS: u8 = OpCodes::Minus as u8;
 const JUMP: u8 = OpCodes::Jump as u8;
 const JUMP_NOT_TRUTHY: u8 = OpCodes::JumpNotTruthy as u8;
+const NULL_OP: u8 = OpCodes::Null as u8;
 
 const NIL: Object = Object::Null;
 const TRUE_OP: u8 = OpCodes::True as u8;
