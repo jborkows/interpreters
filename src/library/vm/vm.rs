@@ -1,4 +1,4 @@
-use std::{panic, rc::Rc};
+use std::panic;
 
 use crate::{
     ast::expression::{InfixOperatorType, PrefixOperatorType},
@@ -8,24 +8,23 @@ use crate::{
 
 const STACK_SIZE: usize = 2048;
 pub struct VM {
-    constants: Vec<Rc<Object>>,
+    constants: Vec<Object>,
     instructions: Instructions,
-    stack: [Rc<Object>; STACK_SIZE],
+    stack: [Object; STACK_SIZE],
     stack_pointer: usize, //points to the next value. Top of stack is stack[stack_pointer-1]
 }
 
 impl VM {
     pub fn new(byte_code: Bytecode) -> Self {
-        let constants: Vec<Rc<Object>> = byte_code
+        let constants: Vec<Object> = byte_code
             .constants
             .iter()
             .map(|o| o.clone())
-            .map(Rc::new)
             .collect::<Vec<_>>();
         VM {
             constants: constants,
             instructions: byte_code.instructions,
-            stack: std::array::from_fn(|_| Rc::new(NIL)),
+            stack: std::array::from_fn(|_| NIL),
             stack_pointer: 0,
         }
     }
@@ -71,10 +70,10 @@ impl VM {
                     self.pop();
                 }
                 TRUE_OP => {
-                    self.push(Rc::new(TRUE));
+                    self.push(TRUE);
                 }
                 FALSE_OP => {
-                    self.push(Rc::new(FALSE));
+                    self.push(FALSE);
                 }
                 MINUS => self.prefix_operation(PrefixOperatorType::Minus),
                 BANG => self.prefix_operation(PrefixOperatorType::Bang),
@@ -87,11 +86,11 @@ impl VM {
                     let position = read_u_16(&bytes[instruction_pointer + 1..]) as usize;
                     instruction_pointer += 2;
                     let condition = self.pop();
-                    if !is_truthy(condition.as_ref()) {
+                    if !is_truthy(&condition) {
                         instruction_pointer = position - 1; //same as with jump
                     }
                 }
-                NULL_OP => self.push(Rc::new(NIL)),
+                NULL_OP => self.push(NIL),
                 _ => panic!("Don't know what to do with {instruction}"),
             }
             instruction_pointer += 1;
@@ -101,8 +100,8 @@ impl VM {
     fn binary_operation(&mut self, operator: InfixOperatorType) {
         let right = self.pop();
         let left = self.pop();
-        match *right {
-            Object::Int(r) => match *left {
+        match right {
+            Object::Int(r) => match left {
                 Object::Int(l) => {
                     let value = {
                         let operator = operator;
@@ -121,12 +120,12 @@ impl VM {
                             ),
                         }
                     };
-                    self.push(Rc::new(value));
+                    self.push(value);
                 }
 
                 _ => panic!("Don't know how to deal with {right:?} and {left:?} for {operator:?}"),
             },
-            Object::Boolean(r) => match *left {
+            Object::Boolean(r) => match left {
                 Object::Boolean(l) => {
                     let object = match operator {
                         InfixOperatorType::NotEqual => wrap_boolean(l != r),
@@ -135,7 +134,7 @@ impl VM {
                             "Don't know how to deal with {right:?} and {left:?} for {operator:?}"
                         ),
                     };
-                    self.push(Rc::new(object));
+                    self.push(object);
                 }
                 _ => panic!("Don't know how to deal with {right:?} and {left:?} for {operator:?}"),
             },
@@ -145,14 +144,12 @@ impl VM {
 
     fn prefix_operation(&mut self, operator: PrefixOperatorType) {
         let right = self.pop();
-        match *right {
+        match right {
             Object::Int(r) => {
-                let value = {
-                    let operator = operator;
-                    match operator {
-                        PrefixOperatorType::Minus => self.push(Rc::new(Object::Int(-r))),
-                        _ => panic!("Don't know how to deal with {right:?} for {operator:?}"),
-                    }
+                let operator = operator;
+                match operator {
+                    PrefixOperatorType::Minus => self.push(Object::Int(-r)),
+                    _ => panic!("Don't know how to deal with {right:?} for {operator:?}"),
                 };
             }
             Object::Boolean(r) => {
@@ -160,17 +157,17 @@ impl VM {
                     PrefixOperatorType::Bang => wrap_boolean(!r),
                     _ => panic!("Don't know how to deal with {right:?} for {operator:?}"),
                 };
-                self.push(Rc::new(object));
+                self.push(object);
             }
             _ => panic!("Don't know how to deal with {right:?} for {operator:?}"),
         }
     }
 
-    pub(crate) fn last_poped_stack_element(&self) -> Option<&Object> {
-        self.stack.get(self.stack_pointer).map(|x| x.as_ref())
+    pub(crate) fn last_poped_stack_element(&self) -> Option<Object> {
+        self.stack.get(self.stack_pointer).map(|o| o.clone())
     }
 
-    fn push(&mut self, object: Rc<Object>) {
+    fn push(&mut self, object: Object) {
         if self.stack_pointer >= STACK_SIZE {
             panic!("stack overflow")
         }
@@ -178,13 +175,13 @@ impl VM {
         self.stack_pointer += 1;
     }
 
-    fn pop(&mut self) -> Rc<Object> {
+    fn pop(&mut self) -> Object {
         if self.stack_pointer == 0 {
             panic!("Cannot move from stack, stack is empty")
         }
         let object = self.stack[self.stack_pointer - 1].clone();
         self.stack_pointer -= 1;
-        return object;
+        return object.clone();
     }
 }
 fn wrap_boolean(value: bool) -> Object {

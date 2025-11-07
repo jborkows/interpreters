@@ -1,4 +1,4 @@
-use std::{cell::RefCell, rc::Rc, vec};
+use std::{rc::Rc, vec};
 
 use crate::{
     ast::{
@@ -107,10 +107,14 @@ impl Worker {
 
     fn compile_statement(&mut self, statement: &Statement) {
         match statement {
-            Statement::Let { token, name, value } => todo!(),
+            Statement::Let {
+                token: _,
+                name: _,
+                value: _,
+            } => todo!(),
             Statement::Return {
-                token,
-                return_value,
+                token: _,
+                return_value: _,
             } => todo!(),
             Statement::AExpression {
                 token: _,

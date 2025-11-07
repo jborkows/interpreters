@@ -57,7 +57,7 @@ pub(crate) fn run_vm_test(input: &str, checker: impl Fn(&Object)) {
         Some(v) => v,
         None => panic!("No object on stack"),
     };
-    checker(stack_element);
+    checker(&stack_element);
 }
 #[macro_export]
 macro_rules! generate_vm_tests {
