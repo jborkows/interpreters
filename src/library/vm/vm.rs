@@ -7,11 +7,16 @@ use crate::{
 };
 
 const STACK_SIZE: usize = 2048;
+#[cfg(not(test))]
+const GLOBALS_SIZE: usize = 0xFFFF;
+#[cfg(test)]
+const GLOBALS_SIZE: usize = 0xFF;
 pub struct VM {
     constants: Vec<Object>,
     instructions: Instructions,
     stack: [Object; STACK_SIZE],
     stack_pointer: usize, //points to the next value. Top of stack is stack[stack_pointer-1]
+    globals: [Object; GLOBALS_SIZE],
 }
 
 impl VM {
@@ -26,6 +31,7 @@ impl VM {
             instructions: byte_code.instructions,
             stack: std::array::from_fn(|_| NIL),
             stack_pointer: 0,
+            globals: std::array::from_fn(|_| NIL),
         }
     }
 
@@ -91,6 +97,17 @@ impl VM {
                     }
                 }
                 NULL_OP => self.push(NIL),
+                SET_GLOBAL => {
+                    let global_index = read_u_16(&bytes[instruction_pointer + 1..]) as usize;
+                    instruction_pointer += 2;
+                    self.globals[global_index] = self.pop()
+                }
+                GET_GLOBAL => {
+                    let global_index = read_u_16(&bytes[instruction_pointer + 1..]) as usize;
+                    instruction_pointer += 2;
+                    let value = self.globals[global_index].clone();
+                    self.push(value);
+                }
                 _ => panic!("Don't know what to do with {instruction}"),
             }
             instruction_pointer += 1;
@@ -209,6 +226,8 @@ const JUMP: u8 = OpCodes::Jump as u8;
 const JUMP_NOT_TRUTHY: u8 = OpCodes::JumpNotTruthy as u8;
 const NULL_OP: u8 = OpCodes::Null as u8;
 
+const GET_GLOBAL: u8 = OpCodes::GetGlobal as u8;
+const SET_GLOBAL: u8 = OpCodes::SetGlobal as u8;
 const NIL: Object = Object::Null;
 const TRUE_OP: u8 = OpCodes::True as u8;
 const FALSE_OP: u8 = OpCodes::False as u8;

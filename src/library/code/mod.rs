@@ -6,6 +6,7 @@ use std::sync::LazyLock;
 mod compiler;
 mod definitions;
 mod make;
+mod symbol_table;
 #[cfg(test)]
 mod testing;
 
@@ -32,6 +33,8 @@ static DEFINITIONS: LazyLock<HashMap<OpCode, Definition>> = LazyLock::new(|| {
         pair(OpCodes::Jump, vec![2]),
         pair(OpCodes::JumpNotTruthy, vec![2]),
         pair(OpCodes::Null, vec![]),
+        pair(OpCodes::SetGlobal, vec![2]),
+        pair(OpCodes::GetGlobal, vec![2]),
     ]);
 });
 

@@ -1,6 +1,8 @@
 mod boolean_arithmethics;
 mod conditionals;
 mod integer_arithmethics;
+mod let_statement;
+mod symbol_table_test;
 mod test_compiler;
 mod test_make;
 mod test_unmake;

@@ -1,8 +1,4 @@
-use std::{
-    cell::RefCell,
-    io::{self, BufRead},
-    rc::Rc,
-};
+use std::io::{self, BufRead};
 
 use crate::{
     evaluator::{define_macros, expand_macros},

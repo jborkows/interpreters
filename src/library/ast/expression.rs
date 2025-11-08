@@ -249,7 +249,7 @@ pub fn identifier(token: Rc<Token>) -> Expression {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub(crate) enum PrefixOperatorType {
+pub enum PrefixOperatorType {
     Bang,
     Minus,
 }
@@ -264,7 +264,7 @@ impl Display for PrefixOperatorType {
 }
 
 #[derive(Debug, PartialEq, Clone)]
-pub(crate) enum InfixOperatorType {
+pub enum InfixOperatorType {
     Plus,
     Minus,
     NotEqual,

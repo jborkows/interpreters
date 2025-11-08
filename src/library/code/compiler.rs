@@ -10,9 +10,10 @@ use crate::{
         OpCode,
         definitions::{Byte, Instructions, OpCodes},
         make::make,
+        symbol_table::SymbolTable,
     },
     object::Object,
-    tokens::Token,
+    tokens::{self, Token},
 };
 
 #[derive(Debug)]
@@ -20,6 +21,7 @@ pub enum CompilationError {
     UnexpectedSymbol(Rc<Token>),
     NotImplementedYet(Rc<Expression>),
     UnknownOperator(Rc<Token>, InfixOperatorType),
+    UndefinedVariable(Rc<Token>, String),
 }
 
 pub fn compile<T: Node>(node: T) -> Result<Bytecode, Vec<CompilationError>> {
@@ -40,7 +42,8 @@ struct Worker {
     errors: Vec<CompilationError>,
     last_instruction: Option<EmitedInstruction>,
     previous_instruction: Option<EmitedInstruction>, //can temporary show not correct values, it is
-                                                     //to eliminate to pops in if statement
+    //to eliminate to pops in if statement
+    symbol_table: SymbolTable,
 }
 
 impl Worker {
@@ -51,6 +54,7 @@ impl Worker {
             errors: vec![],
             last_instruction: None,
             previous_instruction: None,
+            symbol_table: SymbolTable::new(),
         }
     }
 
@@ -107,11 +111,22 @@ impl Worker {
 
     fn compile_statement(&mut self, statement: &Statement) {
         match statement {
-            Statement::Let {
-                token: _,
-                name: _,
-                value: _,
-            } => todo!(),
+            Statement::Let { token, name, value } => {
+                let name = match name {
+                    Expression::Identifier(token) => match &token.kind {
+                        crate::tokens::TokenKind::Identifier(v) => v,
+                        _ => {
+                            self.add_errors(CompilationError::UnexpectedSymbol(token.clone()));
+                            return;
+                        }
+                    },
+                    _ => {
+                        self.add_errors(CompilationError::UnexpectedSymbol(token.clone()));
+                        return;
+                    }
+                };
+                self.compile_let(name.to_string(), value)
+            }
             Statement::Return {
                 token: _,
                 return_value: _,
@@ -226,6 +241,22 @@ impl Worker {
                     &[self.instructions.len() as u16],
                 );
             }
+            Expression::Identifier(token) => {
+                match &token.kind {
+                    tokens::TokenKind::Identifier(v) => match self.symbol_table.resolve(v) {
+                        Some(symbol) => {
+                            self.emit(OpCodes::GetGlobal, &[symbol.index]);
+                        }
+                        None => {
+                            self.add_errors(CompilationError::UndefinedVariable(
+                                token.clone(),
+                                v.to_string(),
+                            ));
+                        }
+                    },
+                    _ => self.add_errors(CompilationError::UnexpectedSymbol(token.clone())),
+                };
+            }
             _ => self.add_errors(CompilationError::NotImplementedYet(Rc::new(
                 expression.clone(),
             ))),
@@ -273,6 +304,12 @@ impl Worker {
             opcode: op_codes,
             position: possition,
         });
+    }
+
+    fn compile_let(&mut self, name: String, value: &Expression) {
+        self.compile_expression(value);
+        let symbol = self.symbol_table.define(&name);
+        self.emit(OpCodes::SetGlobal, &[symbol.index]);
     }
 }
 

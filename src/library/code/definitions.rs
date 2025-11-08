@@ -127,6 +127,8 @@ pub enum OpCodes {
     Jump,
     JumpNotTruthy,
     Null,
+    SetGlobal,
+    GetGlobal,
 }
 
 impl Display for OpCodes {
@@ -148,6 +150,8 @@ impl Display for OpCodes {
             OpCodes::Jump => f.write_str("Unconditional jump"),
             OpCodes::JumpNotTruthy => f.write_str("jump if not True"),
             OpCodes::Null => f.write_str("Null"),
+            OpCodes::SetGlobal => f.write_str("SetGlobal"),
+            OpCodes::GetGlobal => f.write_str("GetGlobal"),
         }
     }
 }
