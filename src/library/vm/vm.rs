@@ -1,9 +1,11 @@
+use crate::vm::{FALSE, TRUE, wrap_boolean};
 use std::panic;
 
 use crate::{
     ast::expression::{InfixOperatorType, PrefixOperatorType},
     code::{Bytecode, Instructions, OpCodes, read_u_16},
     object::{Object, is_truthy},
+    vm::binary_operations::binary,
 };
 
 const STACK_SIZE: usize = 2048;
@@ -117,46 +119,8 @@ impl VM {
     fn binary_operation(&mut self, operator: InfixOperatorType) {
         let right = self.pop();
         let left = self.pop();
-        match right {
-            Object::Int(r) => match left {
-                Object::Int(l) => {
-                    let value = {
-                        let operator = operator;
-                        let left = l;
-                        let right = r;
-                        match operator {
-                            InfixOperatorType::Plus => Object::Int(left + right),
-                            InfixOperatorType::Minus => Object::Int(left - right),
-                            InfixOperatorType::Multiply => Object::Int(left * right),
-                            InfixOperatorType::Divide => Object::Int(left / right),
-                            InfixOperatorType::NotEqual => wrap_boolean(left != right),
-                            InfixOperatorType::GreaterThan => wrap_boolean(left > right),
-                            InfixOperatorType::Equal => wrap_boolean(left == right),
-                            _ => panic!(
-                                "Don't know how to deal with {right:?} and {left:?} for {operator:?}"
-                            ),
-                        }
-                    };
-                    self.push(value);
-                }
-
-                _ => panic!("Don't know how to deal with {right:?} and {left:?} for {operator:?}"),
-            },
-            Object::Boolean(r) => match left {
-                Object::Boolean(l) => {
-                    let object = match operator {
-                        InfixOperatorType::NotEqual => wrap_boolean(l != r),
-                        InfixOperatorType::Equal => wrap_boolean(l == r),
-                        _ => panic!(
-                            "Don't know how to deal with {right:?} and {left:?} for {operator:?}"
-                        ),
-                    };
-                    self.push(object);
-                }
-                _ => panic!("Don't know how to deal with {right:?} and {left:?} for {operator:?}"),
-            },
-            _ => panic!("Don't know how to deal with {right:?} for {operator:?}"),
-        }
+        let value = binary(left, right, operator);
+        self.push(value)
     }
 
     fn prefix_operation(&mut self, operator: PrefixOperatorType) {
@@ -207,12 +171,6 @@ impl VM {
         return object.clone();
     }
 }
-fn wrap_boolean(value: bool) -> Object {
-    match value {
-        true => TRUE,
-        false => FALSE,
-    }
-}
 
 const CONSTANT: u8 = OpCodes::Constant as u8;
 const ADD: u8 = OpCodes::Add as u8;
@@ -234,5 +192,3 @@ const FALSE_OP: u8 = OpCodes::False as u8;
 const GRATER: u8 = OpCodes::GreaterThan as u8;
 const EQUAL: u8 = OpCodes::Equal as u8;
 const NOT_EQUAL: u8 = OpCodes::NotEqual as u8;
-const TRUE: Object = Object::Boolean(true);
-const FALSE: Object = Object::Boolean(false);

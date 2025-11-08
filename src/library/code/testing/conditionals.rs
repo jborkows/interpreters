@@ -33,7 +33,7 @@ if_else: (
             make(OpCodes::Constant.into(), &[2]),//0014
             make(OpCodes::Pop.into(), &[]), //0017
         ],
-        /**
+        /*
         * 0000 True
         * 0001 JumpNotTruthy
         * 0002 0

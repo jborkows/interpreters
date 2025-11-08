@@ -2,6 +2,7 @@ mod boolean_arithmethics;
 mod conditionals;
 mod integer_arithmethics;
 mod let_statement;
+mod strings;
 mod symbol_table_test;
 mod test_compiler;
 mod test_make;

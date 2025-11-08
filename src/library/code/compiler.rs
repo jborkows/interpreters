@@ -163,6 +163,18 @@ impl Worker {
                 let constant_possition = self.add_constant(value);
                 self.emit(OpCodes::Constant, &[constant_possition]);
             }
+            Expression::StringLiteral(token) => {
+                let value = match &token.kind {
+                    crate::tokens::TokenKind::StringLiteral(v) => v,
+                    _ => {
+                        self.add_errors(CompilationError::UnexpectedSymbol(token.clone()));
+                        return;
+                    }
+                };
+                let value = Object::String(value.into());
+                let constant_possition = self.add_constant(value);
+                self.emit(OpCodes::Constant, &[constant_possition]);
+            }
             Expression::Infix {
                 token: _,
                 left,

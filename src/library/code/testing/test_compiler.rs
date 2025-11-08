@@ -118,6 +118,12 @@ pub(crate) fn test_be_integer(value: i64) -> impl Fn(&Object, Index) {
         _ => panic!("Expecting int got {:?} at {:?}", object, i),
     }
 }
+pub(crate) fn test_be_string(value: &str) -> impl Fn(&Object, Index) {
+    move |object: &Object, i: Index| match object {
+        Object::String(v) => assert_eq!(&value, v, "Expecing {:?} got {:?} at {:?}", value, v, i),
+        _ => panic!("Expecting int got {:?} at {:?}", object, i),
+    }
+}
 
 pub(crate) struct Index(usize);
 impl Display for Index {
