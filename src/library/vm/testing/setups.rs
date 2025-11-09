@@ -46,6 +46,22 @@ pub(crate) fn should_be_null() -> impl Fn(&Object) {
     }
 }
 
+pub(crate) fn should_be_integer_array(expected: &[i64]) -> impl Fn(&Object) {
+    move |object: &Object| match object {
+        Object::Array { elements } => {
+            assert_eq!(
+                expected.len(),
+                elements.len(),
+                "Expecting {expected:?} got {elements:?}"
+            );
+            for (e, a) in expected.iter().zip(elements) {
+                should_be_integer(e.clone())(a.as_ref());
+            }
+        }
+        _ => panic!("Expecting {expected:?} got {:?}", object),
+    }
+}
+
 pub(crate) fn run_vm_test(input: &str, checker: impl Fn(&Object)) {
     let program = parse_program(input);
     let byte_code = match compile(program) {

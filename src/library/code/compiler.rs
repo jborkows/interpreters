@@ -269,6 +269,13 @@ impl Worker {
                     _ => self.add_errors(CompilationError::UnexpectedSymbol(token.clone())),
                 };
             }
+            Expression::ArrayLiteral { token: _, elements } => {
+                for element in elements {
+                    self.compile(element);
+                }
+                //TODO exception when usize larger than u16
+                self.emit(OpCodes::Array, &[elements.len() as u16]);
+            }
             _ => self.add_errors(CompilationError::NotImplementedYet(Rc::new(
                 expression.clone(),
             ))),

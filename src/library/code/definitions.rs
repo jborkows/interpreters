@@ -129,6 +129,7 @@ pub enum OpCodes {
     Null,
     SetGlobal,
     GetGlobal,
+    Array,
 }
 
 impl Display for OpCodes {
@@ -152,6 +153,7 @@ impl Display for OpCodes {
             OpCodes::Null => f.write_str("Null"),
             OpCodes::SetGlobal => f.write_str("SetGlobal"),
             OpCodes::GetGlobal => f.write_str("GetGlobal"),
+            OpCodes::Array => f.write_str("[]"),
         }
     }
 }

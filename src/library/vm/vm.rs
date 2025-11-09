@@ -1,5 +1,5 @@
 use crate::vm::{FALSE, TRUE, wrap_boolean};
-use std::panic;
+use std::{panic, rc::Rc};
 
 use crate::{
     ast::expression::{InfixOperatorType, PrefixOperatorType},
@@ -110,6 +110,14 @@ impl VM {
                     let value = self.globals[global_index].clone();
                     self.push(value);
                 }
+                ARRAY => {
+                    let number_of_elements = read_u_16(&bytes[instruction_pointer + 1..]) as usize;
+                    instruction_pointer += 2;
+                    let array = self
+                        .build_array(self.stack_pointer - number_of_elements, self.stack_pointer);
+                    self.stack_pointer = self.stack_pointer - number_of_elements;
+                    self.push(array);
+                }
                 _ => panic!("Don't know what to do with {instruction}"),
             }
             instruction_pointer += 1;
@@ -170,6 +178,19 @@ impl VM {
         self.stack_pointer -= 1;
         return object.clone();
     }
+
+    fn build_array(&mut self, start_index: usize, end_index: usize) -> Object {
+        if start_index == end_index {
+            return Object::Array { elements: vec![] };
+        }
+        let mut elements: Vec<Rc<Object>> = Vec::with_capacity(end_index - start_index);
+        let mut i = start_index;
+        while i < end_index {
+            elements.push(Rc::new(self.stack[i].clone()));
+            i += 1;
+        }
+        return Object::Array { elements };
+    }
 }
 
 const CONSTANT: u8 = OpCodes::Constant as u8;
@@ -183,6 +204,7 @@ const MINUS: u8 = OpCodes::Minus as u8;
 const JUMP: u8 = OpCodes::Jump as u8;
 const JUMP_NOT_TRUTHY: u8 = OpCodes::JumpNotTruthy as u8;
 const NULL_OP: u8 = OpCodes::Null as u8;
+const ARRAY: u8 = OpCodes::Array as u8;
 
 const GET_GLOBAL: u8 = OpCodes::GetGlobal as u8;
 const SET_GLOBAL: u8 = OpCodes::SetGlobal as u8;

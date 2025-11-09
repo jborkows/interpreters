@@ -35,6 +35,7 @@ static DEFINITIONS: LazyLock<HashMap<OpCode, Definition>> = LazyLock::new(|| {
         pair(OpCodes::Null, vec![]),
         pair(OpCodes::SetGlobal, vec![2]),
         pair(OpCodes::GetGlobal, vec![2]),
+        pair(OpCodes::Array, vec![2]), //operand number of elements in array
     ]);
 });
 
