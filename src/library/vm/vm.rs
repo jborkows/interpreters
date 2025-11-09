@@ -1,6 +1,6 @@
 use crate::{
     object::{HashEntry, HashValue, hash},
-    vm::{FALSE, TRUE, wrap_boolean},
+    vm::{FALSE, NIL, TRUE, index_operations::execute_array_index, wrap_boolean},
 };
 use std::{collections::HashMap, panic, rc::Rc};
 
@@ -129,6 +129,11 @@ impl VM {
                     self.stack_pointer = self.stack_pointer - number_of_elements;
                     self.push(maps);
                 }
+                INDEX => {
+                    let index = self.pop();
+                    let left = self.pop();
+                    self.execute_index(index, left);
+                }
                 _ => panic!("Don't know what to do with {instruction}"),
             }
             instruction_pointer += 1;
@@ -224,6 +229,29 @@ impl VM {
         }
         return Object::HashMap(elements);
     }
+
+    fn execute_index(&mut self, index: Object, left: Object) {
+        match left {
+            Object::Array { elements } => {
+                let index_value = match index {
+                    Object::Int(v) => v,
+                    _ => panic!("Cannot do index {index:?} operation on array"),
+                };
+
+                self.push(execute_array_index(elements, index_value));
+            }
+            Object::HashMap(hash_map) => {
+                let hash = hash(&index);
+                let value = hash_map.get(&hash);
+                let object = match value {
+                    Some(entry) => Rc::unwrap_or_clone(entry.value.clone()),
+                    None => NIL,
+                };
+                self.push(object);
+            }
+            _ => panic!("Cannot do index operation on {left:?}"),
+        }
+    }
 }
 
 const CONSTANT: u8 = OpCodes::Constant as u8;
@@ -239,10 +267,10 @@ const JUMP_NOT_TRUTHY: u8 = OpCodes::JumpNotTruthy as u8;
 const NULL_OP: u8 = OpCodes::Null as u8;
 const ARRAY: u8 = OpCodes::Array as u8;
 const HASH: u8 = OpCodes::Hash as u8;
+const INDEX: u8 = OpCodes::Index as u8;
 
 const GET_GLOBAL: u8 = OpCodes::GetGlobal as u8;
 const SET_GLOBAL: u8 = OpCodes::SetGlobal as u8;
-const NIL: Object = Object::Null;
 const TRUE_OP: u8 = OpCodes::True as u8;
 const FALSE_OP: u8 = OpCodes::False as u8;
 const GRATER: u8 = OpCodes::GreaterThan as u8;

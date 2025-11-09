@@ -1,4 +1,5 @@
 mod binary_operations;
+mod index_operations;
 #[cfg(test)]
 mod testing;
 mod vm;
@@ -15,3 +16,4 @@ pub(crate) fn wrap_boolean(value: bool) -> Object {
 
 const TRUE: Object = Object::Boolean(true);
 const FALSE: Object = Object::Boolean(false);
+const NIL: Object = Object::Null;

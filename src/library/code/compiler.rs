@@ -284,6 +284,15 @@ impl Worker {
                 let size = elements.len() * 2;
                 self.emit(OpCodes::Hash, &[size as u16]);
             }
+            Expression::Index {
+                token: _,
+                array,
+                index,
+            } => {
+                self.compile(array.as_ref());
+                self.compile(index.as_ref());
+                self.emit_op_code(OpCodes::Index);
+            }
             _ => self.add_errors(CompilationError::NotImplementedYet(Rc::new(
                 expression.clone(),
             ))),
