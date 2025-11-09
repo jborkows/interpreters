@@ -276,6 +276,14 @@ impl Worker {
                 //TODO exception when usize larger than u16
                 self.emit(OpCodes::Array, &[elements.len() as u16]);
             }
+            Expression::MapLiteral { token: _, elements } => {
+                for (key, value) in elements {
+                    self.compile(key);
+                    self.compile(value);
+                }
+                let size = elements.len() * 2;
+                self.emit(OpCodes::Hash, &[size as u16]);
+            }
             _ => self.add_errors(CompilationError::NotImplementedYet(Rc::new(
                 expression.clone(),
             ))),

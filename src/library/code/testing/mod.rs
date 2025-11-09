@@ -1,6 +1,7 @@
 mod array;
 mod boolean_arithmethics;
 mod conditionals;
+mod hashmaps;
 mod integer_arithmethics;
 mod let_statement;
 mod strings;

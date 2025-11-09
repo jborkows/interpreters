@@ -1,5 +1,8 @@
-use crate::vm::{FALSE, TRUE, wrap_boolean};
-use std::{panic, rc::Rc};
+use crate::{
+    object::{HashEntry, HashValue, hash},
+    vm::{FALSE, TRUE, wrap_boolean},
+};
+use std::{collections::HashMap, panic, rc::Rc};
 
 use crate::{
     ast::expression::{InfixOperatorType, PrefixOperatorType},
@@ -118,6 +121,14 @@ impl VM {
                     self.stack_pointer = self.stack_pointer - number_of_elements;
                     self.push(array);
                 }
+                HASH => {
+                    let number_of_elements = read_u_16(&bytes[instruction_pointer + 1..]) as usize;
+                    instruction_pointer += 2;
+                    let maps =
+                        self.build_map(self.stack_pointer - number_of_elements, self.stack_pointer);
+                    self.stack_pointer = self.stack_pointer - number_of_elements;
+                    self.push(maps);
+                }
                 _ => panic!("Don't know what to do with {instruction}"),
             }
             instruction_pointer += 1;
@@ -191,6 +202,28 @@ impl VM {
         }
         return Object::Array { elements };
     }
+
+    fn build_map(&self, start_index: usize, end_index: usize) -> Object {
+        if start_index == end_index {
+            return Object::HashMap(HashMap::new());
+        }
+        let mut elements: HashMap<HashValue, Rc<HashEntry>> =
+            HashMap::with_capacity(end_index - start_index);
+        let mut i = start_index;
+        while i < end_index {
+            let key = self.stack[i].clone();
+            let value = self.stack[i + 1].clone();
+            elements.insert(
+                hash(&key),
+                Rc::new(HashEntry {
+                    key: Rc::new(key),
+                    value: Rc::new(value),
+                }),
+            );
+            i += 2;
+        }
+        return Object::HashMap(elements);
+    }
 }
 
 const CONSTANT: u8 = OpCodes::Constant as u8;
@@ -205,6 +238,7 @@ const JUMP: u8 = OpCodes::Jump as u8;
 const JUMP_NOT_TRUTHY: u8 = OpCodes::JumpNotTruthy as u8;
 const NULL_OP: u8 = OpCodes::Null as u8;
 const ARRAY: u8 = OpCodes::Array as u8;
+const HASH: u8 = OpCodes::Hash as u8;
 
 const GET_GLOBAL: u8 = OpCodes::GetGlobal as u8;
 const SET_GLOBAL: u8 = OpCodes::SetGlobal as u8;
