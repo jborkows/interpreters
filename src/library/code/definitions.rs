@@ -40,6 +40,7 @@ impl From<&u8> for Byte {
     }
 }
 
+#[derive(Clone)]
 pub struct Instructions(pub Vec<Byte>);
 
 impl Instructions {
@@ -50,9 +51,8 @@ impl Instructions {
     pub fn bytes(&self) -> Vec<Byte> {
         self.0.clone()
     }
-}
-impl Display for Instructions {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+
+    fn string(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut index = 0;
 
         while index < self.0.len() {
@@ -73,6 +73,16 @@ impl Display for Instructions {
         }
 
         Ok(())
+    }
+}
+impl Display for Instructions {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.string(f)
+    }
+}
+impl Debug for Instructions {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.string(f)
     }
 }
 
