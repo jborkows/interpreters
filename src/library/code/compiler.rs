@@ -31,30 +31,45 @@ pub fn compile<T: Node>(node: T) -> Result<Bytecode, Vec<CompilationError>> {
 }
 
 #[derive(Clone)]
-struct EmitedInstruction {
-    opcode: OpCodes,
+pub(crate) struct EmitedInstruction {
+    pub(crate) opcode: OpCodes,
     position: usize,
 }
 
-struct Worker {
-    instructions: Vec<Byte>,
-    constants: Vec<Object>,
-    errors: Vec<CompilationError>,
-    last_instruction: Option<EmitedInstruction>,
-    previous_instruction: Option<EmitedInstruction>, //can temporary show not correct values, it is
-    //to eliminate to pops in if statement
-    symbol_table: SymbolTable,
+#[derive(Clone)]
+pub(crate) struct CompilationScope {
+    pub(crate) instructions: Vec<Byte>,
+    pub(crate) last_instruction: Option<EmitedInstruction>,
+    pub(crate) previous_instruction: Option<EmitedInstruction>, //can temporary show not correct values, it is
+}
+
+impl CompilationScope {
+    fn new() -> Self {
+        CompilationScope {
+            instructions: vec![],
+            last_instruction: None,
+            previous_instruction: None,
+        }
+    }
+}
+
+pub(crate) struct Worker {
+    pub(crate) constants: Vec<Object>,
+    pub(crate) errors: Vec<CompilationError>,
+    pub(crate) scopes: Vec<CompilationScope>,
+    pub(crate) scope_index: usize,
+    pub(crate) symbol_table: SymbolTable,
 }
 
 impl Worker {
-    fn new() -> Self {
+    pub(crate) fn new() -> Self {
+        let main_scope = CompilationScope::new();
         Worker {
-            instructions: vec![],
             constants: vec![],
             errors: vec![],
-            last_instruction: None,
-            previous_instruction: None,
             symbol_table: SymbolTable::new(),
+            scopes: vec![main_scope],
+            scope_index: 0,
         }
     }
 
@@ -66,7 +81,7 @@ impl Worker {
         return (self.constants.len() - 1) as u16;
     }
 
-    fn emit_op_code(&mut self, op_codes: OpCodes) {
+    pub(crate) fn emit_op_code(&mut self, op_codes: OpCodes) {
         self.emit(op_codes.into(), &[]);
     }
 
@@ -76,13 +91,60 @@ impl Worker {
         self.set_last_emited(op_codes, possition);
         return possition;
     }
+
+    fn current_instructions_lenght(&self) -> usize {
+        self.scopes
+            .get(self.scope_index)
+            .take()
+            .expect("Scope has to be defined")
+            .instructions
+            .len()
+    }
+
+    fn change_bytecode(&mut self, index: usize, byte: Byte) {
+        let current_instructions = &mut self
+            .scopes
+            .get_mut(self.scope_index)
+            .take()
+            .expect("Scope has to be defined")
+            .instructions;
+        current_instructions[index] = byte;
+    }
+    fn read_bytecode(&mut self, index: usize) -> Byte {
+        let current_instructions = &self
+            .scopes
+            .get(self.scope_index)
+            .take()
+            .expect("Scope has to be defined")
+            .instructions;
+        current_instructions[index].clone()
+    }
+
     fn add_instruction(&mut self, instructions: Instructions) -> usize {
-        let previous_position = self.instructions.len();
+        let current_instructions = &mut self
+            .scopes
+            .get_mut(self.scope_index)
+            .take()
+            .expect("Scope has to be defined")
+            .instructions;
+        let previous_position = current_instructions.len();
         for byte in instructions.bytes() {
-            self.instructions.push(byte.clone());
+            current_instructions.push(byte.clone());
         }
         previous_position
     }
+
+    pub(crate) fn enter_scope(&mut self) {
+        let scope = CompilationScope::new();
+        self.scopes.push(scope);
+        self.scope_index += 1;
+    }
+    pub(crate) fn leave_scope(&mut self) -> Instructions {
+        let scope = self.scopes.pop().take().expect("Scope was not defined");
+        self.scope_index -= 1;
+        Instructions(scope.instructions)
+    }
+
     fn compile<T: Node>(&mut self, node: &T) {
         let statement = node.as_any().downcast_ref::<Statement>();
         if let Some(statement) = statement {
@@ -129,8 +191,11 @@ impl Worker {
             }
             Statement::Return {
                 token: _,
-                return_value: _,
-            } => todo!(),
+                return_value,
+            } => {
+                self.compile_expression(return_value);
+                self.emit_op_code(OpCodes::ReturnValue);
+            }
             Statement::AExpression {
                 token: _,
                 expression,
@@ -232,15 +297,18 @@ impl Worker {
                 self.compile_expression(&condition);
                 let jump_after_consequences = self.emit(OpCodes::JumpNotTruthy, &[9999]);
                 self.compile_statement(consequence.as_ref());
-                if self.last_instruction_is_pop() {
+                if self.last_instruction_is(OpCodes::Pop) {
                     self.remove_last_pop();
                 }
                 let ajump_to_end_of_conditional = self.emit(OpCodes::Jump, &[9999]);
-                self.change_operand(jump_after_consequences, &[self.instructions.len() as u16]);
+                self.change_operand(
+                    jump_after_consequences,
+                    &[self.current_instructions_lenght() as u16],
+                );
                 match alternative {
                     Some(body) => {
                         self.compile_statement(&body);
-                        if self.last_instruction_is_pop() {
+                        if self.last_instruction_is(OpCodes::Pop) {
                             self.remove_last_pop();
                         }
                     }
@@ -250,7 +318,7 @@ impl Worker {
                 }
                 self.change_operand(
                     ajump_to_end_of_conditional,
-                    &[self.instructions.len() as u16],
+                    &[self.current_instructions_lenght() as u16],
                 );
             }
             Expression::Identifier(token) => {
@@ -293,6 +361,24 @@ impl Worker {
                 self.compile(index.as_ref());
                 self.emit_op_code(OpCodes::Index);
             }
+            Expression::FunctionLiteral {
+                token: _,
+                parameters: _,
+                body,
+            } => {
+                self.enter_scope();
+                self.compile(body.as_ref());
+                if self.last_instruction_is(OpCodes::Pop) {
+                    self.replace_last_pop_with_return()
+                }
+                if !self.last_instruction_is(OpCodes::ReturnValue) {
+                    self.emit_op_code(OpCodes::ReturnNone);
+                }
+                let instructions = self.leave_scope();
+                let compiled_function = Object::CompiledFunction(instructions);
+                let constant_position = self.add_constant(compiled_function);
+                self.emit(OpCodes::Constant, &[constant_position]);
+            }
             _ => self.add_errors(CompilationError::NotImplementedYet(Rc::new(
                 expression.clone(),
             ))),
@@ -303,7 +389,7 @@ impl Worker {
         let mut i = 0;
         let bytes = new_instruction.bytes();
         while i < new_instruction.length() {
-            self.instructions[possition + i] = bytes[i].clone();
+            self.change_bytecode(possition + i, bytes[i].clone());
             i += 1;
         }
     }
@@ -314,29 +400,45 @@ impl Worker {
      * - same operands length
      */
     fn change_operand(&mut self, operand_possition: usize, operands: &[u16]) {
-        let op_code = OpCode(self.instructions[operand_possition].clone());
+        let op_code = OpCode(self.read_bytecode(operand_possition));
         let new_instruction = make(op_code, operands);
         self.replace_instructions(operand_possition, new_instruction);
     }
 
-    fn last_instruction_is_pop(&self) -> bool {
-        match self.last_instruction {
-            Some(ref v) => v.opcode == OpCodes::Pop,
+    fn last_instruction_is(&self, op_codes: OpCodes) -> bool {
+        let scope = self
+            .scopes
+            .get(self.scope_index)
+            .take()
+            .expect("scope has to be defined");
+
+        match scope.last_instruction {
+            Some(ref v) => v.opcode == op_codes,
             None => false,
         }
     }
     fn remove_last_pop(&mut self) {
-        let pop_position = match self.last_instruction {
+        let scope = &mut self
+            .scopes
+            .get_mut(self.scope_index)
+            .take()
+            .expect("scope has to be defined");
+        let pop_position = match scope.last_instruction {
             Some(ref v) => v.position,
             None => return,
         };
-        self.instructions.remove(pop_position);
-        self.last_instruction = self.previous_instruction.clone();
+        scope.instructions.remove(pop_position);
+        scope.last_instruction = scope.previous_instruction.clone();
     }
 
     fn set_last_emited(&mut self, op_codes: OpCodes, possition: usize) {
-        self.previous_instruction = self.last_instruction.clone();
-        self.last_instruction = Some(EmitedInstruction {
+        let scope = &mut self
+            .scopes
+            .get_mut(self.scope_index)
+            .take()
+            .expect("scope has to be defined");
+        scope.previous_instruction = scope.last_instruction.clone();
+        scope.last_instruction = Some(EmitedInstruction {
             opcode: op_codes,
             position: possition,
         });
@@ -347,6 +449,30 @@ impl Worker {
         let symbol = self.symbol_table.define(&name);
         self.emit(OpCodes::SetGlobal, &[symbol.index]);
     }
+
+    fn replace_last_pop_with_return(&mut self) {
+        let scope = self
+            .scopes
+            .get(self.scope_index)
+            .take()
+            .expect("scope has to be defined");
+        let pop_position = match scope.last_instruction {
+            Some(ref v) => v.position,
+            None => return,
+        };
+        let return_code = make(OpCodes::ReturnValue.into(), &[]);
+        self.replace_instructions(pop_position, return_code);
+        let scope = self
+            .scopes
+            .get_mut(self.scope_index)
+            .take()
+            .expect("scope has to be defined");
+        scope
+            .last_instruction
+            .take()
+            .expect("has to be there")
+            .opcode = OpCodes::ReturnValue;
+    }
 }
 
 impl From<Worker> for Result<Bytecode, Vec<CompilationError>> {
@@ -355,8 +481,13 @@ impl From<Worker> for Result<Bytecode, Vec<CompilationError>> {
         if errors.len() > 0 {
             return Result::Err(errors);
         }
+        let current_scope = value
+            .scopes
+            .get(value.scope_index)
+            .take()
+            .expect("Has to have main scope");
         Result::Ok(Bytecode {
-            instructions: Instructions(value.instructions),
+            instructions: Instructions(current_scope.instructions.clone()),
             constants: value.constants,
         })
     }

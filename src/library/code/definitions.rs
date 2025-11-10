@@ -142,10 +142,12 @@ pub enum OpCodes {
     Array,
     Hash,
     Index,
+    Call,
+    ReturnValue,
+    ReturnNone,
 }
-
-impl Display for OpCodes {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl OpCodes {
+    fn string(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             OpCodes::Constant => f.write_str("Constant"),
             OpCodes::Add => f.write_str("+"),
@@ -168,7 +170,21 @@ impl Display for OpCodes {
             OpCodes::Array => f.write_str("[]"),
             OpCodes::Hash => f.write_str("{}"),
             OpCodes::Index => f.write_str("index"),
+            OpCodes::Call => f.write_str("call"),
+            OpCodes::ReturnValue => f.write_str("Return Value"),
+            OpCodes::ReturnNone => f.write_str("Return None"),
         }
+    }
+}
+
+impl Display for OpCodes {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.string(f)
+    }
+}
+impl Debug for OpCodes {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.string(f)
     }
 }
 

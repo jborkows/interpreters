@@ -31,7 +31,7 @@ macro_rules! generate_tests_for_compiler {
 pub(crate) fn test_compilation(
     input: &str,
     expected_instructions: Vec<Instructions>,
-    checkers: Vec<impl Fn(&Object, Index)>,
+    checkers: Vec<Box<dyn Fn(&Object, Index)>>,
 ) {
     let program = parse_program(input);
     let compiled = compile(program);
@@ -98,7 +98,7 @@ pub(crate) fn concat_instructions(instructions: &Vec<Instructions>) -> Instructi
     return Instructions(bytes);
 }
 
-pub(crate) fn test_constants(checkers: Vec<impl Fn(&Object, Index)>, actuals: Vec<Object>) {
+pub(crate) fn test_constants(checkers: Vec<Box<dyn Fn(&Object, Index)>>, actuals: Vec<Object>) {
     if checkers.len() != actuals.len() {
         panic!(
             "Wrong number of constants expected {:?} got {:?}",
@@ -112,17 +112,17 @@ pub(crate) fn test_constants(checkers: Vec<impl Fn(&Object, Index)>, actuals: Ve
     }
 }
 
-pub(crate) fn test_be_integer(value: i64) -> impl Fn(&Object, Index) {
-    move |object: &Object, i: Index| match object {
+pub(crate) fn test_be_integer(value: i64) -> Box<dyn Fn(&Object, Index)> {
+    Box::new(move |object: &Object, i: Index| match object {
         Object::Int(v) => assert_eq!(&value, v, "Expecing {:?} got {:?} at {:?}", value, v, i),
         _ => panic!("Expecting int got {:?} at {:?}", object, i),
-    }
+    })
 }
-pub(crate) fn test_be_string(value: &str) -> impl Fn(&Object, Index) {
-    move |object: &Object, i: Index| match object {
+pub(crate) fn test_be_string<'a>(value: &'a str) -> Box<dyn Fn(&Object, Index) + 'a> {
+    Box::new(move |object: &Object, i: Index| match object {
         Object::String(v) => assert_eq!(&value, v, "Expecing {:?} got {:?} at {:?}", value, v, i),
         _ => panic!("Expecting int got {:?} at {:?}", object, i),
-    }
+    })
 }
 
 pub(crate) struct Index(usize);

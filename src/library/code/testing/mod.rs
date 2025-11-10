@@ -1,10 +1,12 @@
 mod array;
 mod boolean_arithmethics;
 mod conditionals;
+mod functions;
 mod hashmaps;
 mod index;
 mod integer_arithmethics;
 mod let_statement;
+mod scopes;
 mod strings;
 mod symbol_table_test;
 mod test_compiler;
