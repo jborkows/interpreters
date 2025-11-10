@@ -1,12 +1,17 @@
 use crate::{
     object::{HashEntry, HashValue, hash},
-    vm::{FALSE, NIL, TRUE, index_operations::execute_array_index, wrap_boolean},
+    vm::{
+        FALSE, NIL, TRUE,
+        frame::{Frame, NIL_FRAME},
+        index_operations::execute_array_index,
+        wrap_boolean,
+    },
 };
 use std::{collections::HashMap, panic, rc::Rc};
 
 use crate::{
     ast::expression::{InfixOperatorType, PrefixOperatorType},
-    code::{Bytecode, Instructions, OpCodes, read_u_16},
+    code::{Bytecode, OpCodes, read_u_16},
     object::{Object, is_truthy},
     vm::binary_operations::binary,
 };
@@ -16,12 +21,17 @@ const STACK_SIZE: usize = 2048;
 const GLOBALS_SIZE: usize = 0xFFFF;
 #[cfg(test)]
 const GLOBALS_SIZE: usize = 0xFF;
+#[cfg(not(test))]
+const FRAME_SIZE: usize = 1024;
+#[cfg(test)]
+const FRAME_SIZE: usize = 100;
 pub struct VM {
     constants: Vec<Object>,
-    instructions: Instructions,
     stack: [Object; STACK_SIZE],
     stack_pointer: usize, //points to the next value. Top of stack is stack[stack_pointer-1]
     globals: [Object; GLOBALS_SIZE],
+    frames: [Frame; FRAME_SIZE],
+    frame_index: usize,
 }
 
 impl VM {
@@ -31,25 +41,32 @@ impl VM {
             .iter()
             .map(|o| o.clone())
             .collect::<Vec<_>>();
-        VM {
+
+        let mut vm = VM {
             constants: constants,
-            instructions: byte_code.instructions,
             stack: std::array::from_fn(|_| NIL),
             stack_pointer: 0,
             globals: std::array::from_fn(|_| NIL),
-        }
+            frames: std::array::from_fn(|_| NIL_FRAME),
+            frame_index: 0,
+        };
+        vm.push_frame(Frame::new(byte_code.instructions));
+        vm
     }
 
     pub fn run(&mut self) {
-        let bytes = self.instructions.bytes();
-        let mut instruction_pointer = 0;
-        while instruction_pointer < bytes.len() {
+        let mut move_pointer: usize;
+        while self.current_frame().instruction_pointer < self.current_frame().function.bytes().len()
+        {
+            let instruction_pointer = self.current_frame().instruction_pointer;
+            let bytes = self.current_frame().function.bytes();
             let instruction: u8 = bytes.get(instruction_pointer).unwrap().into();
+            move_pointer = 1;
 
             match instruction {
                 CONSTANT => {
                     let constant_index = read_u_16(&bytes[instruction_pointer + 1..]);
-                    instruction_pointer += 2;
+                    self.current_frame().instruction_pointer += 2;
                     let cloned = self.constants.clone();
                     let constant = cloned.get(constant_index as usize).expect(
                         format!("Can not find constant at index {constant_index}").as_str(),
@@ -90,32 +107,32 @@ impl VM {
                 BANG => self.prefix_operation(PrefixOperatorType::Bang),
                 JUMP => {
                     let position = read_u_16(&bytes[instruction_pointer + 1..]) as usize;
-                    instruction_pointer = position - 1; //not to position, it will be incremented
+                    self.current_frame().instruction_pointer = position - 1; //not to position, it will be incremented
                     //at end of loop
                 }
                 JUMP_NOT_TRUTHY => {
                     let position = read_u_16(&bytes[instruction_pointer + 1..]) as usize;
-                    instruction_pointer += 2;
+                    self.current_frame().instruction_pointer += 2;
                     let condition = self.pop();
                     if !is_truthy(&condition) {
-                        instruction_pointer = position - 1; //same as with jump
+                        self.current_frame().instruction_pointer = position - 1; //same as with jump
                     }
                 }
                 NULL_OP => self.push(NIL),
                 SET_GLOBAL => {
                     let global_index = read_u_16(&bytes[instruction_pointer + 1..]) as usize;
-                    instruction_pointer += 2;
+                    self.current_frame().instruction_pointer += 2;
                     self.globals[global_index] = self.pop()
                 }
                 GET_GLOBAL => {
                     let global_index = read_u_16(&bytes[instruction_pointer + 1..]) as usize;
-                    instruction_pointer += 2;
+                    self.current_frame().instruction_pointer += 2;
                     let value = self.globals[global_index].clone();
                     self.push(value);
                 }
                 ARRAY => {
                     let number_of_elements = read_u_16(&bytes[instruction_pointer + 1..]) as usize;
-                    instruction_pointer += 2;
+                    self.current_frame().instruction_pointer += 2;
                     let array = self
                         .build_array(self.stack_pointer - number_of_elements, self.stack_pointer);
                     self.stack_pointer = self.stack_pointer - number_of_elements;
@@ -123,7 +140,7 @@ impl VM {
                 }
                 HASH => {
                     let number_of_elements = read_u_16(&bytes[instruction_pointer + 1..]) as usize;
-                    instruction_pointer += 2;
+                    self.current_frame().instruction_pointer += 2;
                     let maps =
                         self.build_map(self.stack_pointer - number_of_elements, self.stack_pointer);
                     self.stack_pointer = self.stack_pointer - number_of_elements;
@@ -134,9 +151,28 @@ impl VM {
                     let left = self.pop();
                     self.execute_index(index, left);
                 }
+                CALL => {
+                    let object = self.pop();
+                    match object {
+                        Object::CompiledFunction(instructions) => {
+                            self.push_frame(Frame::new(instructions));
+                            move_pointer = 0;
+                        }
+                        _ => panic!("Can only call compiled function called {object}"),
+                    }
+                }
+                RETURN_VALUE => {
+                    self.pop_frame();
+                    let value = self.pop();
+                    self.push(value);
+                }
+                NO_RETURN => {
+                    self.pop_frame();
+                    self.push(NIL)
+                }
                 _ => panic!("Don't know what to do with {instruction}"),
             }
-            instruction_pointer += 1;
+            self.current_frame().instruction_pointer += move_pointer;
         }
     }
 
@@ -144,7 +180,25 @@ impl VM {
         let right = self.pop();
         let left = self.pop();
         let value = binary(left, right, operator);
-        self.push(value)
+        self.push(value);
+    }
+
+    fn current_frame(&mut self) -> &mut Frame {
+        self.frames
+            .get_mut(self.frame_index - 1)
+            .expect("Has to find frame")
+    }
+
+    fn push_frame(&mut self, frame: Frame) {
+        self.frames[self.frame_index] = frame;
+        self.frame_index += 1;
+    }
+
+    fn pop_frame(&mut self) -> Frame {
+        let frame = self.frames[self.frame_index - 1].clone();
+        self.frames[self.frame_index - 1] = NIL_FRAME;
+        self.frame_index -= 1;
+        frame
     }
 
     fn prefix_operation(&mut self, operator: PrefixOperatorType) {
@@ -268,6 +322,9 @@ const NULL_OP: u8 = OpCodes::Null as u8;
 const ARRAY: u8 = OpCodes::Array as u8;
 const HASH: u8 = OpCodes::Hash as u8;
 const INDEX: u8 = OpCodes::Index as u8;
+const CALL: u8 = OpCodes::Call as u8;
+const NO_RETURN: u8 = OpCodes::ReturnNone as u8;
+const RETURN_VALUE: u8 = OpCodes::ReturnValue as u8;
 
 const GET_GLOBAL: u8 = OpCodes::GetGlobal as u8;
 const SET_GLOBAL: u8 = OpCodes::SetGlobal as u8;

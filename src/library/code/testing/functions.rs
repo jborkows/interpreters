@@ -73,5 +73,38 @@ empty_function: (
             ])
         ]
     ),
+call_no_args_literal:(
+        "fn(){25}()",
+        vec![
+            make(OpCodes::Constant.into(), &[1]),
+            make(OpCodes::Call.into(), &[]),
+            make(OpCodes::Pop.into(), &[]),
+        ],
+        vec![
+            test_be_integer(25),
+            test_bytecode(vec![
+                make(OpCodes::Constant.into(), &[0]),
+                make(OpCodes::ReturnValue.into(), &[]),
+            ])
+        ]
+),
+
+call_no_args:(
+        "let noArg = fn(){25}; noArg()",
+        vec![
+            make(OpCodes::Constant.into(), &[1]),
+            make(OpCodes::SetGlobal.into(), &[]),
+            make(OpCodes::GetGlobal.into(), &[]),
+            make(OpCodes::Call.into(), &[]),
+            make(OpCodes::Pop.into(), &[]),
+        ],
+        vec![
+            test_be_integer(25),
+            test_bytecode(vec![
+                make(OpCodes::Constant.into(), &[0]),
+                make(OpCodes::ReturnValue.into(), &[]),
+            ])
+        ]
+),
 
 }

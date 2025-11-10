@@ -1,4 +1,5 @@
 mod binary_operations;
+mod frame;
 mod index_operations;
 #[cfg(test)]
 mod testing;

@@ -378,6 +378,14 @@ impl Worker {
                 let constant_position = self.add_constant(compiled_function);
                 self.emit(OpCodes::Constant, &[constant_position]);
             }
+            Expression::Call {
+                token: _,
+                function,
+                arguments: _,
+            } => {
+                self.compile_expression(&function);
+                self.emit_op_code(OpCodes::Call);
+            }
             _ => self.add_errors(CompilationError::NotImplementedYet(Rc::new(
                 expression.clone(),
             ))),
