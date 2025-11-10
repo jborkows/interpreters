@@ -1,4 +1,4 @@
-use std::{rc::Rc, vec};
+use std::{rc::Rc, thread::scope, vec};
 
 use crate::{
     ast::{
@@ -61,6 +61,25 @@ pub(crate) struct Worker {
     pub(crate) symbol_table: SymbolTable,
 }
 
+macro_rules! scope {
+    ($self:expr) => {
+        $self
+            .scopes
+            .get($self.scope_index)
+            .take()
+            .expect("Scope has to be defined")
+    };
+}
+
+macro_rules! scope_mut {
+    ($self:expr) => {
+        &mut $self
+            .scopes
+            .get_mut($self.scope_index)
+            .take()
+            .expect("Scope has to be defined")
+    };
+}
 impl Worker {
     pub(crate) fn new() -> Self {
         let main_scope = CompilationScope::new();
@@ -93,40 +112,20 @@ impl Worker {
     }
 
     fn current_instructions_lenght(&self) -> usize {
-        self.scopes
-            .get(self.scope_index)
-            .take()
-            .expect("Scope has to be defined")
-            .instructions
-            .len()
+        scope!(self).instructions.len()
     }
 
     fn change_bytecode(&mut self, index: usize, byte: Byte) {
-        let current_instructions = &mut self
-            .scopes
-            .get_mut(self.scope_index)
-            .take()
-            .expect("Scope has to be defined")
-            .instructions;
+        let current_instructions = &mut scope_mut!(self).instructions;
         current_instructions[index] = byte;
     }
     fn read_bytecode(&mut self, index: usize) -> Byte {
-        let current_instructions = &self
-            .scopes
-            .get(self.scope_index)
-            .take()
-            .expect("Scope has to be defined")
-            .instructions;
+        let current_instructions = &mut scope_mut!(self).instructions;
         current_instructions[index].clone()
     }
 
     fn add_instruction(&mut self, instructions: Instructions) -> usize {
-        let current_instructions = &mut self
-            .scopes
-            .get_mut(self.scope_index)
-            .take()
-            .expect("Scope has to be defined")
-            .instructions;
+        let current_instructions = &mut scope_mut!(self).instructions;
         let previous_position = current_instructions.len();
         for byte in instructions.bytes() {
             current_instructions.push(byte.clone());
@@ -406,11 +405,7 @@ impl Worker {
     }
 
     fn last_instruction_is(&self, op_codes: OpCodes) -> bool {
-        let scope = self
-            .scopes
-            .get(self.scope_index)
-            .take()
-            .expect("scope has to be defined");
+        let scope = scope!(self);
 
         match scope.last_instruction {
             Some(ref v) => v.opcode == op_codes,
@@ -418,11 +413,7 @@ impl Worker {
         }
     }
     fn remove_last_pop(&mut self) {
-        let scope = &mut self
-            .scopes
-            .get_mut(self.scope_index)
-            .take()
-            .expect("scope has to be defined");
+        let scope = scope_mut!(self);
         let pop_position = match scope.last_instruction {
             Some(ref v) => v.position,
             None => return,
@@ -432,11 +423,7 @@ impl Worker {
     }
 
     fn set_last_emited(&mut self, op_codes: OpCodes, possition: usize) {
-        let scope = &mut self
-            .scopes
-            .get_mut(self.scope_index)
-            .take()
-            .expect("scope has to be defined");
+        let scope = scope_mut!(self);
         scope.previous_instruction = scope.last_instruction.clone();
         scope.last_instruction = Some(EmitedInstruction {
             opcode: op_codes,
@@ -451,22 +438,14 @@ impl Worker {
     }
 
     fn replace_last_pop_with_return(&mut self) {
-        let scope = self
-            .scopes
-            .get(self.scope_index)
-            .take()
-            .expect("scope has to be defined");
+        let scope = scope!(self);
         let pop_position = match scope.last_instruction {
             Some(ref v) => v.position,
             None => return,
         };
         let return_code = make(OpCodes::ReturnValue.into(), &[]);
         self.replace_instructions(pop_position, return_code);
-        let scope = self
-            .scopes
-            .get_mut(self.scope_index)
-            .take()
-            .expect("scope has to be defined");
+        let scope = scope_mut!(self);
         scope
             .last_instruction
             .take()
@@ -481,11 +460,7 @@ impl From<Worker> for Result<Bytecode, Vec<CompilationError>> {
         if errors.len() > 0 {
             return Result::Err(errors);
         }
-        let current_scope = value
-            .scopes
-            .get(value.scope_index)
-            .take()
-            .expect("Has to have main scope");
+        let current_scope = scope!(value);
         Result::Ok(Bytecode {
             instructions: Instructions(current_scope.instructions.clone()),
             constants: value.constants,
