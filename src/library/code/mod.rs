@@ -41,6 +41,8 @@ static DEFINITIONS: LazyLock<HashMap<OpCode, Definition>> = LazyLock::new(|| {
         pair(OpCodes::Call, vec![]),
         pair(OpCodes::ReturnValue, vec![]),
         pair(OpCodes::ReturnNone, vec![]),
+        pair(OpCodes::SetLocal, vec![1]),
+        pair(OpCodes::GetLocal, vec![1]),
     ]);
 });
 
@@ -67,4 +69,7 @@ pub fn lookup<'a>(op_code: &OpCode) -> Result<&'a Definition, LookupError> {
 
 pub fn read_u_16(entry: &[Byte]) -> u16 {
     (entry[0].0 as u16) * 256 + (entry[1].0 as u16)
+}
+pub fn read_u_8(entry: &[Byte]) -> u16 {
+    entry[0].0 as u16
 }

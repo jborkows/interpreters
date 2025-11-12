@@ -8,7 +8,7 @@ use crate::code::testing::test_compiler::test_compilation;
 use crate::generate_tests_for_compiler;
 use crate::object::Object;
 
-pub(crate) fn test_bytecode(values: Vec<Instructions>) -> Box<dyn Fn(&Object, Index)> {
+fn test_bytecode(values: Vec<Instructions>) -> Box<dyn Fn(&Object, Index)> {
     Box::new(move |object: &Object, i: Index| match object {
         Object::CompiledFunction(v) => {
             let expected = concat_instructions(&values.to_vec());
@@ -105,6 +105,53 @@ call_no_args:(
                 make(OpCodes::ReturnValue.into(), &[]),
             ])
         ]
+),
+locals: (
+        "
+        fn() {
+        let x = 1;
+        x;
+        }
+        ",
+        vec![
+            make(OpCodes::Constant.into(), &[1]),
+            make(OpCodes::Pop.into(), &[]),
+        ],
+        vec![test_be_integer(1), test_bytecode(
+        vec![
+                make(OpCodes::Constant.into(), &[0]),
+                make(OpCodes::SetLocal.into(), &[0]),
+                make(OpCodes::GetLocal.into(), &[0]),
+                make(OpCodes::ReturnValue.into(), &[]),
+        ]
+        )]
+
+),
+multiple_locals:  (
+        "
+        fn() {
+        let x = 1;
+        let y = 4;
+        x+y;
+        }
+        ",
+        vec![
+            make(OpCodes::Constant.into(), &[2]),
+            make(OpCodes::Pop.into(), &[]),
+        ],
+        vec![test_be_integer(1), test_be_integer(4), test_bytecode(
+        vec![
+                make(OpCodes::Constant.into(), &[0]),
+                make(OpCodes::SetLocal.into(), &[0]),
+                make(OpCodes::Constant.into(), &[1]),
+                make(OpCodes::SetLocal.into(), &[1]),
+                make(OpCodes::GetLocal.into(), &[0]),
+                make(OpCodes::GetLocal.into(), &[1]),
+                make(OpCodes::Add.into(), &[]),
+                make(OpCodes::ReturnValue.into(), &[]),
+        ]
+        )]
+
 ),
 
 }

@@ -1,4 +1,4 @@
-use std::{rc::Rc, thread::scope, vec};
+use std::{rc::Rc, vec};
 
 use crate::{
     ast::{
@@ -53,12 +53,12 @@ impl CompilationScope {
     }
 }
 
-pub(crate) struct Worker {
+pub(crate) struct Worker<'a> {
     pub(crate) constants: Vec<Object>,
     pub(crate) errors: Vec<CompilationError>,
     pub(crate) scopes: Vec<CompilationScope>,
     pub(crate) scope_index: usize,
-    pub(crate) symbol_table: SymbolTable,
+    pub(crate) symbol_table: SymbolTable<'a>,
 }
 
 macro_rules! scope {
@@ -80,7 +80,7 @@ macro_rules! scope_mut {
             .expect("Scope has to be defined")
     };
 }
-impl Worker {
+impl<'a> Worker<'a> {
     pub(crate) fn new() -> Self {
         let main_scope = CompilationScope::new();
         Worker {
@@ -462,7 +462,7 @@ impl Worker {
     }
 }
 
-impl From<Worker> for Result<Bytecode, Vec<CompilationError>> {
+impl<'a> From<Worker<'a>> for Result<Bytecode, Vec<CompilationError>> {
     fn from(value: Worker) -> Self {
         let errors = value.errors;
         if errors.len() > 0 {

@@ -40,6 +40,8 @@ macro_rules! generate_for_display {
 
 generate_for_display! {
    should_display_add: (OpCodes::Add, [], "0x0000 +"),
+   should_display_set_local: (OpCodes::SetLocal, [255 as u16],  "0x0000 SetLocal 255"),
+   should_display_get_local: (OpCodes::GetLocal, [255 as u16],  "0x0000 GetLocal 255"),
 }
 
 fn helper_read(op_codes: OpCodes, operands: &[u16], read_bytes: usize) {
@@ -82,4 +84,6 @@ macro_rules! generate_for_read {
 
 generate_for_read! {
    should_read_constant: (OpCodes::Constant, &[65535], 2),
+   should_read_get: (OpCodes::GetLocal, &[255], 1),
+   should_read_set: (OpCodes::SetLocal, &[255], 1),
 }

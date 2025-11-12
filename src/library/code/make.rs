@@ -1,6 +1,6 @@
 use crate::code::{
     definitions::{Byte, Definition, Instructions, OpCode},
-    lookup, read_u_16,
+    lookup, read_u_8, read_u_16,
 };
 
 pub(crate) fn make(opcode: OpCode, operands: &[u16]) -> Instructions {
@@ -26,6 +26,10 @@ pub(crate) fn make(opcode: OpCode, operands: &[u16]) -> Instructions {
                 instructions[offset] = big_endian[0];
                 instructions[offset + 1] = big_endian[1];
             }
+            1 => {
+                let byte = val.clone() as u8;
+                instructions[offset] = byte;
+            }
             _ => {}
         }
         offset += current_width
@@ -40,6 +44,11 @@ pub(crate) fn read_operands(definition: &Definition, operands: &[Byte]) -> (Vec<
         match operand_width {
             2 => {
                 let value: u16 = read_u_16(&operands[offset..]);
+                values[index] = value;
+                offset += operand_width;
+            }
+            1 => {
+                let value: u16 = read_u_8(&operands[offset..]);
                 values[index] = value;
                 offset += operand_width;
             }
