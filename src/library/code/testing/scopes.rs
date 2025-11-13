@@ -1,4 +1,4 @@
-use crate::code::{OpCodes, compiler::Worker};
+use crate::code::{OpCodes, compiler::Worker, symbol_table::SymbolTable};
 
 #[test]
 fn compiler_scopes() {
@@ -6,6 +6,9 @@ fn compiler_scopes() {
     assert_eq!(compiler.scope_index, 0);
     compiler.emit_op_code(OpCodes::Minus);
     compiler.enter_scope();
+    if !SymbolTable::is_enclosed(&compiler.symbol_table) {
+        panic!("Scope was not enclosed")
+    }
 
     assert_eq!(compiler.scope_index, 1);
     compiler.emit_op_code(OpCodes::Bang);
@@ -21,6 +24,9 @@ fn compiler_scopes() {
         .expect("Should be Bang");
     assert_eq!(OpCodes::Bang, instuction.opcode);
     compiler.leave_scope();
+    if SymbolTable::is_enclosed(&compiler.symbol_table) {
+        panic!("Scope was enclosed but should be restored to global")
+    }
     assert_eq!(compiler.scope_index, 0);
     compiler.emit_op_code(OpCodes::Add);
     let main_scope = compiler

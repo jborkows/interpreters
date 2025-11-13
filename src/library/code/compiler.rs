@@ -1,4 +1,4 @@
-use std::{rc::Rc, vec};
+use std::{cell::RefCell, rc::Rc, vec};
 
 use crate::{
     ast::{
@@ -53,12 +53,12 @@ impl CompilationScope {
     }
 }
 
-pub(crate) struct Worker<'a> {
+pub(crate) struct Worker {
     pub(crate) constants: Vec<Object>,
     pub(crate) errors: Vec<CompilationError>,
     pub(crate) scopes: Vec<CompilationScope>,
     pub(crate) scope_index: usize,
-    pub(crate) symbol_table: SymbolTable<'a>,
+    pub(crate) symbol_table: Rc<RefCell<SymbolTable>>,
 }
 
 macro_rules! scope {
@@ -80,13 +80,13 @@ macro_rules! scope_mut {
             .expect("Scope has to be defined")
     };
 }
-impl<'a> Worker<'a> {
+impl Worker {
     pub(crate) fn new() -> Self {
         let main_scope = CompilationScope::new();
         Worker {
             constants: vec![],
             errors: vec![],
-            symbol_table: SymbolTable::new(),
+            symbol_table: SymbolTable::new_table(),
             scopes: vec![main_scope],
             scope_index: 0,
         }
@@ -135,12 +135,15 @@ impl<'a> Worker<'a> {
 
     pub(crate) fn enter_scope(&mut self) {
         let scope = CompilationScope::new();
+        self.symbol_table = SymbolTable::enclosed(&self.symbol_table);
         self.scopes.push(scope);
         self.scope_index += 1;
     }
+
     pub(crate) fn leave_scope(&mut self) -> Instructions {
         let scope = self.scopes.pop().take().expect("Scope was not defined");
         self.scope_index -= 1;
+        self.symbol_table = SymbolTable::outer(&self.symbol_table);
         Instructions(scope.instructions)
     }
 
@@ -322,17 +325,23 @@ impl<'a> Worker<'a> {
             }
             Expression::Identifier(token) => {
                 match &token.kind {
-                    tokens::TokenKind::Identifier(v) => match self.symbol_table.resolve(v) {
-                        Some(symbol) => {
-                            self.emit(OpCodes::GetGlobal, &[symbol.index]);
+                    tokens::TokenKind::Identifier(v) => {
+                        match SymbolTable::resolve(&self.symbol_table, v) {
+                            Some(symbol) => {
+                                let code = match symbol.is_global() {
+                                    true => OpCodes::GetGlobal,
+                                    false => OpCodes::GetLocal,
+                                };
+                                self.emit(code, &[symbol.index]);
+                            }
+                            None => {
+                                self.add_errors(CompilationError::UndefinedVariable(
+                                    token.clone(),
+                                    v.to_string(),
+                                ));
+                            }
                         }
-                        None => {
-                            self.add_errors(CompilationError::UndefinedVariable(
-                                token.clone(),
-                                v.to_string(),
-                            ));
-                        }
-                    },
+                    }
                     _ => self.add_errors(CompilationError::UnexpectedSymbol(token.clone())),
                 };
             }
@@ -441,8 +450,12 @@ impl<'a> Worker<'a> {
 
     fn compile_let(&mut self, name: String, value: &Expression) {
         self.compile_expression(value);
-        let symbol = self.symbol_table.define(&name);
-        self.emit(OpCodes::SetGlobal, &[symbol.index]);
+        let symbol = SymbolTable::define(&self.symbol_table, &name);
+        let op_code = match symbol.is_global() {
+            true => OpCodes::SetGlobal,
+            false => OpCodes::SetLocal,
+        };
+        self.emit(op_code, &[symbol.index]);
     }
 
     fn replace_last_pop_with_return(&mut self) {
@@ -462,7 +475,7 @@ impl<'a> Worker<'a> {
     }
 }
 
-impl<'a> From<Worker<'a>> for Result<Bytecode, Vec<CompilationError>> {
+impl From<Worker> for Result<Bytecode, Vec<CompilationError>> {
     fn from(value: Worker) -> Self {
         let errors = value.errors;
         if errors.len() > 0 {
