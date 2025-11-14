@@ -45,7 +45,10 @@ pub enum Object {
     //TODO: Implement collision mechanics, probably using a linked list
     HashMap(std::collections::HashMap<HashValue, Rc<HashEntry>>),
     Quote(Rc<Expression>),
-    CompiledFunction(Instructions),
+    CompiledFunction {
+        instructions: Instructions,
+        number_of_locals: usize,
+    },
 }
 
 impl PartialEq for Object {
@@ -116,7 +119,10 @@ pub fn type_of(object: &Object) -> String {
         Object::Array { .. } => "Array".to_string(),
         Object::HashMap(_) => "HashMap".to_string(),
         Object::Quote(_) => "Quote: ".to_string(),
-        Object::CompiledFunction(v) => format!("CompiledFunction({v})"),
+        Object::CompiledFunction {
+            instructions: _,
+            number_of_locals,
+        } => format!("CompiledFunction({number_of_locals})"),
     }
 }
 impl Display for Object {
@@ -147,7 +153,13 @@ impl Display for Object {
                 write!(f, "{{{}}}", join_collection!(entries, ", "))
             }
             Object::Quote(statement) => write!(f, "Quote: {}", statement),
-            Object::CompiledFunction(v) => write!(f, "CompiledFunction({v})"),
+            Object::CompiledFunction {
+                instructions,
+                number_of_locals,
+            } => write!(
+                f,
+                "CompiledFunction({instructions}, locals: {number_of_locals})"
+            ),
         }
     }
 }
@@ -205,7 +217,10 @@ pub fn hash(object: &Object) -> HashValue {
         }
         Object::HashMap(map) => panic!("Cannot hash HashMap directly: {}", map.len()),
         Object::Quote(statement) => panic!("Cannot hash Quote directly: {}", statement),
-        Object::CompiledFunction(v) => panic!("Cannot hash CompiledFunction directly: {}", v),
+        Object::CompiledFunction {
+            instructions,
+            number_of_locals,
+        } => panic!("Cannot hash CompiledFunction directly: {instructions} {number_of_locals}"),
     }
     HashValue(hasher.finish() as i64)
 }

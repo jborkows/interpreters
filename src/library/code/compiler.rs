@@ -382,8 +382,12 @@ impl Worker {
                 if !self.last_instruction_is(OpCodes::ReturnValue) {
                     self.emit_op_code(OpCodes::ReturnNone);
                 }
+                let number_of_locals = SymbolTable::number_of_locals(&self.symbol_table);
                 let instructions = self.leave_scope();
-                let compiled_function = Object::CompiledFunction(instructions);
+                let compiled_function = Object::CompiledFunction {
+                    instructions,
+                    number_of_locals,
+                };
                 let constant_position = self.add_constant(compiled_function);
                 self.emit(OpCodes::Constant, &[constant_position]);
             }

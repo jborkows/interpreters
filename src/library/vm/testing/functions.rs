@@ -8,7 +8,7 @@ generate_vm_tests! {
     let fun = fn(){5+10}
     fun()
     "#, should_be_integer(15)),
-    call_in_serreis:(r#"
+    call_in_serries:(r#"
        let a = fn() {1}
        let b = fn() { 2 + a()}
        let c = fn() { b() + 3}

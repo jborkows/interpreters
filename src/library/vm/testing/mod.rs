@@ -5,5 +5,6 @@ mod functions;
 mod hashmaps;
 mod indexes;
 mod let_statements;
+mod local_bindings;
 mod setups;
 mod string_arithmethics;

@@ -44,6 +44,10 @@ impl SymbolTable {
         symbol.clone()
     }
 
+    pub fn number_of_locals(symbol_table: &Rc<RefCell<SymbolTable>>) -> usize {
+        symbol_table.borrow().store.len()
+    }
+
     pub fn is_enclosed(symbol_table: &Rc<RefCell<SymbolTable>>) -> bool {
         symbol_table.borrow().outer.is_some()
     }

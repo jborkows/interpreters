@@ -1,4 +1,5 @@
 use crate::{
+    code::read_u_8,
     object::{HashEntry, HashValue, hash},
     vm::{
         FALSE, NIL, TRUE,
@@ -50,7 +51,7 @@ impl VM {
             frames: std::array::from_fn(|_| NIL_FRAME),
             frame_index: 0,
         };
-        vm.push_frame(Frame::new(byte_code.instructions));
+        vm.push_frame(Frame::new(byte_code.instructions, 0));
         vm
     }
 
@@ -154,21 +155,43 @@ impl VM {
                 CALL => {
                     let object = self.pop();
                     match object {
-                        Object::CompiledFunction(instructions) => {
-                            self.push_frame(Frame::new(instructions));
+                        Object::CompiledFunction {
+                            instructions,
+                            number_of_locals,
+                        } => {
+                            let frame = Frame::new(instructions, self.stack_pointer + 1);
+                            let instruction_pointer_position =
+                                frame.base_pointer + number_of_locals;
+                            self.push_frame(frame);
                             move_pointer = 0;
+                            self.stack_pointer = instruction_pointer_position;
                         }
                         _ => panic!("Can only call compiled function called {object}"),
                     }
                 }
                 RETURN_VALUE => {
-                    self.pop_frame();
+                    let frame = self.pop_frame();
                     let value = self.pop();
+                    self.stack_pointer = frame.base_pointer - 1;
                     self.push(value);
                 }
                 NO_RETURN => {
-                    self.pop_frame();
+                    let frame = self.pop_frame();
+                    self.stack_pointer = frame.base_pointer - 1;
                     self.push(NIL)
+                }
+                SET_LOCAL => {
+                    let local_index = read_u_8(&bytes[instruction_pointer + 1..]) as usize;
+                    self.current_frame().instruction_pointer += 1;
+                    let index = self.current_frame().base_pointer + local_index;
+                    self.stack[index] = self.pop();
+                }
+                GET_LOCAL => {
+                    let local_index = read_u_8(&bytes[instruction_pointer + 1..]) as usize;
+                    self.current_frame().instruction_pointer += 1;
+                    let index = self.current_frame().base_pointer + local_index;
+                    let object = self.stack[index].clone();
+                    self.push(object);
                 }
                 _ => panic!("Don't know what to do with {instruction}"),
             }
@@ -333,3 +356,5 @@ const FALSE_OP: u8 = OpCodes::False as u8;
 const GRATER: u8 = OpCodes::GreaterThan as u8;
 const EQUAL: u8 = OpCodes::Equal as u8;
 const NOT_EQUAL: u8 = OpCodes::NotEqual as u8;
+const GET_LOCAL: u8 = OpCodes::GetLocal as u8;
+const SET_LOCAL: u8 = OpCodes::SetLocal as u8;
