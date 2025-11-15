@@ -58,13 +58,13 @@ impl VM {
     }
 
     pub fn run(&mut self) {
-        let mut move_pointer: usize;
+        let mut move_instruction_pointer: usize;
         while self.current_frame().instruction_pointer < self.current_frame().function.bytes().len()
         {
             let instruction_pointer = self.current_frame().instruction_pointer;
             let bytes = self.current_frame().function.bytes();
             let instruction: u8 = bytes.get(instruction_pointer).unwrap().into();
-            move_pointer = 1;
+            move_instruction_pointer = 1;
             #[cfg(test)]
             debug(instruction);
             match instruction {
@@ -155,26 +155,6 @@ impl VM {
                     let left = self.pop();
                     self.execute_index(index, left);
                 }
-                CALL => {
-                    let number_of_arguments = read_u_8(&bytes[instruction_pointer + 1..]) as usize;
-                    self.current_frame().instruction_pointer += 1;
-                    let object = self.relative_stack_down(number_of_arguments);
-                    match object {
-                        Object::CompiledFunction {
-                            instructions,
-                            number_of_locals,
-                        } => {
-                            let frame =
-                                Frame::new(instructions, self.stack_pointer - number_of_arguments);
-                            let instruction_pointer_position =
-                                frame.base_pointer + number_of_locals;
-                            self.push_frame(frame);
-                            move_pointer = 0;
-                            self.stack_pointer = instruction_pointer_position;
-                        }
-                        _ => panic!("Can only call compiled function called {object}"),
-                    }
-                }
                 RETURN_VALUE => {
                     let frame = self.pop_frame();
                     let value = self.pop();
@@ -199,9 +179,15 @@ impl VM {
                     let object = self.stack[index].clone();
                     self.push(object);
                 }
+                CALL => {
+                    let number_of_arguments = read_u_8(&bytes[instruction_pointer + 1..]) as usize;
+                    self.current_frame().instruction_pointer += 1;
+                    self.call_function(number_of_arguments);
+                    move_instruction_pointer = 0;
+                }
                 _ => panic!("Don't know what to do with {instruction}"),
             }
-            self.current_frame().instruction_pointer += move_pointer;
+            self.current_frame().instruction_pointer += move_instruction_pointer;
         }
     }
 
@@ -343,6 +329,22 @@ impl VM {
                 self.push(object);
             }
             _ => panic!("Cannot do index operation on {left:?}"),
+        }
+    }
+
+    fn call_function(&mut self, number_of_arguments: usize) {
+        let object = self.relative_stack_down(number_of_arguments);
+        match object {
+            Object::CompiledFunction {
+                instructions,
+                number_of_locals,
+            } => {
+                let frame = Frame::new(instructions, self.stack_pointer - number_of_arguments);
+                let instruction_pointer_position = frame.base_pointer + number_of_locals;
+                self.push_frame(frame);
+                self.stack_pointer = instruction_pointer_position;
+            }
+            _ => panic!("Can only call compiled function called {object}"),
         }
     }
 }
