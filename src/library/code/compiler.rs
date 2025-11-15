@@ -13,7 +13,7 @@ use crate::{
         symbol_table::SymbolTable,
     },
     object::Object,
-    tokens::{self, Token},
+    tokens::{self, Token, TokenKind},
 };
 
 #[derive(Debug)]
@@ -22,6 +22,7 @@ pub enum CompilationError {
     NotImplementedYet(Rc<Expression>),
     UnknownOperator(Rc<Token>, InfixOperatorType),
     UndefinedVariable(Rc<Token>, String),
+    ParameterOfFunctionHasToBeIdentifier(Rc<Token>),
 }
 
 pub fn compile<T: Node>(node: T) -> Result<Bytecode, Vec<CompilationError>> {
@@ -370,11 +371,30 @@ impl Worker {
                 self.emit_op_code(OpCodes::Index);
             }
             Expression::FunctionLiteral {
-                token: _,
-                parameters: _,
+                token,
+                parameters,
                 body,
             } => {
                 self.enter_scope();
+
+                for parameter in parameters.clone().as_ref() {
+                    match parameter {
+                        Expression::Identifier(id_token) => match &id_token.kind {
+                            TokenKind::Identifier(value) => {
+                                SymbolTable::define(&self.symbol_table, &value);
+                            }
+                            _ => self.add_errors(
+                                CompilationError::ParameterOfFunctionHasToBeIdentifier(
+                                    id_token.clone(),
+                                ),
+                            ),
+                        },
+                        _ => self.add_errors(
+                            CompilationError::ParameterOfFunctionHasToBeIdentifier(token.clone()),
+                        ),
+                    }
+                }
+
                 self.compile(body.as_ref());
                 if self.last_instruction_is(OpCodes::Pop) {
                     self.replace_last_pop_with_return()
@@ -394,10 +414,13 @@ impl Worker {
             Expression::Call {
                 token: _,
                 function,
-                arguments: _,
+                arguments,
             } => {
                 self.compile_expression(&function);
-                self.emit_op_code(OpCodes::Call);
+                for argument in arguments {
+                    self.compile_expression(argument);
+                }
+                self.emit(OpCodes::Call, &[arguments.len() as u16]);
             }
             _ => self.add_errors(CompilationError::NotImplementedYet(Rc::new(
                 expression.clone(),

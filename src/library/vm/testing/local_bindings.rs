@@ -56,4 +56,15 @@ global_scope:(r#"
     }
     first() + second() 
     "#, should_be_integer(5)),
+nested:(r#"
+    let g = 4;
+    let first = fn(){
+        let aaa = 1;
+        g - fn(){
+           let aaa = 2
+           aaa
+        }() - aaa
+    }
+    first()
+    "#, should_be_integer(1)),
 }

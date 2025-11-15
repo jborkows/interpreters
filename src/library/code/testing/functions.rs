@@ -85,7 +85,7 @@ call_no_args_literal:(
         "fn(){25}()",
         vec![
             make(OpCodes::Constant.into(), &[1]),
-            make(OpCodes::Call.into(), &[]),
+            make(OpCodes::Call.into(), &[0]),
             make(OpCodes::Pop.into(), &[]),
         ],
         vec![
@@ -103,7 +103,7 @@ call_no_args:(
             make(OpCodes::Constant.into(), &[1]),
             make(OpCodes::SetGlobal.into(), &[]),
             make(OpCodes::GetGlobal.into(), &[]),
-            make(OpCodes::Call.into(), &[]),
+            make(OpCodes::Call.into(), &[0]),
             make(OpCodes::Pop.into(), &[]),
         ],
         vec![
@@ -161,5 +161,105 @@ multiple_locals:  (
         )]
 
 ),
+one_argument: (
+"
+let fun = fn(a){ }
+fun(6)
+",
+    vec![
+         make(OpCodes::Constant.into(), &[0]),
+         make(OpCodes::SetGlobal.into(), &[0]),
+         make(OpCodes::GetGlobal.into(), &[0]),
+         make(OpCodes::Constant.into(), &[1]),
+         make(OpCodes::Call.into(), &[1]),
+         make(OpCodes::Pop.into(), &[]),
 
+    ],
+    vec![
+        test_bytecode(vec![
+            make(OpCodes::ReturnNone.into(), &[])
+        ]
+        ),
+        test_be_integer(6)
+    ]
+),
+many_argument: (
+"
+let fun = fn(a,b,c){}
+fun(6,7,8)
+",
+    vec![
+         make(OpCodes::Constant.into(), &[0]),
+         make(OpCodes::SetGlobal.into(), &[0]),
+         make(OpCodes::GetGlobal.into(), &[0]),
+         make(OpCodes::Constant.into(), &[1]),
+         make(OpCodes::Constant.into(), &[2]),
+         make(OpCodes::Constant.into(), &[3]),
+         make(OpCodes::Call.into(), &[3]),
+         make(OpCodes::Pop.into(), &[]),
+
+    ],
+    vec![
+        test_bytecode(vec![
+            make(OpCodes::ReturnNone.into(), &[])
+        ]),
+        test_be_integer(6),
+        test_be_integer(7),
+        test_be_integer(8),
+    ]
+),
+
+one_argument_used: (
+r#"
+let one = fn(a){ a }
+one(6)
+"#,
+    vec![
+         make(OpCodes::Constant.into(), &[0]),
+         make(OpCodes::SetGlobal.into(), &[0]),
+         make(OpCodes::GetGlobal.into(), &[0]),
+         make(OpCodes::Constant.into(), &[1]),
+         make(OpCodes::Call.into(), &[1]),
+         make(OpCodes::Pop.into(), &[]),
+
+    ],
+    vec![
+        test_bytecode(vec![
+            make(OpCodes::GetLocal.into(), &[0]),
+            make(OpCodes::ReturnValue.into(), &[])
+        ]
+        ),
+        test_be_integer(6)
+    ]
+),
+many_argument_used: (
+"
+let fun = fn(a,b,c){ a;b;c;}
+fun(6,7,8)
+",
+    vec![
+         make(OpCodes::Constant.into(), &[0]),
+         make(OpCodes::SetGlobal.into(), &[0]),
+         make(OpCodes::GetGlobal.into(), &[0]),
+         make(OpCodes::Constant.into(), &[1]),
+         make(OpCodes::Constant.into(), &[2]),
+         make(OpCodes::Constant.into(), &[3]),
+         make(OpCodes::Call.into(), &[3]),
+         make(OpCodes::Pop.into(), &[]),
+
+    ],
+    vec![
+        test_bytecode(vec![
+            make(OpCodes::GetLocal.into(), &[0]),
+            make(OpCodes::Pop.into(), &[]),
+            make(OpCodes::GetLocal.into(), &[1]),
+            make(OpCodes::Pop.into(), &[]),
+            make(OpCodes::GetLocal.into(), &[2]),
+            make(OpCodes::ReturnValue.into(), &[])
+        ]),
+        test_be_integer(6),
+        test_be_integer(7),
+        test_be_integer(8),
+    ]
+),
 }

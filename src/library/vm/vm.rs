@@ -37,6 +37,8 @@ pub struct VM {
 
 impl VM {
     pub fn new(byte_code: Bytecode) -> Self {
+        #[cfg(test)]
+        println!("Processing\n{:?}", byte_code.instructions);
         let constants: Vec<Object> = byte_code
             .constants
             .iter()
@@ -63,7 +65,8 @@ impl VM {
             let bytes = self.current_frame().function.bytes();
             let instruction: u8 = bytes.get(instruction_pointer).unwrap().into();
             move_pointer = 1;
-
+            #[cfg(test)]
+            debug(instruction);
             match instruction {
                 CONSTANT => {
                     let constant_index = read_u_16(&bytes[instruction_pointer + 1..]);
@@ -153,13 +156,16 @@ impl VM {
                     self.execute_index(index, left);
                 }
                 CALL => {
-                    let object = self.pop();
+                    let number_of_arguments = read_u_8(&bytes[instruction_pointer + 1..]) as usize;
+                    self.current_frame().instruction_pointer += 1;
+                    let object = self.relative_stack_down(number_of_arguments);
                     match object {
                         Object::CompiledFunction {
                             instructions,
                             number_of_locals,
                         } => {
-                            let frame = Frame::new(instructions, self.stack_pointer + 1);
+                            let frame =
+                                Frame::new(instructions, self.stack_pointer - number_of_arguments);
                             let instruction_pointer_position =
                                 frame.base_pointer + number_of_locals;
                             self.push_frame(frame);
@@ -263,6 +269,16 @@ impl VM {
         self.stack_pointer += 1;
     }
 
+    fn relative_stack_down(&mut self, possition: usize) -> Object {
+        if self.stack_pointer < possition {
+            panic!(
+                "Cannot get from stack at {possition} since stack pointer is {}",
+                self.stack_pointer
+            )
+        }
+        let object = self.stack[self.stack_pointer - 1 - possition].clone();
+        return object.clone();
+    }
     fn pop(&mut self) -> Object {
         if self.stack_pointer == 0 {
             panic!("Cannot move from stack, stack is empty")
@@ -329,6 +345,39 @@ impl VM {
             _ => panic!("Cannot do index operation on {left:?}"),
         }
     }
+}
+
+fn debug(opcode: u8) {
+    let text = match opcode {
+        CONSTANT => "CONSTANT",
+        ADD => "ADD",
+        SUBSTITUTE => "SUBSTITUTE",
+        MULTIPLY => "MULTIPLY",
+        DIVIDE => "DIVIDE",
+        EQUAL => "EQUAL",
+        NOT_EQUAL => "NOT_EQUAL",
+        GRATER => "GRATER",
+        POP => "POP",
+        TRUE_OP => "TRUE",
+        FALSE_OP => "FALSE",
+        MINUS => "MINUS",
+        BANG => "BANG",
+        JUMP => "JUMP",
+        JUMP_NOT_TRUTHY => "JUMP_NOT_TRUTHY",
+        NULL_OP => "NULL",
+        SET_GLOBAL => "SET_GLOBAL",
+        GET_GLOBAL => "GET_GLOBAL",
+        ARRAY => "ARRAY",
+        HASH => "HASH",
+        INDEX => "INDEX",
+        CALL => "CALL",
+        RETURN_VALUE => "RETURN_VALUE",
+        NO_RETURN => "NO_RETURN",
+        SET_LOCAL => "SET_LOCAL",
+        GET_LOCAL => "GET_LOCAL",
+        _ => "NOT KNOW",
+    };
+    println!("{text}")
 }
 
 const CONSTANT: u8 = OpCodes::Constant as u8;
