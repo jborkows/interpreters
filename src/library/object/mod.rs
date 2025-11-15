@@ -48,6 +48,7 @@ pub enum Object {
     CompiledFunction {
         instructions: Instructions,
         number_of_locals: usize,
+        number_of_parameters: usize,
     },
 }
 
@@ -121,8 +122,9 @@ pub fn type_of(object: &Object) -> String {
         Object::Quote(_) => "Quote: ".to_string(),
         Object::CompiledFunction {
             instructions: _,
-            number_of_locals,
-        } => format!("CompiledFunction({number_of_locals})"),
+            number_of_locals: _,
+            number_of_parameters: number_of_arguments,
+        } => format!("CompiledFunction({number_of_arguments})"),
     }
 }
 impl Display for Object {
@@ -156,9 +158,10 @@ impl Display for Object {
             Object::CompiledFunction {
                 instructions,
                 number_of_locals,
+                number_of_parameters: number_of_arguments,
             } => write!(
                 f,
-                "CompiledFunction({instructions}, locals: {number_of_locals})"
+                "CompiledFunction({number_of_arguments}, instructions:{instructions}, locals: {number_of_locals})"
             ),
         }
     }
@@ -219,8 +222,9 @@ pub fn hash(object: &Object) -> HashValue {
         Object::Quote(statement) => panic!("Cannot hash Quote directly: {}", statement),
         Object::CompiledFunction {
             instructions,
-            number_of_locals,
-        } => panic!("Cannot hash CompiledFunction directly: {instructions} {number_of_locals}"),
+            number_of_locals: _,
+            number_of_parameters: number_of_arguments,
+        } => panic!("Cannot hash CompiledFunction directly: {instructions} {number_of_arguments}"),
     }
     HashValue(hasher.finish() as i64)
 }

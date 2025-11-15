@@ -81,6 +81,7 @@ pub(crate) fn run_vm_test(input: &str, checker: impl Fn(&Object)) {
     };
     checker(&stack_element);
 }
+
 #[macro_export]
 macro_rules! generate_vm_tests {
     ($($name:ident: ($program_text:expr, $checker:expr),)*) => {

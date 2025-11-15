@@ -23,6 +23,11 @@ pub enum CompilationError {
     UnknownOperator(Rc<Token>, InfixOperatorType),
     UndefinedVariable(Rc<Token>, String),
     ParameterOfFunctionHasToBeIdentifier(Rc<Token>),
+    WrongNumberOfArguments {
+        token: Rc<Token>,
+        expected: usize,
+        provided: usize,
+    },
 }
 
 pub fn compile<T: Node>(node: T) -> Result<Bytecode, Vec<CompilationError>> {
@@ -375,8 +380,8 @@ impl Worker {
                 parameters,
                 body,
             } => {
+                println!("literal");
                 self.enter_scope();
-
                 for parameter in parameters.clone().as_ref() {
                     match parameter {
                         Expression::Identifier(id_token) => match &id_token.kind {
@@ -407,15 +412,18 @@ impl Worker {
                 let compiled_function = Object::CompiledFunction {
                     instructions,
                     number_of_locals,
+                    number_of_parameters: parameters.len(),
                 };
+                println!("{compiled_function}");
                 let constant_position = self.add_constant(compiled_function);
                 self.emit(OpCodes::Constant, &[constant_position]);
             }
             Expression::Call {
-                token: _,
+                token,
                 function,
                 arguments,
             } => {
+                self.check_call(&function, token.clone(), &arguments);
                 self.compile_expression(&function);
                 for argument in arguments {
                     self.compile_expression(argument);
@@ -499,6 +507,25 @@ impl Worker {
             .take()
             .expect("has to be there")
             .opcode = OpCodes::ReturnValue;
+    }
+
+    fn check_call(&mut self, function: &Expression, token: Rc<Token>, arguments: &[Expression]) {
+        match function {
+            Expression::FunctionLiteral {
+                token: _,
+                parameters,
+                body: _,
+            } => {
+                if parameters.len() != arguments.len() {
+                    self.add_errors(CompilationError::WrongNumberOfArguments {
+                        token: token.clone(),
+                        expected: parameters.len(),
+                        provided: arguments.len(),
+                    });
+                }
+            }
+            _ => {}
+        }
     }
 }
 

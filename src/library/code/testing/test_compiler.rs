@@ -27,7 +27,6 @@ macro_rules! generate_tests_for_compiler {
     };
 
 }
-
 pub(crate) fn test_compilation(
     input: &str,
     expected_instructions: Vec<Instructions>,
@@ -48,7 +47,7 @@ pub(crate) fn test_compilation(
     test_constants(checkers, bytecode.constants);
 }
 
-fn parse_program(input: &str) -> Program {
+pub(crate) fn parse_program(input: &str) -> Program {
     let mut parser = Parser::from_string(input);
     let program = parser.parse_program();
     check_parser_errors(&parser);

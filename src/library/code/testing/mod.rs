@@ -1,6 +1,7 @@
 mod array;
 mod boolean_arithmethics;
 mod conditionals;
+mod failing_compilations;
 mod functions;
 mod hashmaps;
 mod index;

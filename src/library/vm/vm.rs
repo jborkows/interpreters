@@ -338,7 +338,13 @@ impl VM {
             Object::CompiledFunction {
                 instructions,
                 number_of_locals,
+                number_of_parameters,
             } => {
+                if number_of_arguments != number_of_parameters {
+                    panic!(
+                        "Number of arguments does not match expecting {number_of_arguments} got {number_of_parameters}"
+                    )
+                }
                 let frame = Frame::new(instructions, self.stack_pointer - number_of_arguments);
                 let instruction_pointer_position = frame.base_pointer + number_of_locals;
                 self.push_frame(frame);

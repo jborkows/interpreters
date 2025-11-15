@@ -13,6 +13,7 @@ fn test_bytecode(values: Vec<Instructions>) -> Box<dyn Fn(&Object, Index)> {
         Object::CompiledFunction {
             instructions,
             number_of_locals,
+            number_of_parameters: _,
         } => {
             let expected = concat_instructions(&values.to_vec());
             for (i, (e, a)) in expected
