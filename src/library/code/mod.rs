@@ -38,11 +38,12 @@ static DEFINITIONS: LazyLock<HashMap<OpCode, Definition>> = LazyLock::new(|| {
         pair(OpCodes::Array, vec![2]), //operand number of elements in array
         pair(OpCodes::Hash, vec![2]),  //operand number of keys and values from map
         pair(OpCodes::Index, vec![]),
-        pair(OpCodes::Call, vec![1]),
+        pair(OpCodes::Call, vec![1]), //number of arguments passed
         pair(OpCodes::ReturnValue, vec![]),
         pair(OpCodes::ReturnNone, vec![]),
         pair(OpCodes::SetLocal, vec![1]),
         pair(OpCodes::GetLocal, vec![1]),
+        pair(OpCodes::GetBuiltin, vec![1]),
     ]);
 });
 

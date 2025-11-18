@@ -8,7 +8,7 @@ mod builtins;
 mod environment;
 mod helpers;
 mod object_pool;
-use builtins::BuiltInFunction;
+pub use builtins::BuiltInFunction;
 pub use builtins::BuiltInResult;
 pub use builtins::parse_built_in_function;
 pub use environment::{Environment, new_environment};

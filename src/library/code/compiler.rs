@@ -16,6 +16,8 @@ use crate::{
     tokens::{self, Token, TokenKind},
 };
 
+use super::symbol_table::SymbolType;
+
 #[derive(Debug)]
 pub enum CompilationError {
     UnexpectedSymbol(Rc<Token>),
@@ -28,6 +30,7 @@ pub enum CompilationError {
         expected: usize,
         provided: usize,
     },
+    BuiltinCannotBeSet(String),
 }
 
 pub fn compile<T: Node>(node: T) -> Result<Bytecode, Vec<CompilationError>> {
@@ -335,9 +338,10 @@ impl Worker {
                     tokens::TokenKind::Identifier(v) => {
                         match SymbolTable::resolve(&self.symbol_table, v) {
                             Some(symbol) => {
-                                let code = match symbol.is_global() {
-                                    true => OpCodes::GetGlobal,
-                                    false => OpCodes::GetLocal,
+                                let code = match symbol.what_type() {
+                                    SymbolType::GLOBAL => OpCodes::GetGlobal,
+                                    SymbolType::LOCAL => OpCodes::GetLocal,
+                                    SymbolType::BUILTIN => OpCodes::GetBuiltin,
                                 };
                                 self.emit(code, &[symbol.index]);
                             }
@@ -487,9 +491,13 @@ impl Worker {
     fn compile_let(&mut self, name: String, value: &Expression) {
         self.compile_expression(value);
         let symbol = SymbolTable::define(&self.symbol_table, &name);
-        let op_code = match symbol.is_global() {
-            true => OpCodes::SetGlobal,
-            false => OpCodes::SetLocal,
+        let op_code = match symbol.what_type() {
+            SymbolType::GLOBAL => OpCodes::SetGlobal,
+            SymbolType::LOCAL => OpCodes::SetLocal,
+            SymbolType::BUILTIN => {
+                self.add_errors(CompilationError::BuiltinCannotBeSet(name));
+                return;
+            }
         };
         self.emit(op_code, &[symbol.index]);
     }

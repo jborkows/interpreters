@@ -1,3 +1,5 @@
+use core::panic;
+
 use crate::code::symbol_table::SymbolTable;
 
 macro_rules! do_not_find_in {
@@ -280,6 +282,22 @@ fn test_local_nested_resolve() {
     );
     do_not_find_in!(first_one, "e");
     do_not_find_in!(first_one, "f");
+}
+
+#[test]
+fn test_builtin() {
+    let global = &SymbolTable::new_table();
+    SymbolTable::define(global, "a");
+    SymbolTable::define(global, "b");
+    let local = &SymbolTable::enclosed(global);
+    SymbolTable::define_builtin(local, "fun");
+    match SymbolTable::resolve(global, "fun") {
+        Some(s) => match s.what_type() {
+            crate::code::symbol_table::SymbolType::BUILTIN => {}
+            _ => panic!("Builtin was defined but with wrong type"),
+        },
+        None => panic!("Builtin was not resolved in global scope"),
+    }
 }
 
 struct Expected<'a> {

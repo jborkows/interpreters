@@ -37,6 +37,7 @@ macro_rules! value {
 }
 
 #[derive(Debug, Clone, PartialEq)]
+#[repr(u8)]
 pub enum BuiltInFunction {
     Len,
     First,
@@ -66,6 +67,20 @@ impl BuiltInFunction {
             BuiltInFunction::Puts => apply_puts(arguments),
             BuiltInFunction::Quote => apply_quote(arguments),
         }
+    }
+    pub fn index(&self) -> u8 {
+        return self.clone() as u8;
+    }
+
+    pub fn all<'a>() -> &'a [BuiltInFunction] {
+        &[
+            BuiltInFunction::Len,
+            BuiltInFunction::First,
+            BuiltInFunction::Last,
+            BuiltInFunction::Rest,
+            BuiltInFunction::Push,
+            BuiltInFunction::Puts,
+        ]
     }
 }
 

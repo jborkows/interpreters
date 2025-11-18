@@ -147,6 +147,7 @@ pub enum OpCodes {
     ReturnNone,
     SetLocal,
     GetLocal,
+    GetBuiltin,
 }
 impl OpCodes {
     fn string(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -177,6 +178,7 @@ impl OpCodes {
             OpCodes::ReturnNone => f.write_str("Return None"),
             OpCodes::SetLocal => f.write_str("SetLocal"),
             OpCodes::GetLocal => f.write_str("GetLocal"),
+            OpCodes::GetBuiltin => f.write_str("GetBuiltin"),
         }
     }
 }
