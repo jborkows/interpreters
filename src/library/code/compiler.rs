@@ -65,6 +65,7 @@ pub(crate) struct Worker {
     pub(crate) scopes: Vec<CompilationScope>,
     pub(crate) scope_index: usize,
     pub(crate) symbol_table: Rc<RefCell<SymbolTable>>,
+    //TODO: provide symbol map: bytes -> position, stil naive no stack trace
 }
 
 macro_rules! scope {

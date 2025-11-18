@@ -1,4 +1,3 @@
-use std::fmt::write;
 use std::hash::{Hash, Hasher};
 use std::{cell::RefCell, fmt::Display, rc::Rc};
 
@@ -10,6 +9,7 @@ mod environment;
 mod helpers;
 mod object_pool;
 use builtins::BuiltInFunction;
+pub use builtins::BuiltInResult;
 pub use builtins::parse_built_in_function;
 pub use environment::{Environment, new_environment};
 pub use helpers::*;
@@ -87,6 +87,7 @@ impl Display for Identifier {
     }
 }
 
+//TODO: replace with accepting position
 pub fn error_at(message: &str, token: &Token) -> Rc<Object> {
     let position = token.position();
     Rc::new(Object::Error {

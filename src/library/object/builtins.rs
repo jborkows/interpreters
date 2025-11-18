@@ -1,8 +1,6 @@
-use std::fmt::Display;
+use std::{fmt::Display, rc::Rc};
 
-use crate::{object::int_value, tokens::Token};
-
-use super::error_at;
+use crate::object::{Object, int_value};
 
 macro_rules! end_flow {
     ($value:expr ) => {
@@ -15,21 +13,26 @@ macro_rules! end_flow {
     };
 }
 macro_rules! expecting_array {
-    ($left:ident, $token:expr, $function_name:expr, $argument_no:expr ) => {
+    ($left:ident,  $function_name:expr, $argument_no:expr ) => {
         (match $left.as_ref() {
             super::Object::Array { elements } => Ok(elements),
-            _ => Err(error_at(
-                format!(
+            _ => {
+                let error_message = format!(
                     "Invalid argument {} for {}: {}({}) expected Array",
                     $argument_no,
                     $function_name,
                     super::type_of($left),
                     $left.to_string(),
-                )
-                .as_str(),
-                $token,
-            )),
+                );
+                Err(BuiltInResult::Failure(error_message))
+            }
         })
+    };
+}
+
+macro_rules! value {
+    ($value:expr  ) => {
+        BuiltInResult::Value(Rc::new($value))
     };
 }
 
@@ -43,132 +46,116 @@ pub enum BuiltInFunction {
     Puts,
     Quote,
 }
+
+pub enum BuiltInResult {
+    Unit,
+    Value(Rc<Object>),
+    Failure(String),
+}
+
 impl BuiltInFunction {
-    pub(crate) fn apply(
-        &self,
-        token: &Token,
-        arguments: &[std::rc::Rc<super::Object>],
-    ) -> std::rc::Rc<super::Object> {
+    //TODO: replace to return Result either object or error ready structure -> function accepting
+    //position
+    pub(crate) fn apply(&self, arguments: &[std::rc::Rc<super::Object>]) -> BuiltInResult {
         match self {
-            BuiltInFunction::Len => apply_len(token, arguments),
-            BuiltInFunction::First => apply_first(token, arguments),
-            BuiltInFunction::Last => apply_last(token, arguments),
-            BuiltInFunction::Rest => apply_rest(token, arguments),
-            BuiltInFunction::Push => apply_push(token, arguments),
-            BuiltInFunction::Puts => apply_puts(token, arguments),
-            BuiltInFunction::Quote => apply_quote(token, arguments),
+            BuiltInFunction::Len => apply_len(arguments),
+            BuiltInFunction::First => apply_first(arguments),
+            BuiltInFunction::Last => apply_last(arguments),
+            BuiltInFunction::Rest => apply_rest(arguments),
+            BuiltInFunction::Push => apply_push(arguments),
+            BuiltInFunction::Puts => apply_puts(arguments),
+            BuiltInFunction::Quote => apply_quote(arguments),
         }
     }
 }
 
-fn apply_quote(
-    token: &Token,
-    arguments: &[std::rc::Rc<super::Object>],
-) -> std::rc::Rc<super::Object> {
-    end_flow!(accept_n_arguments("quote", 1, token, arguments));
+fn apply_quote(arguments: &[std::rc::Rc<super::Object>]) -> BuiltInResult {
+    end_flow!(accept_n_arguments("quote", 1, arguments));
     todo!()
 }
 
-fn apply_puts(
-    _token: &Token,
-    arguments: &[std::rc::Rc<super::Object>],
-) -> std::rc::Rc<super::Object> {
+fn apply_puts(arguments: &[std::rc::Rc<super::Object>]) -> BuiltInResult {
     arguments.into_iter().for_each(|arg| {
         println!(">> {}", arg.to_string());
     });
-    std::rc::Rc::new(super::Object::Null)
+    BuiltInResult::Unit
 }
 
-fn apply_push(
-    token: &Token,
-    arguments: &[std::rc::Rc<super::Object>],
-) -> std::rc::Rc<super::Object> {
-    end_flow!(accept_n_arguments("push", 2, token, arguments));
+fn apply_push(arguments: &[std::rc::Rc<super::Object>]) -> BuiltInResult {
+    end_flow!(accept_n_arguments("push", 2, arguments));
     let an_array = &arguments[0];
-    let value = end_flow!(expecting_array!(an_array, token, "push", 1));
+    let value = end_flow!(expecting_array!(an_array, "push", 1));
     let new_value = &arguments[1];
     let mut copied = value.clone();
     copied.push(new_value.clone());
-    std::rc::Rc::new(super::Object::Array { elements: copied })
+    value!(Object::Array { elements: copied })
 }
 
-fn apply_rest(
-    token: &Token,
-    arguments: &[std::rc::Rc<super::Object>],
-) -> std::rc::Rc<super::Object> {
-    end_flow!(accept_n_arguments("rest", 1, token, arguments));
+fn apply_rest(arguments: &[std::rc::Rc<super::Object>]) -> BuiltInResult {
+    end_flow!(accept_n_arguments("rest", 1, arguments));
     let argument = &arguments[0];
-    let value = end_flow!(expecting_array!(argument, token, "rest", 1));
+    let value = end_flow!(expecting_array!(argument, "rest", 1));
     if value.is_empty() {
-        return std::rc::Rc::new(super::Object::Array { elements: vec![] });
+        return value!(Object::Array { elements: vec![] });
     }
     value
         .get(1..)
         .map(|slice| {
-            std::rc::Rc::new(super::Object::Array {
-                elements: slice.to_vec(),
+            value!(Object::Array {
+                elements: slice.to_vec()
             })
         })
-        .unwrap_or_else(|| error_at("Cannot get rest of array for empty array", token))
+        .unwrap_or_else(|| {
+            BuiltInResult::Failure("Cannot get rest of array for empty array".to_string())
+        })
 }
 
-fn apply_last(
-    token: &Token,
-    arguments: &[std::rc::Rc<super::Object>],
-) -> std::rc::Rc<super::Object> {
-    end_flow!(accept_n_arguments("last", 1, token, arguments));
+fn apply_last(arguments: &[Rc<Object>]) -> BuiltInResult {
+    end_flow!(accept_n_arguments("last", 1, arguments));
     let argument = &arguments[0];
-    let value = end_flow!(expecting_array!(argument, token, "last", 1));
+    let value = end_flow!(expecting_array!(argument, "last", 1));
     value
         .into_iter()
         .last()
         .cloned()
-        .unwrap_or_else(|| error_at("Cannot get last element for empty array", token))
+        .map(|x| BuiltInResult::Value(x))
+        .unwrap_or_else(|| {
+            BuiltInResult::Failure("Cannot get last element for empty array".to_string())
+        })
 }
 
-fn apply_first(
-    token: &Token,
-    arguments: &[std::rc::Rc<super::Object>],
-) -> std::rc::Rc<super::Object> {
-    end_flow!(accept_n_arguments("first", 1, token, arguments));
+fn apply_first(arguments: &[Rc<Object>]) -> BuiltInResult {
+    end_flow!(accept_n_arguments("first", 1, arguments));
     let argument = &arguments[0];
-    let value = end_flow!(expecting_array!(argument, token, "first", 1));
+    let value = end_flow!(expecting_array!(argument, "first", 1));
     value
         .get(0)
         .cloned()
-        .unwrap_or_else(|| error_at("Cannot get first element for empty array", token))
+        .map(|x| BuiltInResult::Value(x))
+        .unwrap_or_else(|| {
+            BuiltInResult::Failure("Cannot get first element for empty array".to_string())
+        })
 }
 
-fn apply_len(
-    token: &Token,
-    arguments: &[std::rc::Rc<super::Object>],
-) -> std::rc::Rc<super::Object> {
-    end_flow!(accept_n_arguments("len", 1, token, arguments));
+fn apply_len(arguments: &[Rc<Object>]) -> BuiltInResult {
+    end_flow!(accept_n_arguments("len", 1, arguments));
     let argument = &arguments[0];
     match argument.as_ref() {
-        super::Object::Array { elements } => int_value(elements.len() as i64),
-        super::Object::String(s) => int_value(s.len() as i64),
+        super::Object::Array { elements } => BuiltInResult::Value(int_value(elements.len() as i64)),
+        super::Object::String(s) => BuiltInResult::Value(int_value(s.len() as i64)),
         super::Object::Int(_) | super::Object::Boolean(_) | super::Object::Null => {
-            return error_at(
-                format!(
-                    "Invalid argument for len: {}({}) expected Array or String",
-                    super::type_of(argument),
-                    argument.to_string()
-                )
-                .as_str(),
-                token,
-            );
+            return BuiltInResult::Failure(format!(
+                "Invalid argument for len: {}({}) expected Array or String",
+                super::type_of(argument),
+                argument.to_string()
+            ));
         }
         _ => {
-            return error_at(
-                format!(
-                    "Invalid argument for len: {}({}) expected Array or String",
-                    super::type_of(argument),
-                    argument.to_string()
-                )
-                .as_str(),
-                token,
-            );
+            return BuiltInResult::Failure(format!(
+                "Invalid argument for len: {}({}) expected Array or String",
+                super::type_of(argument),
+                argument.to_string()
+            ));
         }
     }
 }
@@ -176,20 +163,16 @@ fn apply_len(
 fn accept_n_arguments(
     name: &str,
     expected: usize,
-    token: &Token,
-    arguments: &[std::rc::Rc<super::Object>],
-) -> Result<(), std::rc::Rc<super::Object>> {
+    arguments: &[Rc<Object>],
+) -> Result<(), BuiltInResult> {
     if arguments.len() != expected {
-        return Err(error_at(
-            format!(
-                "Function {} expected {} arguments, got {}",
-                name,
-                expected,
-                arguments.len()
-            )
-            .as_str(),
-            token,
-        ));
+        let message = format!(
+            "Function {} expected {} arguments, got {}",
+            name,
+            expected,
+            arguments.len()
+        );
+        return Err(BuiltInResult::Failure(message.clone()));
     }
     Ok(())
 }

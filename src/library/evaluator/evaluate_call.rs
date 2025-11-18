@@ -72,7 +72,14 @@ fn apply_function(token: &Token, function: Rc<Object>, arguments: &[Rc<Object>])
                 _ => result,
             }
         }
-        Object::Builtin(ref func) => func.apply(token, arguments),
+        Object::Builtin(ref func) => {
+            let evaluation = func.apply(arguments);
+            match evaluation {
+                crate::object::BuiltInResult::Unit => Rc::new(Object::Null),
+                crate::object::BuiltInResult::Value(object) => object.clone(),
+                crate::object::BuiltInResult::Failure(e) => error_at(&e, token),
+            }
+        }
         _ => error_at("Call expression is not a function.", token),
     }
 }
