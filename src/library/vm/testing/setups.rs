@@ -39,6 +39,20 @@ pub(crate) fn should_be_boolean(value: bool) -> impl Fn(&Object) {
         _ => panic!("Expecting boolean got {:?}", object),
     }
 }
+pub(crate) fn should_be_error<'a, F>(message_checker: F) -> impl Fn(&Object)
+where
+    F: Fn(&str) -> Result<(), &'a str> + 'a,
+{
+    move |object: &Object| match object {
+        Object::Error { message, .. } => {
+            let result = message_checker(&message);
+            if let Err(error_message) = result {
+                panic!("For error {message} got {error_message}");
+            }
+        }
+        _ => panic!("Expecting error got {:?}", object),
+    }
+}
 pub(crate) fn should_be_null() -> impl Fn(&Object) {
     move |object: &Object| match object {
         Object::Null => {}

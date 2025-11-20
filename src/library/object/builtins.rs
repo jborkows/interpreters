@@ -54,10 +54,18 @@ pub enum BuiltInResult {
     Failure(String),
 }
 
+const BUILTINS_DATA: [BuiltInFunction; 6] = [
+    BuiltInFunction::Len,
+    BuiltInFunction::First,
+    BuiltInFunction::Last,
+    BuiltInFunction::Rest,
+    BuiltInFunction::Push,
+    BuiltInFunction::Puts,
+];
 impl BuiltInFunction {
     //TODO: replace to return Result either object or error ready structure -> function accepting
     //position
-    pub(crate) fn apply(&self, arguments: &[std::rc::Rc<super::Object>]) -> BuiltInResult {
+    pub(crate) fn apply(&self, arguments: &[Rc<super::Object>]) -> BuiltInResult {
         match self {
             BuiltInFunction::Len => apply_len(arguments),
             BuiltInFunction::First => apply_first(arguments),
@@ -69,7 +77,20 @@ impl BuiltInFunction {
         }
     }
     pub fn index(&self) -> u8 {
-        return self.clone() as u8;
+        return BUILTINS_DATA
+            .iter()
+            .position(|x| x == self)
+            .expect(&format!(
+                "It seams {} was not fully defined, lucking index",
+                &self
+            )) as u8;
+    }
+
+    pub fn decode(index: usize) -> BuiltInFunction {
+        return BUILTINS_DATA
+            .get(index)
+            .expect(&format!("Cannot decode {index}"))
+            .clone();
     }
 
     pub fn all<'a>() -> &'a [BuiltInFunction] {

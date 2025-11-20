@@ -1,5 +1,6 @@
 mod arithmetics;
 mod arrays;
+mod builtins;
 mod conditionals;
 mod functions;
 mod functions_with_arguments;

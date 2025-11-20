@@ -1,6 +1,6 @@
 use crate::{
     code::read_u_8,
-    object::{HashEntry, HashValue, hash},
+    object::{BuiltInFunction, HashEntry, HashValue, hash},
     vm::{
         FALSE, NIL, TRUE,
         frame::{Frame, NIL_FRAME},
@@ -182,8 +182,14 @@ impl VM {
                 CALL => {
                     let number_of_arguments = read_u_8(&bytes[instruction_pointer + 1..]) as usize;
                     self.current_frame().instruction_pointer += 1;
-                    self.call_function(number_of_arguments);
-                    move_instruction_pointer = 0;
+                    move_instruction_pointer = self.call_function(number_of_arguments);
+                }
+
+                GET_BUILTIN => {
+                    let builtin_index = read_u_8(&bytes[instruction_pointer + 1..]) as usize;
+                    self.current_frame().instruction_pointer += 1;
+                    let definition = BuiltInFunction::decode(builtin_index);
+                    self.push(Object::Builtin(definition));
                 }
                 _ => panic!("Don't know what to do with {instruction}"),
             }
@@ -332,7 +338,7 @@ impl VM {
         }
     }
 
-    fn call_function(&mut self, number_of_arguments: usize) {
+    fn call_function(&mut self, number_of_arguments: usize) -> usize {
         let object = self.relative_stack_down(number_of_arguments);
         match object {
             Object::CompiledFunction {
@@ -341,6 +347,22 @@ impl VM {
                 number_of_parameters,
             } => {
                 if number_of_arguments != number_of_parameters {
+                    // let message = format!(
+                    //     "Number of arguments does not match expecting {number_of_arguments} got {number_of_parameters}"
+                    // );
+                    // //TODO add symbol map to show real place of error
+                    // let error = Object::Error {
+                    //     message: message,
+                    //     line: 0,
+                    //     column: 0,
+                    // };
+                    // self.push(error); <- will not work, arguments are push on stack and after
+                    // call their are poped. So fun(1,2) which accept zero arguments, would push to
+                    // stack 1,2 and then error, pop would pop error (instead of 2) and then 2,
+                    // there would be still 1 on stack. It would be better to have error from
+                    // compilation and here only safeguard of panic
+                    // return;
+
                     panic!(
                         "Number of arguments does not match expecting {number_of_arguments} got {number_of_parameters}"
                     )
@@ -349,6 +371,29 @@ impl VM {
                 let instruction_pointer_position = frame.base_pointer + number_of_locals;
                 self.push_frame(frame);
                 self.stack_pointer = instruction_pointer_position;
+                0
+            }
+            Object::Builtin(fun) => {
+                let data =
+                    &self.stack[(self.stack_pointer - number_of_arguments)..self.stack_pointer];
+                let mapped: Vec<Rc<Object>> = data.iter().map(|o| Rc::new(o.clone())).collect();
+                println!("{mapped:?}");
+                self.stack_pointer = self.stack_pointer - number_of_arguments - 1;
+                match fun.apply(&mapped) {
+                    crate::object::BuiltInResult::Unit => self.push(Object::Null),
+                    crate::object::BuiltInResult::Value(object) => {
+                        let value = Rc::unwrap_or_clone(object);
+                        self.push(value);
+                    }
+                    crate::object::BuiltInResult::Failure(error) => {
+                        self.push(Object::Error {
+                            message: error,
+                            line: 0,
+                            column: 0,
+                        });
+                    }
+                }
+                1
             }
             _ => panic!("Can only call compiled function called {object}"),
         }
@@ -414,4 +459,5 @@ const GRATER: u8 = OpCodes::GreaterThan as u8;
 const EQUAL: u8 = OpCodes::Equal as u8;
 const NOT_EQUAL: u8 = OpCodes::NotEqual as u8;
 const GET_LOCAL: u8 = OpCodes::GetLocal as u8;
+const GET_BUILTIN: u8 = OpCodes::GetBuiltin as u8;
 const SET_LOCAL: u8 = OpCodes::SetLocal as u8;
