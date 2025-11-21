@@ -259,6 +259,17 @@ impl VM {
         }
         self.stack[self.stack_pointer] = object;
         self.stack_pointer += 1;
+        #[cfg(test)]
+        println!(
+            "After push:\n{:?}",
+            self.stack
+                .iter()
+                .filter(|x| match x {
+                    Object::Null => false,
+                    _ => true,
+                })
+                .collect::<Vec<_>>()
+        )
     }
 
     fn relative_stack_down(&mut self, possition: usize) -> Object {
@@ -277,6 +288,8 @@ impl VM {
         }
         let object = self.stack[self.stack_pointer - 1].clone();
         self.stack_pointer -= 1;
+        #[cfg(test)]
+        println!("Poping: {object} (stack pointer: {})", self.stack_pointer);
         return object.clone();
     }
 
@@ -347,25 +360,20 @@ impl VM {
                 number_of_parameters,
             } => {
                 if number_of_arguments != number_of_parameters {
-                    // let message = format!(
-                    //     "Number of arguments does not match expecting {number_of_arguments} got {number_of_parameters}"
-                    // );
-                    // //TODO add symbol map to show real place of error
-                    // let error = Object::Error {
-                    //     message: message,
-                    //     line: 0,
-                    //     column: 0,
-                    // };
-                    // self.push(error); <- will not work, arguments are push on stack and after
-                    // call their are poped. So fun(1,2) which accept zero arguments, would push to
-                    // stack 1,2 and then error, pop would pop error (instead of 2) and then 2,
-                    // there would be still 1 on stack. It would be better to have error from
-                    // compilation and here only safeguard of panic
-                    // return;
-
-                    panic!(
+                    let message = format!(
                         "Number of arguments does not match expecting {number_of_arguments} got {number_of_parameters}"
-                    )
+                    );
+                    //TODO add symbol map to show real place of error
+                    let error = Object::Error {
+                        message: message,
+                        line: 0,
+                        column: 0,
+                    };
+                    //move stack pointer before arguments
+                    self.stack_pointer = self.stack_pointer - number_of_arguments - 1;
+                    println!("Pushing error");
+                    self.push(error);
+                    return 1;
                 }
                 let frame = Frame::new(instructions, self.stack_pointer - number_of_arguments);
                 let instruction_pointer_position = frame.base_pointer + number_of_locals;

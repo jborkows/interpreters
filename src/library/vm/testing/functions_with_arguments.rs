@@ -1,7 +1,18 @@
 use crate::{
     generate_vm_tests,
-    vm::testing::setups::{run_vm_test, should_be_integer},
+    object::Object,
+    vm::testing::setups::{run_vm_test, should_be_error, should_be_integer},
 };
+fn argument_length_does_not_match(x: &Object) {
+    should_be_error(|x| {
+        if x.contains("Number of arguments does not match") {
+            Result::Ok(())
+        } else {
+            let message = format!("Expecting error about number of arguments got {x}");
+            Result::Err(message)
+        }
+    });
+}
 
 generate_vm_tests! {
     indentity: (r#"
@@ -49,6 +60,24 @@ generate_vm_tests! {
     }
     wrapper() + global
     "#, should_be_integer(210)),
+   too_much_arguments:(
+    "let add = fn(a,b){a + b}
+    add(1,2,3)
+    ", should_be_error(|_x|Result::Ok(()))
+  ),
+   too_much_arguments_with_global:(
+    "
+    let global = 111;
+    let add = fn(a,b){a + b + global}
+    add(1,2,3)
+    ", argument_length_does_not_match
+  ),
 
+   not_enough_arguments:(
+    "
+    let add = fn(a,b){a + b}
+    add(1)
+    ", argument_length_does_not_match
+  ),
 
 }

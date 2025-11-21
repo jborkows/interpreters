@@ -41,7 +41,7 @@ pub(crate) fn should_be_boolean(value: bool) -> impl Fn(&Object) {
 }
 pub(crate) fn should_be_error<'a, F>(message_checker: F) -> impl Fn(&Object)
 where
-    F: Fn(&str) -> Result<(), &'a str> + 'a,
+    F: Fn(&str) -> Result<(), String>,
 {
     move |object: &Object| match object {
         Object::Error { message, .. } => {
