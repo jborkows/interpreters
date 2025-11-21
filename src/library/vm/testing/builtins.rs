@@ -1,6 +1,6 @@
 use crate::{
     generate_vm_tests,
-    vm::testing::setups::{run_vm_test, should_be_error, should_be_integer, should_be_null},
+    vm::testing::setups::{run_vm_test, should_be_error, should_be_integer},
 };
 
 generate_vm_tests! {

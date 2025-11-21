@@ -45,11 +45,14 @@ pub enum Object {
     //TODO: Implement collision mechanics, probably using a linked list
     HashMap(std::collections::HashMap<HashValue, Rc<HashEntry>>),
     Quote(Rc<Expression>),
-    CompiledFunction {
-        instructions: Instructions,
-        number_of_locals: usize,
-        number_of_parameters: usize,
-    },
+    CompiledFunction(CompiledFunctionEntry),
+}
+
+#[derive(Debug, Clone)]
+pub struct CompiledFunctionEntry {
+    pub instructions: Instructions,
+    pub number_of_locals: usize,
+    pub number_of_parameters: usize,
 }
 
 impl PartialEq for Object {
@@ -121,11 +124,7 @@ pub fn type_of(object: &Object) -> String {
         Object::Array { .. } => "Array".to_string(),
         Object::HashMap(_) => "HashMap".to_string(),
         Object::Quote(_) => "Quote: ".to_string(),
-        Object::CompiledFunction {
-            instructions: _,
-            number_of_locals: _,
-            number_of_parameters: number_of_arguments,
-        } => format!("CompiledFunction({number_of_arguments})"),
+        Object::CompiledFunction(v) => format!("CompiledFunction({})", v.number_of_parameters),
     }
 }
 impl Display for Object {
@@ -156,13 +155,10 @@ impl Display for Object {
                 write!(f, "{{{}}}", join_collection!(entries, ", "))
             }
             Object::Quote(statement) => write!(f, "Quote: {}", statement),
-            Object::CompiledFunction {
-                instructions,
-                number_of_locals,
-                number_of_parameters: number_of_arguments,
-            } => write!(
+            Object::CompiledFunction(v) => write!(
                 f,
-                "CompiledFunction({number_of_arguments}, instructions:{instructions}, locals: {number_of_locals})"
+                "CompiledFunction({}, instructions:{}, locals: {})",
+                v.number_of_parameters, v.instructions, v.number_of_locals
             ),
         }
     }
@@ -221,11 +217,10 @@ pub fn hash(object: &Object) -> HashValue {
         }
         Object::HashMap(map) => panic!("Cannot hash HashMap directly: {}", map.len()),
         Object::Quote(statement) => panic!("Cannot hash Quote directly: {}", statement),
-        Object::CompiledFunction {
-            instructions,
-            number_of_locals: _,
-            number_of_parameters: number_of_arguments,
-        } => panic!("Cannot hash CompiledFunction directly: {instructions} {number_of_arguments}"),
+        Object::CompiledFunction(v) => panic!(
+            "Cannot hash CompiledFunction directly: {} {}",
+            v.instructions, v.number_of_parameters
+        ),
     }
     HashValue(hasher.finish() as i64)
 }

@@ -12,7 +12,7 @@ use crate::{
         make::make,
         symbol_table::SymbolTable,
     },
-    object::Object,
+    object::{CompiledFunctionEntry, Object},
     tokens::{self, Token, TokenKind},
 };
 
@@ -414,11 +414,11 @@ impl Worker {
                 }
                 let number_of_locals = SymbolTable::number_of_locals(&self.symbol_table);
                 let instructions = self.leave_scope();
-                let compiled_function = Object::CompiledFunction {
+                let compiled_function = Object::CompiledFunction(CompiledFunctionEntry {
                     instructions,
                     number_of_locals,
                     number_of_parameters: parameters.len(),
-                };
+                });
                 println!("{compiled_function}");
                 let constant_position = self.add_constant(compiled_function);
                 self.emit(OpCodes::Constant, &[constant_position]);

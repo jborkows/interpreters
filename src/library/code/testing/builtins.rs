@@ -11,21 +11,18 @@ use crate::object::Object;
 
 fn test_bytecode(values: Vec<Instructions>) -> Box<dyn Fn(&Object, Index)> {
     Box::new(move |object: &Object, i: Index| match object {
-        Object::CompiledFunction {
-            instructions,
-            number_of_locals,
-            number_of_parameters: _,
-        } => {
+        Object::CompiledFunction(f) => {
             let expected = concat_instructions(&values.to_vec());
             for (i, (e, a)) in expected
                 .bytes()
                 .iter()
-                .zip(instructions.bytes())
+                .zip(f.instructions.bytes())
                 .enumerate()
             {
                 assert_eq!(
                     e, &a,
-                    "Expecing {e:?} got {a:?} at {i:?} for {number_of_locals}, expecting {expected}"
+                    "Expecing {e:?} got {a:?} at {i:?} for {}, expecting {expected}",
+                    f.number_of_locals
                 )
             }
         }
