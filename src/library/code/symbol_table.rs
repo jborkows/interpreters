@@ -1,6 +1,6 @@
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
-use crate::{code::symbol_table, object::BuiltInFunction};
+use crate::object::BuiltInFunction;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) enum SymbolType {
@@ -112,7 +112,7 @@ impl SymbolTable {
         }
     }
     pub fn new_table() -> Rc<RefCell<SymbolTable>> {
-        let mut builtin_store: HashMap<String, Rc<Symbol>> = BuiltInFunction::all()
+        let builtin_store: HashMap<String, Rc<Symbol>> = BuiltInFunction::all()
             .into_iter()
             .map(|fun| {
                 (

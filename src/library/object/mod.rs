@@ -46,6 +46,10 @@ pub enum Object {
     HashMap(std::collections::HashMap<HashValue, Rc<HashEntry>>),
     Quote(Rc<Expression>),
     CompiledFunction(CompiledFunctionEntry),
+    Closure {
+        function: CompiledFunctionEntry,
+        free: Vec<Object>,
+    },
 }
 
 #[derive(Debug, Clone)]
@@ -125,6 +129,9 @@ pub fn type_of(object: &Object) -> String {
         Object::HashMap(_) => "HashMap".to_string(),
         Object::Quote(_) => "Quote: ".to_string(),
         Object::CompiledFunction(v) => format!("CompiledFunction({})", v.number_of_parameters),
+        Object::Closure { function, free: _ } => {
+            format!("Closure({})", function.number_of_parameters)
+        }
     }
 }
 impl Display for Object {
@@ -159,6 +166,11 @@ impl Display for Object {
                 f,
                 "CompiledFunction({}, instructions:{}, locals: {})",
                 v.number_of_parameters, v.instructions, v.number_of_locals
+            ),
+            Object::Closure { function, free } => write!(
+                f,
+                "Closure({}, instructions:{}, locals: {}, free: {free:?})",
+                function.number_of_parameters, function.instructions, function.number_of_locals
             ),
         }
     }
@@ -220,6 +232,10 @@ pub fn hash(object: &Object) -> HashValue {
         Object::CompiledFunction(v) => panic!(
             "Cannot hash CompiledFunction directly: {} {}",
             v.instructions, v.number_of_parameters
+        ),
+        Object::Closure { function, free } => panic!(
+            "Cannot hash Closure: {} {}, {free:?}",
+            function.instructions, function.number_of_parameters
         ),
     }
     HashValue(hasher.finish() as i64)
