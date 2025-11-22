@@ -6,7 +6,6 @@ mod lexers;
 mod lines;
 mod object;
 mod parser;
-mod processors;
 mod repl;
 mod tokens;
 mod vm;
@@ -23,4 +22,3 @@ pub use repl::start;
 pub fn bar() {
     println!("Hello, world!");
 }
-pub use processors::Compiler;
