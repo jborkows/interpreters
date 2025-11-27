@@ -385,7 +385,6 @@ impl Worker {
                 parameters,
                 body,
             } => {
-                println!("literal");
                 self.enter_scope();
                 for parameter in parameters.clone().as_ref() {
                     match parameter {
@@ -419,9 +418,8 @@ impl Worker {
                     number_of_locals,
                     number_of_parameters: parameters.len(),
                 });
-                println!("{compiled_function}");
                 let constant_position = self.add_constant(compiled_function);
-                self.emit(OpCodes::Constant, &[constant_position]);
+                self.emit(OpCodes::Closure, &[constant_position, 0]); //TODO free variables...
             }
             Expression::Call {
                 token,

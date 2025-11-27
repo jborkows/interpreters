@@ -36,4 +36,5 @@ macro_rules! expect_comparing {
 expect_comparing! {
         should_create_constant: (OpCodes::Constant, &[65534], &[OpCodes::Constant.into(), 255,254]),
         should_create_add: (OpCodes::Add, &[], &[OpCodes::Add.into()]),
+        should_create_closure: (OpCodes::Closure, &[0xFFFE, 0xFF], &[OpCodes::Closure.into(), 255,254,255]),
 }

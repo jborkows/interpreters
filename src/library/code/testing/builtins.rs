@@ -61,7 +61,7 @@ builtin_in_function: (
         }
         ",
         vec![
-            make(OpCodes::Constant.into(), &[0]),
+            make(OpCodes::Closure.into(), &[0]),
             make(OpCodes::Pop.into(), &[]),
         ],
         vec![

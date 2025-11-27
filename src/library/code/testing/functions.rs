@@ -34,7 +34,7 @@ generate_tests_for_compiler! {
 no_arg_returning: (
         "fn() {return 5 + 10}",
         vec![
-            make(OpCodes::Constant.into(), &[2]),
+            make(OpCodes::Closure.into(), &[2]),
             make(OpCodes::Pop.into(), &[]),
         ],
         vec![
@@ -52,7 +52,7 @@ no_arg_returning: (
 implicit_no_arg_returning: (
         "fn() {1;2}",
         vec![
-            make(OpCodes::Constant.into(), &[2]),
+            make(OpCodes::Closure.into(), &[2]),
             make(OpCodes::Pop.into(), &[]),
         ],
         vec![
@@ -70,7 +70,7 @@ implicit_no_arg_returning: (
 empty_function: (
         "fn() {}",
         vec![
-                make(OpCodes::Constant.into(), &[0]),
+                make(OpCodes::Closure.into(), &[0]),
                 make(OpCodes::Pop.into(), &[]),
         ],
         vec![
@@ -82,7 +82,7 @@ empty_function: (
 call_no_args_literal:(
         "fn(){25}()",
         vec![
-            make(OpCodes::Constant.into(), &[1]),
+            make(OpCodes::Closure.into(), &[1]),
             make(OpCodes::Call.into(), &[0]),
             make(OpCodes::Pop.into(), &[]),
         ],
@@ -98,7 +98,7 @@ call_no_args_literal:(
 call_no_args:(
         "let noArg = fn(){25}; noArg()",
         vec![
-            make(OpCodes::Constant.into(), &[1]),
+            make(OpCodes::Closure.into(), &[1]),
             make(OpCodes::SetGlobal.into(), &[]),
             make(OpCodes::GetGlobal.into(), &[]),
             make(OpCodes::Call.into(), &[0]),
@@ -120,7 +120,7 @@ locals: (
         }
         ",
         vec![
-            make(OpCodes::Constant.into(), &[1]),
+            make(OpCodes::Closure.into(), &[1]),
             make(OpCodes::Pop.into(), &[]),
         ],
         vec![test_be_integer(1), test_bytecode(
@@ -142,7 +142,7 @@ multiple_locals:  (
         }
         ",
         vec![
-            make(OpCodes::Constant.into(), &[2]),
+            make(OpCodes::Closure.into(), &[2]),
             make(OpCodes::Pop.into(), &[]),
         ],
         vec![test_be_integer(1), test_be_integer(4), test_bytecode(
@@ -165,7 +165,7 @@ let fun = fn(a){ }
 fun(6)
 ",
     vec![
-         make(OpCodes::Constant.into(), &[0]),
+         make(OpCodes::Closure.into(), &[0]),
          make(OpCodes::SetGlobal.into(), &[0]),
          make(OpCodes::GetGlobal.into(), &[0]),
          make(OpCodes::Constant.into(), &[1]),
@@ -187,7 +187,7 @@ let fun = fn(a,b,c){}
 fun(6,7,8)
 ",
     vec![
-         make(OpCodes::Constant.into(), &[0]),
+         make(OpCodes::Closure.into(), &[0]),
          make(OpCodes::SetGlobal.into(), &[0]),
          make(OpCodes::GetGlobal.into(), &[0]),
          make(OpCodes::Constant.into(), &[1]),
@@ -213,7 +213,7 @@ let one = fn(a){ a }
 one(6)
 "#,
     vec![
-         make(OpCodes::Constant.into(), &[0]),
+         make(OpCodes::Closure.into(), &[0]),
          make(OpCodes::SetGlobal.into(), &[0]),
          make(OpCodes::GetGlobal.into(), &[0]),
          make(OpCodes::Constant.into(), &[1]),
@@ -236,7 +236,7 @@ let fun = fn(a,b,c){ a;b;c;}
 fun(6,7,8)
 ",
     vec![
-         make(OpCodes::Constant.into(), &[0]),
+         make(OpCodes::Closure.into(), &[0]),
          make(OpCodes::SetGlobal.into(), &[0]),
          make(OpCodes::GetGlobal.into(), &[0]),
          make(OpCodes::Constant.into(), &[1]),

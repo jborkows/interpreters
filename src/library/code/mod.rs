@@ -44,6 +44,8 @@ static DEFINITIONS: LazyLock<HashMap<OpCode, Definition>> = LazyLock::new(|| {
         pair(OpCodes::SetLocal, vec![1]),
         pair(OpCodes::GetLocal, vec![1]),
         pair(OpCodes::GetBuiltin, vec![1]),
+        pair(OpCodes::Closure, vec![2, 1]), //[constant index of compiled function, number of free
+                                            //variables in function]
     ]);
 });
 

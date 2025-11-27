@@ -148,6 +148,7 @@ pub enum OpCodes {
     SetLocal,
     GetLocal,
     GetBuiltin,
+    Closure,
 }
 impl OpCodes {
     fn string(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -179,6 +180,7 @@ impl OpCodes {
             OpCodes::SetLocal => f.write_str("SetLocal"),
             OpCodes::GetLocal => f.write_str("GetLocal"),
             OpCodes::GetBuiltin => f.write_str("GetBuiltin"),
+            OpCodes::Closure => f.write_str("Closure"),
         }
     }
 }
