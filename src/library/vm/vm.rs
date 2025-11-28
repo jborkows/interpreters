@@ -3,7 +3,7 @@ use crate::{
     object::{BuiltInFunction, HashEntry, HashValue, hash},
     vm::{
         FALSE, NIL, TRUE,
-        frame::{Frame, NIL_FRAME},
+        frame::{Closure, Frame, NIL_FRAME},
         index_operations::execute_array_index,
         wrap_boolean,
     },
@@ -53,16 +53,22 @@ impl VM {
             frames: std::array::from_fn(|_| NIL_FRAME),
             frame_index: 0,
         };
-        vm.push_frame(Frame::new(byte_code.instructions, 0));
+        let function = crate::object::CompiledFunctionEntry {
+            instructions: byte_code.instructions,
+            number_of_locals: 0,
+            number_of_parameters: 0,
+        };
+        let closure = Closure { function };
+        vm.push_frame(Frame::new(closure, 0));
         vm
     }
 
     pub fn run(&mut self) {
         let mut move_instruction_pointer: usize;
-        while self.current_frame().instruction_pointer < self.current_frame().function.bytes().len()
+        while self.current_frame().instruction_pointer < self.current_frame().closure.bytes().len()
         {
             let instruction_pointer = self.current_frame().instruction_pointer;
-            let bytes = self.current_frame().function.bytes();
+            let bytes = self.current_frame().closure.bytes();
             let instruction: u8 = bytes.get(instruction_pointer).unwrap().into();
             move_instruction_pointer = 1;
             #[cfg(test)]
@@ -182,7 +188,7 @@ impl VM {
                 CALL => {
                     let number_of_arguments = read_u_8(&bytes[instruction_pointer + 1..]) as usize;
                     self.current_frame().instruction_pointer += 1;
-                    move_instruction_pointer = self.call_function(number_of_arguments);
+                    move_instruction_pointer = self.execute_call(number_of_arguments);
                 }
 
                 GET_BUILTIN => {
@@ -190,6 +196,12 @@ impl VM {
                     self.current_frame().instruction_pointer += 1;
                     let definition = BuiltInFunction::decode(builtin_index);
                     self.push(Object::Builtin(definition));
+                }
+                CLOSURE => {
+                    let index_of_constant = read_u_16(&bytes[instruction_pointer + 1..]) as usize;
+                    let _free_variables = read_u_8(&bytes[instruction_pointer + 3..]) as usize;
+                    self.push_closure(index_of_constant);
+                    self.current_frame().instruction_pointer += 3
                 }
                 _ => panic!("Don't know what to do with {instruction}"),
             }
@@ -351,10 +363,13 @@ impl VM {
         }
     }
 
-    fn call_function(&mut self, number_of_arguments: usize) -> usize {
+    fn execute_call(&mut self, number_of_arguments: usize) -> usize {
         let object = self.relative_stack_down(number_of_arguments);
         match object {
-            Object::CompiledFunction(f) => {
+            Object::Closure {
+                function: f,
+                free: _,
+            } => {
                 if number_of_arguments != f.number_of_parameters {
                     let message = format!(
                         "Number of arguments does not match expecting {number_of_arguments} got {}",
@@ -372,8 +387,10 @@ impl VM {
                     self.push(error);
                     return 1;
                 }
-                let frame = Frame::new(f.instructions, self.stack_pointer - number_of_arguments);
-                let instruction_pointer_position = frame.base_pointer + f.number_of_locals;
+                let locals = f.number_of_locals;
+                let closure = Closure { function: f };
+                let frame = Frame::new(closure, self.stack_pointer - number_of_arguments);
+                let instruction_pointer_position = frame.base_pointer + locals;
                 self.push_frame(frame);
                 self.stack_pointer = instruction_pointer_position;
                 0
@@ -401,6 +418,29 @@ impl VM {
                 1
             }
             _ => panic!("Can only call compiled function called {object}"),
+        }
+    }
+
+    fn push_closure(&mut self, index_of_constant: usize) {
+        match self.constants.get(index_of_constant) {
+            Some(object) => match object {
+                Object::CompiledFunction(function) => {
+                    self.push(Object::Closure {
+                        function: function.clone(),
+                        free: vec![],
+                    });
+                }
+                _ => {
+                    #[cfg(test)]
+                    println!("Current state of constants: {:?}", self.constants);
+                    panic!("Did not found function found {object}");
+                }
+            },
+            None => {
+                #[cfg(test)]
+                println!("Current state of constants: {:?}", self.constants);
+                panic!("Cannot find constant at {index_of_constant}");
+            }
         }
     }
 }
@@ -466,3 +506,5 @@ const NOT_EQUAL: u8 = OpCodes::NotEqual as u8;
 const GET_LOCAL: u8 = OpCodes::GetLocal as u8;
 const GET_BUILTIN: u8 = OpCodes::GetBuiltin as u8;
 const SET_LOCAL: u8 = OpCodes::SetLocal as u8;
+
+const CLOSURE: u8 = OpCodes::Closure as u8;

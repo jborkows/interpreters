@@ -1,4 +1,4 @@
-use crate::code::definitions::{Byte, Definition};
+use crate::code::definitions::Definition;
 use std::collections::HashMap;
 
 use std::sync::LazyLock;
@@ -11,6 +11,7 @@ mod symbol_table;
 mod testing;
 
 pub use compiler::{Bytecode, CompilationError, compile};
+pub use definitions::Byte;
 pub use definitions::Instructions;
 pub use definitions::OpCode;
 pub use definitions::OpCodes;

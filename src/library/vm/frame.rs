@@ -1,8 +1,22 @@
-use crate::code::Instructions;
+use crate::{
+    code::{Byte, Instructions},
+    object::CompiledFunctionEntry,
+};
+
+#[derive(Clone, Debug)]
+pub(crate) struct Closure {
+    pub(crate) function: CompiledFunctionEntry,
+}
+
+impl Closure {
+    pub fn bytes(&self) -> Vec<Byte> {
+        self.function.instructions.bytes()
+    }
+}
 
 #[derive(Clone, Debug)]
 pub(crate) struct Frame {
-    pub(crate) function: Instructions,
+    pub(crate) closure: Closure,
     pub(crate) instruction_pointer: usize,
     pub(crate) base_pointer: usize, //position of stack before starting new frame, it is not
                                     //instruction pointer since on stack there will be a place for local bindings so
@@ -16,9 +30,9 @@ pub(crate) struct Frame {
 }
 
 impl Frame {
-    pub(crate) fn new(instructions: Instructions, base_pointer: usize) -> Frame {
+    pub(crate) fn new(closure: Closure, base_pointer: usize) -> Frame {
         Frame {
-            function: instructions,
+            closure: closure,
             instruction_pointer: 0,
             base_pointer: base_pointer,
         }
@@ -26,7 +40,13 @@ impl Frame {
 }
 
 pub(crate) const NIL_FRAME: Frame = Frame {
-    function: Instructions(vec![]),
+    closure: Closure {
+        function: CompiledFunctionEntry {
+            instructions: Instructions(vec![]),
+            number_of_locals: 0,
+            number_of_parameters: 0,
+        },
+    },
     instruction_pointer: 0,
     base_pointer: 0,
 };
