@@ -115,51 +115,29 @@ impl SymbolTable {
         symbol_table: &Rc<RefCell<SymbolTable>>,
         name: &str,
     ) -> Option<Rc<Symbol>> {
-        let local_result = symbol_table.borrow().store.get(name).cloned();
-
-        match local_result {
-            Some(v) => Some(v),
-            None => {
-                let mut outer_ref = symbol_table.borrow().outer.clone();
-                loop {
-                    if let Some(ref outer) = outer_ref {
-                        let outher_result = outer.borrow().store.get(name).cloned();
-                        match outher_result {
-                            Some(v) => {
-                                if matches!(v.what_type(), SymbolType::LOCAL) {
-                                    return Some(SymbolTable::define_free(symbol_table, v));
-                                } else {
-                                    return Some(v.clone());
-                                }
-                            }
-                            None => {
-                                if let Some(builtin) = symbol_table
-                                    .borrow()
-                                    .builtin_scope
-                                    .borrow()
-                                    .store
-                                    .get(name)
-                                    .cloned()
-                                {
-                                    return Some(builtin.clone());
-                                }
-
-                                let outer_outer = outer.borrow().outer.clone();
-                                outer_ref = outer_outer;
-                            }
-                        }
-                    } else {
-                        return symbol_table
-                            .borrow()
-                            .builtin_scope
-                            .borrow()
-                            .store
-                            .get(name)
-                            .cloned();
-                    }
-                }
-            }
+        if let Some(symbol) = symbol_table.borrow().store.get(name).cloned() {
+            return Some(symbol);
         }
+
+        let mut current_outer = symbol_table.borrow().outer.clone();
+        while let Some(outer) = current_outer {
+            if let Some(symbol) = outer.borrow().store.get(name).cloned() {
+                return Some(if matches!(symbol.what_type(), SymbolType::LOCAL) {
+                    SymbolTable::define_free(symbol_table, symbol)
+                } else {
+                    symbol
+                });
+            }
+            current_outer = outer.borrow().outer.clone();
+        }
+
+        symbol_table
+            .borrow()
+            .builtin_scope
+            .borrow()
+            .store
+            .get(name)
+            .cloned()
     }
 
     pub fn new_table() -> Rc<RefCell<SymbolTable>> {
