@@ -105,6 +105,8 @@ pub(crate) fn test_constants(checkers: Vec<Box<dyn Fn(&Object, Index)>>, actuals
             actuals.len()
         );
     }
+    #[cfg(test)]
+    println!("Constants: {actuals:?}");
     for (index, value) in checkers.iter().zip(actuals).enumerate() {
         let (checker, actual) = value;
         checker(&actual, index.into())

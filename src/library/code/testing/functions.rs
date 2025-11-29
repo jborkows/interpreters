@@ -20,8 +20,8 @@ fn test_bytecode(values: Vec<Instructions>) -> Box<dyn Fn(&Object, Index)> {
             {
                 assert_eq!(
                     e, &a,
-                    "Expecing {e:?} got {a:?} at {i:?} for {}, expecting {expected}",
-                    f.number_of_parameters
+                    "Expecing {e:?} got {a:?} at {i:?} for {}, expecting:\n{expected}\ngot\n{}",
+                    f.number_of_parameters, f.instructions
                 )
             }
         }
@@ -258,6 +258,115 @@ fun(6,7,8)
         test_be_integer(6),
         test_be_integer(7),
         test_be_integer(8),
+    ]
+),
+
+closure: (
+"
+fn(a) { fn(b){ a + b } }
+",
+    vec![
+         make(OpCodes::Closure.into(), &[1,0]),
+         make(OpCodes::Pop.into(), &[]),
+
+    ],
+    vec![
+        test_bytecode(vec![
+            make(OpCodes::GetFree.into(), &[0]),
+            make(OpCodes::GetLocal.into(), &[0]),
+            make(OpCodes::Add.into(), &[]),
+            make(OpCodes::ReturnValue.into(), &[])
+        ]),
+        test_bytecode(vec![
+            make(OpCodes::GetLocal.into(), &[0]),
+            make(OpCodes::Closure.into(), &[0, 1]),
+            make(OpCodes::ReturnValue.into(), &[])
+        ])
+    ]
+),
+deep_closure: (
+"
+fn(a) { fn(b){ fn(c) { a + b + c } }
+",
+    vec![
+         make(OpCodes::Closure.into(), &[2,0]),
+         make(OpCodes::Pop.into(), &[]),
+
+    ],
+    vec![
+        test_bytecode(vec![
+            make(OpCodes::GetFree.into(), &[0]),
+            make(OpCodes::GetFree.into(), &[1]),
+            make(OpCodes::Add.into(), &[]),
+            make(OpCodes::GetLocal.into(), &[0]),
+            make(OpCodes::Add.into(), &[]),
+            make(OpCodes::ReturnValue.into(), &[])
+        ]),
+        test_bytecode(vec![
+            make(OpCodes::GetFree.into(), &[0]),
+            make(OpCodes::GetLocal.into(), &[0]),
+            make(OpCodes::Closure.into(), &[0, 2]),
+            make(OpCodes::ReturnValue.into(), &[])
+        ]),
+        test_bytecode(vec![
+            make(OpCodes::GetLocal.into(), &[0]),
+            make(OpCodes::Closure.into(), &[1, 1]),
+            make(OpCodes::ReturnValue.into(), &[])
+        ])
+    ]
+),
+using_closures: (
+"
+let global = 1;
+fn() {
+  let a = 2;
+  fn(){
+    let b = 3;
+    fn() {
+      let c = 4
+      global + a + b + c  
+    }
+  } 
+}
+",
+    vec![
+         make(OpCodes::Constant.into(), &[0]),
+         make(OpCodes::SetGlobal.into(), &[0]),
+         make(OpCodes::Closure.into(), &[6,0]),
+         make(OpCodes::Pop.into(), &[]),
+    ],
+    vec![
+        test_be_integer(1),
+        test_be_integer(2),
+        test_be_integer(3),
+        test_be_integer(4),
+        test_bytecode(vec![
+            make(OpCodes::Constant.into(), &[3]),
+            make(OpCodes::SetLocal.into(), &[0]),
+            make(OpCodes::GetGlobal.into(), &[0]),
+            make(OpCodes::GetFree.into(), &[0]),
+            make(OpCodes::Add.into(), &[]),
+            make(OpCodes::GetFree.into(), &[1]),
+            make(OpCodes::Add.into(), &[]),
+            make(OpCodes::GetLocal.into(), &[0]),
+            make(OpCodes::Add.into(), &[]),
+            make(OpCodes::ReturnValue.into(), &[])
+        ]),
+        test_bytecode(vec![
+            make(OpCodes::Constant.into(), &[2]),
+            make(OpCodes::SetLocal.into(), &[0]),
+            make(OpCodes::GetFree.into(), &[0]),
+            make(OpCodes::GetLocal.into(), &[0]),
+            make(OpCodes::Closure.into(), &[4, 2]),
+            make(OpCodes::ReturnValue.into(), &[])
+        ]),
+        test_bytecode(vec![
+            make(OpCodes::Constant.into(), &[1]),
+            make(OpCodes::SetLocal.into(), &[0]),
+            make(OpCodes::GetLocal.into(), &[0]),
+            make(OpCodes::Closure.into(), &[5, 1]),
+            make(OpCodes::ReturnValue.into(), &[])
+        ]),
     ]
 ),
 }

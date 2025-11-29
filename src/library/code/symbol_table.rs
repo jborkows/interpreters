@@ -1,12 +1,13 @@
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
-use crate::object::BuiltInFunction;
+use crate::{code::symbol_table, object::BuiltInFunction};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) enum SymbolType {
     GLOBAL,
     LOCAL,
     BUILTIN,
+    FREE,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -29,6 +30,7 @@ pub(crate) struct SymbolTable {
     level: usize,
     outer: Option<Rc<RefCell<SymbolTable>>>,
     builtin_scope: Rc<RefCell<BuiltinScope>>,
+    pub free_symbols: Vec<Rc<Symbol>>,
 }
 struct BuiltinScope {
     store: HashMap<String, Rc<Symbol>>,
@@ -43,6 +45,7 @@ impl SymbolTable {
             level: 0,
             outer: None,
             builtin_scope: Rc::new(RefCell::new(builtin)),
+            free_symbols: vec![],
         }
     }
 
@@ -80,6 +83,26 @@ impl SymbolTable {
         symbol.clone()
     }
 
+    fn define_free(symbol_table: &Rc<RefCell<SymbolTable>>, original: Rc<Symbol>) -> Rc<Symbol> {
+        let mut table = symbol_table.borrow_mut();
+        let number_of_free = table.free_symbols.len() as u16;
+        let free_one = Rc::new(Symbol {
+            name: original.name.clone(),
+            index: number_of_free,
+            level: 0,
+            symbol_type: SymbolType::FREE,
+        });
+        table.free_symbols.push(free_one.clone());
+        #[cfg(test)]
+        println!(
+            "Pushing {:?} at {number_of_free} current table {:?}",
+            free_one.clone(),
+            table.free_symbols
+        );
+        table.store.insert(original.name.clone(), free_one.clone());
+        free_one
+    }
+
     pub fn number_of_locals(symbol_table: &Rc<RefCell<SymbolTable>>) -> usize {
         symbol_table.borrow().store.len()
     }
@@ -92,23 +115,38 @@ impl SymbolTable {
         symbol_table: &Rc<RefCell<SymbolTable>>,
         name: &str,
     ) -> Option<Rc<Symbol>> {
-        let borrowed = symbol_table.borrow();
-        let value = borrowed.store.get(&name.to_string()).map(|x| x.as_ref());
-        match value {
-            Some(v) => Some(Rc::new(v.clone())),
-            None => match symbol_table.borrow().outer.clone() {
-                Some(o) => SymbolTable::resolve(&o, name),
-                None => match borrowed
-                    .builtin_scope
-                    .borrow()
-                    .store
-                    .get(&name.to_string())
-                    .map(|x| x.as_ref())
-                {
-                    Some(v) => Some(Rc::new(v.clone())),
-                    None => None,
-                },
-            },
+        let local_result = symbol_table.borrow().store.get(name).cloned();
+
+        match local_result {
+            Some(v) => Some(v),
+            None => {
+                let outer_ref = symbol_table.borrow().outer.clone();
+
+                match outer_ref {
+                    Some(o) => {
+                        let resolved = SymbolTable::resolve(&o, name);
+                        match resolved {
+                            Some(ref v) => {
+                                if matches!(v.what_type(), SymbolType::LOCAL) {
+                                    Some(SymbolTable::define_free(symbol_table, v.clone()))
+                                } else if matches!(v.what_type(), SymbolType::FREE) {
+                                    Some(SymbolTable::define_free(symbol_table, v.clone()))
+                                } else {
+                                    resolved
+                                }
+                            }
+                            None => None,
+                        }
+                    }
+                    None => symbol_table
+                        .borrow()
+                        .builtin_scope
+                        .borrow()
+                        .store
+                        .get(name)
+                        .cloned(),
+                }
+            }
         }
     }
     pub fn new_table() -> Rc<RefCell<SymbolTable>> {
@@ -151,6 +189,7 @@ impl SymbolTable {
             level: symbol_table.borrow().level + 1,
             outer: Some(symbol_table.clone()),
             builtin_scope: symbol_table.borrow().builtin_scope.clone(),
+            free_symbols: vec![],
         };
         Rc::new(RefCell::new(symbol))
     }

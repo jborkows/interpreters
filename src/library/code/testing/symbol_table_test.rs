@@ -17,11 +17,38 @@ macro_rules! find_in {
             .take()
             .expect("Cannot find {expected_identifier} in local scope");
         assert_eq!($expected.identifier, value.name);
-        assert_eq!($expected.index, value.index);
-        assert_eq!($expected.level, value.level);
+        assert_eq!($expected.index, value.index, "{:?}", value);
+        assert_eq!($expected.level, value.level, "{:?}", value);
     }};
 }
 
+macro_rules! should_be_free {
+    ($symbol_table:expr, $name:expr, $index:expr) => {{
+        match SymbolTable::resolve(&$symbol_table, $name) {
+            Some(s) => match s.what_type() {
+                crate::code::symbol_table::SymbolType::FREE => {
+                    assert_eq!(s.index, $index)
+                }
+                _ => panic!("Builtin was defined but with wrong type"),
+            },
+            None => panic!("Builtin was not resolved in global scope"),
+        }
+    }};
+}
+
+macro_rules! should_not_be_free {
+    ($symbol_table:expr, $name:expr) => {{
+        match SymbolTable::resolve(&$symbol_table, $name) {
+            Some(s) => match s.what_type() {
+                crate::code::symbol_table::SymbolType::FREE => {
+                    panic!("{} should not be find as free", $name)
+                }
+                _ => {}
+            },
+            None => {}
+        }
+    }};
+}
 #[test]
 fn test_define() {
     let global = &SymbolTable::new_table();
@@ -247,22 +274,23 @@ fn test_local_nested_resolve() {
         }
     );
 
-    find_in!(
-        second_one,
-        Expected {
-            index: 0,
-            identifier: "c",
-            level: 1,
-        }
-    );
-    find_in!(
-        second_one,
-        Expected {
-            index: 1,
-            identifier: "d",
-            level: 1,
-        }
-    );
+    // No longer true in this form -> "c" and "d" are "free variables" in context of second_one
+    // find_in!(
+    //     second_one,
+    //     Expected {
+    //         index: 0,
+    //         identifier: "c",
+    //         level: 1,
+    //     }
+    // );
+    // find_in!(
+    //     second_one,
+    //     Expected {
+    //         index: 1,
+    //         identifier: "d",
+    //         level: 1,
+    //     }
+    // );
     find_in!(
         second_one,
         Expected {
@@ -298,6 +326,58 @@ fn test_builtin() {
         },
         None => panic!("Builtin was not resolved in global scope"),
     }
+}
+
+#[test]
+fn test_free_variable() {
+    /*
+        let a = 1;
+        let b = 2;
+        let upper = fn(){
+            let c = 3;
+            let d = 4;
+            a + b + c + d
+            let inner = fn() {
+                let e = 5;
+                let f = 6;
+                a + b + c + d + e + f
+            }
+        }
+    *
+    */
+    let global = &SymbolTable::new_table();
+    SymbolTable::define(global, "a");
+    SymbolTable::define(global, "b");
+    let upper = &SymbolTable::enclosed(global);
+    SymbolTable::define(upper, "c");
+    SymbolTable::define(upper, "d");
+    let inner = &SymbolTable::enclosed(upper);
+    SymbolTable::define(inner, "e");
+    SymbolTable::define(inner, "f");
+
+    #[rustfmt::skip]
+    find_in!(global,Expected {index: 0,identifier: "a",level: 0});
+    #[rustfmt::skip]
+    find_in!(global,Expected {index: 1,identifier: "b",level: 0});
+    #[rustfmt::skip]
+    find_in!(upper,Expected {index: 0,identifier: "a",level: 0});
+    #[rustfmt::skip]
+    find_in!(upper,Expected {index: 1,identifier: "b",level: 0});
+    #[rustfmt::skip]
+    find_in!(inner,Expected {index: 0,identifier: "a",level: 0});
+    #[rustfmt::skip]
+    find_in!(inner,Expected {index: 1,identifier: "b",level: 0});
+
+    #[rustfmt::skip]
+    find_in!(upper,Expected {index: 0,identifier: "c",level: 1});
+    #[rustfmt::skip]
+    find_in!(upper,Expected {index: 1,identifier: "d",level: 1});
+
+    #[rustfmt::skip]
+    should_be_free!(inner, "c", 0);
+    #[rustfmt::skip]
+    should_be_free!(inner, "d", 1);
+    should_not_be_free!(inner, "e");
 }
 
 struct Expected<'a> {

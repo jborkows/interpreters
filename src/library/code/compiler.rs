@@ -31,6 +31,7 @@ pub enum CompilationError {
         provided: usize,
     },
     BuiltinCannotBeSet(String),
+    FreeCannotBeSet(String),
 }
 
 pub fn compile<T: Node>(node: T) -> Result<Bytecode, Vec<CompilationError>> {
@@ -335,24 +336,7 @@ impl Worker {
             }
             Expression::Identifier(token) => {
                 match &token.kind {
-                    tokens::TokenKind::Identifier(v) => {
-                        match SymbolTable::resolve(&self.symbol_table, v) {
-                            Some(symbol) => {
-                                let code = match symbol.what_type() {
-                                    SymbolType::GLOBAL => OpCodes::GetGlobal,
-                                    SymbolType::LOCAL => OpCodes::GetLocal,
-                                    SymbolType::BUILTIN => OpCodes::GetBuiltin,
-                                };
-                                self.emit(code, &[symbol.index]);
-                            }
-                            None => {
-                                self.add_errors(CompilationError::UndefinedVariable(
-                                    token.clone(),
-                                    v.to_string(),
-                                ));
-                            }
-                        }
-                    }
+                    tokens::TokenKind::Identifier(v) => self.load_symbol(v, token.clone()),
                     _ => self.add_errors(CompilationError::UnexpectedSymbol(token.clone())),
                 };
             }
@@ -412,14 +396,23 @@ impl Worker {
                     self.emit_op_code(OpCodes::ReturnNone);
                 }
                 let number_of_locals = SymbolTable::number_of_locals(&self.symbol_table);
+                let free_symbols = &self.symbol_table.borrow().free_symbols.clone(); //Has to
+                //happen before leave scope, otherwise free variables will be lost after leaving
+                //scope
                 let instructions = self.leave_scope();
+                for free in free_symbols {
+                    self.load_symbol(&free.name, token.clone());
+                }
                 let compiled_function = Object::CompiledFunction(CompiledFunctionEntry {
                     instructions,
                     number_of_locals,
                     number_of_parameters: parameters.len(),
                 });
                 let constant_position = self.add_constant(compiled_function);
-                self.emit(OpCodes::Closure, &[constant_position, 0]); //TODO free variables...
+                self.emit(
+                    OpCodes::Closure,
+                    &[constant_position, free_symbols.len() as u16],
+                );
             }
             Expression::Call {
                 token,
@@ -436,6 +429,26 @@ impl Worker {
             _ => self.add_errors(CompilationError::NotImplementedYet(Rc::new(
                 expression.clone(),
             ))),
+        }
+    }
+
+    fn load_symbol(&mut self, name: &String, token: Rc<Token>) {
+        match SymbolTable::resolve(&self.symbol_table, name) {
+            Some(symbol) => {
+                let code = match symbol.what_type() {
+                    SymbolType::GLOBAL => OpCodes::GetGlobal,
+                    SymbolType::LOCAL => OpCodes::GetLocal,
+                    SymbolType::BUILTIN => OpCodes::GetBuiltin,
+                    SymbolType::FREE => OpCodes::GetFree,
+                };
+                self.emit(code, &[symbol.index]);
+            }
+            None => {
+                self.add_errors(CompilationError::UndefinedVariable(
+                    token.clone(),
+                    name.to_string(),
+                ));
+            }
         }
     }
 
@@ -494,6 +507,11 @@ impl Worker {
             SymbolType::LOCAL => OpCodes::SetLocal,
             SymbolType::BUILTIN => {
                 self.add_errors(CompilationError::BuiltinCannotBeSet(name));
+                return;
+            }
+
+            SymbolType::FREE => {
+                self.add_errors(CompilationError::FreeCannotBeSet(name));
                 return;
             }
         };
