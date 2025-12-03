@@ -58,7 +58,11 @@ impl VM {
             number_of_locals: 0,
             number_of_parameters: 0,
         };
-        let closure = Closure { function };
+        let free: Vec<Object> = vec![];
+        let closure = Closure {
+            function: function,
+            free: free,
+        };
         vm.push_frame(Frame::new(closure, 0));
         vm
     }
@@ -190,7 +194,6 @@ impl VM {
                     self.current_frame().instruction_pointer += 1;
                     move_instruction_pointer = self.execute_call(number_of_arguments);
                 }
-
                 GET_BUILTIN => {
                     let builtin_index = read_u_8(&bytes[instruction_pointer + 1..]) as usize;
                     self.current_frame().instruction_pointer += 1;
@@ -199,9 +202,22 @@ impl VM {
                 }
                 CLOSURE => {
                     let index_of_constant = read_u_16(&bytes[instruction_pointer + 1..]) as usize;
-                    let _free_variables = read_u_8(&bytes[instruction_pointer + 3..]) as usize;
-                    self.push_closure(index_of_constant);
+                    let free_variables = read_u_8(&bytes[instruction_pointer + 3..]) as usize;
+                    self.push_closure(index_of_constant, free_variables);
                     self.current_frame().instruction_pointer += 3
+                }
+                GET_FREE => {
+                    let free_index = read_u_8(&bytes[instruction_pointer + 1..]) as usize;
+                    self.current_frame().instruction_pointer += 1;
+                    let current_closure = &self.current_frame().closure;
+                    let found_free = current_closure.free.get(free_index).clone();
+                    let found = match found_free {
+                        Some(v) => v.clone(),
+                        None => panic!(
+                            "Cannot find free variable of {free_index} in {current_closure:?}"
+                        ),
+                    };
+                    self.push(found)
                 }
                 _ => panic!("Don't know what to do with {instruction}"),
             }
@@ -368,7 +384,7 @@ impl VM {
         match object {
             Object::Closure {
                 function: f,
-                free: _,
+                free: free,
             } => {
                 if number_of_arguments != f.number_of_parameters {
                     let message = format!(
@@ -388,7 +404,10 @@ impl VM {
                     return 1;
                 }
                 let locals = f.number_of_locals;
-                let closure = Closure { function: f };
+                let closure = Closure {
+                    function: f,
+                    free: free,
+                };
                 let frame = Frame::new(closure, self.stack_pointer - number_of_arguments);
                 let instruction_pointer_position = frame.base_pointer + locals;
                 self.push_frame(frame);
@@ -421,13 +440,21 @@ impl VM {
         }
     }
 
-    fn push_closure(&mut self, index_of_constant: usize) {
+    fn push_closure(&mut self, index_of_constant: usize, number_of_free_variables: usize) {
         match self.constants.get(index_of_constant) {
             Some(object) => match object {
                 Object::CompiledFunction(function) => {
+                    let mut free: Vec<Object> = Vec::with_capacity(number_of_free_variables);
+                    for i in 0..number_of_free_variables {
+                        let object = &self.stack[self.stack_pointer - number_of_free_variables + i];
+                        free.push(object.clone());
+                    }
+
+                    self.stack_pointer -= number_of_free_variables; //cleaning stack by moving
+                    //pointer down
                     self.push(Object::Closure {
                         function: function.clone(),
-                        free: vec![],
+                        free: free,
                     });
                 }
                 _ => {
@@ -508,3 +535,4 @@ const GET_BUILTIN: u8 = OpCodes::GetBuiltin as u8;
 const SET_LOCAL: u8 = OpCodes::SetLocal as u8;
 
 const CLOSURE: u8 = OpCodes::Closure as u8;
+const GET_FREE: u8 = OpCodes::GetFree as u8;

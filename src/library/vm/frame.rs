@@ -1,11 +1,14 @@
+use std::usize;
+
 use crate::{
     code::{Byte, Instructions},
-    object::CompiledFunctionEntry,
+    object::{CompiledFunctionEntry, Object},
 };
 
 #[derive(Clone, Debug)]
 pub(crate) struct Closure {
     pub(crate) function: CompiledFunctionEntry,
+    pub(crate) free: Vec<Object>,
 }
 
 impl Closure {
@@ -46,6 +49,7 @@ pub(crate) const NIL_FRAME: Frame = Frame {
             number_of_locals: 0,
             number_of_parameters: 0,
         },
+        free: vec![],
     },
     instruction_pointer: 0,
     base_pointer: 0,
