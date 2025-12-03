@@ -500,8 +500,8 @@ impl Worker {
     }
 
     fn compile_let(&mut self, name: String, value: &Expression) {
-        self.compile_expression(value);
         let symbol = SymbolTable::define(&self.symbol_table, &name);
+        self.compile_expression(value);
         let op_code = match symbol.what_type() {
             SymbolType::GLOBAL => OpCodes::SetGlobal,
             SymbolType::LOCAL => OpCodes::SetLocal,

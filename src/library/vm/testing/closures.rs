@@ -34,4 +34,14 @@ generate_vm_tests! {
     };
     countDown(1)
     "#, should_be_integer(0)),
+    factorial: (r#"
+    let factorial = fn(x){ 
+        if (x == 1) {
+            1
+        } else {
+            x * factorial(x-1);
+        }
+    };
+    factorial(4)
+    "#, should_be_integer(2*3*4)),
 }
