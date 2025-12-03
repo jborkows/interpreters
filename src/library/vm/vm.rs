@@ -382,14 +382,11 @@ impl VM {
     fn execute_call(&mut self, number_of_arguments: usize) -> usize {
         let object = self.relative_stack_down(number_of_arguments);
         match object {
-            Object::Closure {
-                function: f,
-                free: free,
-            } => {
-                if number_of_arguments != f.number_of_parameters {
+            Object::Closure { function, free } => {
+                if number_of_arguments != function.number_of_parameters {
                     let message = format!(
                         "Number of arguments does not match expecting {number_of_arguments} got {}",
-                        f.number_of_parameters
+                        function.number_of_parameters
                     );
                     //TODO add symbol map to show real place of error
                     let error = Object::Error {
@@ -403,11 +400,8 @@ impl VM {
                     self.push(error);
                     return 1;
                 }
-                let locals = f.number_of_locals;
-                let closure = Closure {
-                    function: f,
-                    free: free,
-                };
+                let locals = function.number_of_locals;
+                let closure = Closure { function, free };
                 let frame = Frame::new(closure, self.stack_pointer - number_of_arguments);
                 let instruction_pointer_position = frame.base_pointer + locals;
                 self.push_frame(frame);
