@@ -24,4 +24,14 @@ generate_vm_tests! {
     let closure = closureFactory(10,1);
     closure()
     "#, should_be_integer(11)),
+    recursive: (r#"
+    let countDown = fn(x){ 
+        if (x == 0) {
+            0
+        } else {
+            countDown(x-1);
+        }
+    };
+    countDown(1)
+    "#, should_be_integer(0)),
 }
