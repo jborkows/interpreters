@@ -43,6 +43,7 @@ pub enum Expression {
         token: Rc<Token>,
         parameters: Rc<Vec<Expression>>, // Identifier
         body: Box<Statement>,
+        name: Option<String>,
     },
     MacroLiteral {
         token: Rc<Token>,
@@ -133,6 +134,7 @@ impl Display for Expression {
                 token: _,
                 parameters,
                 body,
+                name: _,
             } => {
                 let params = join_rc_collection!(parameters, ", ");
                 write!(f, "fn({}){{ {} }}", params, body)
@@ -215,6 +217,7 @@ pub fn function_literal(
         token,
         parameters,
         body: Box::new(body),
+        name: None,
     }
 }
 

@@ -1,3 +1,5 @@
+use core::panic;
+
 use super::Parser;
 use crate::ast::expression::InfixOperatorType;
 use crate::ast::{
@@ -446,6 +448,7 @@ fn parse_function_literal() {
                 token: _,
                 parameters,
                 body,
+                name: _,
             } => {
                 assert_eq!(parameters.len(), 2);
                 assert_eq!(parameters[0].to_string(), "x");
@@ -788,6 +791,36 @@ fn parse_macro() {
             _ => panic!("Expected FunctionLiteral, got {:?}", expression),
         },
         _ => panic!("Expected ExpressionStatement"),
+    }
+}
+
+#[test]
+fn parse_named_function_literal() {
+    let input = "let myFunction = fn() {}";
+    let mut parser = Parser::from_string(input);
+    let program = parser.parse_program();
+    check_parser_errors(&parser);
+    assert_eq!(program.statements.len(), 1);
+
+    let statement = &program.statements[0];
+    match statement {
+        Statement::Let {
+            token: _,
+            name: _,
+            value,
+        } => match value {
+            Expression::FunctionLiteral {
+                token: _,
+                parameters: _,
+                body: _,
+                name,
+            } => match name {
+                Some(x) => assert_eq!("myFunction", x),
+                None => panic!("Function was not named"),
+            },
+            _ => panic!("Should be function found {value:?}"),
+        },
+        _ => panic!("Should find let statement found {statement:?}"),
     }
 }
 

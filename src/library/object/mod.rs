@@ -169,7 +169,7 @@ impl Display for Object {
             ),
             Object::Closure { function, free } => write!(
                 f,
-                "Closure({}, instructions:{}, locals: {}, free: {free:?})",
+                "Closure({}\n, instructions:\n{}\n, locals: {}, free: {free:?})",
                 function.number_of_parameters, function.instructions, function.number_of_locals
             ),
         }

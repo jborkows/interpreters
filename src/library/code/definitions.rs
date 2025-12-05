@@ -150,6 +150,7 @@ pub enum OpCodes {
     GetBuiltin,
     Closure,
     GetFree,
+    CurrentClosure,
 }
 impl OpCodes {
     fn string(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -183,6 +184,7 @@ impl OpCodes {
             OpCodes::GetBuiltin => f.write_str("GetBuiltin"),
             OpCodes::Closure => f.write_str("Closure"),
             OpCodes::GetFree => f.write_str("GetFree"),
+            OpCodes::CurrentClosure => f.write_str("CurrentClosure"),
         }
     }
 }

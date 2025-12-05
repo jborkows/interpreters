@@ -32,6 +32,7 @@ pub enum CompilationError {
     },
     BuiltinCannotBeSet(String),
     FreeCannotBeSet(String),
+    FunctionCannotBeSet(String),
 }
 
 pub fn compile<T: Node>(node: T) -> Result<Bytecode, Vec<CompilationError>> {
@@ -368,8 +369,12 @@ impl Worker {
                 token,
                 parameters,
                 body,
+                name,
             } => {
                 self.enter_scope();
+                if let Some(found_name) = name {
+                    SymbolTable::define_function_name(&self.symbol_table, found_name);
+                }
                 for parameter in parameters.clone().as_ref() {
                     match parameter {
                         Expression::Identifier(id_token) => match &id_token.kind {
@@ -440,6 +445,10 @@ impl Worker {
                     SymbolType::LOCAL => OpCodes::GetLocal,
                     SymbolType::BUILTIN => OpCodes::GetBuiltin,
                     SymbolType::FREE => OpCodes::GetFree,
+                    SymbolType::FUNCTION => {
+                        self.emit_op_code(OpCodes::CurrentClosure);
+                        return;
+                    }
                 };
                 self.emit(code, &[symbol.index]);
             }
@@ -511,9 +520,10 @@ impl Worker {
             }
 
             SymbolType::FREE => {
-                self.add_errors(CompilationError::FreeCannotBeSet(name));
+                self.add_errors(CompilationError::FunctionCannotBeSet(name));
                 return;
             }
+            SymbolType::FUNCTION => todo!(),
         };
         self.emit(op_code, &[symbol.index]);
     }
@@ -540,6 +550,7 @@ impl Worker {
                 token: _,
                 parameters,
                 body: _,
+                name: _,
             } => {
                 if parameters.len() != arguments.len() {
                     self.add_errors(CompilationError::WrongNumberOfArguments {

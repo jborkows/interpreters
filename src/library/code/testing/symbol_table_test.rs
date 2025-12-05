@@ -15,27 +15,38 @@ macro_rules! find_in {
     ($symbol_table:expr, $expected:expr) => {{
         let value = SymbolTable::resolve(&$symbol_table, $expected.identifier)
             .take()
-            .expect("Cannot find {expected_identifier} in local scope");
+            .expect(&format!("Cannot find {:?} in local scope", $expected));
         assert_eq!($expected.identifier, value.name);
         assert_eq!($expected.index, value.index, "{:?}", value);
         assert_eq!($expected.level, value.level, "{:?}", value);
     }};
 }
 
-macro_rules! should_be_free {
-    ($symbol_table:expr, $name:expr, $index:expr) => {{
+macro_rules! should_be_type {
+    ($symbol_table:expr, $name:expr, $index:expr, $type:ident) => {
         match SymbolTable::resolve(&$symbol_table, $name) {
             Some(s) => match s.what_type() {
-                crate::code::symbol_table::SymbolType::FREE => {
+                crate::code::symbol_table::SymbolType::$type => {
                     assert_eq!(s.index, $index)
                 }
-                _ => panic!("Builtin was defined but with wrong type"),
+                _ => panic!(
+                    "Builtin was defined but with wrong type expected {} got {:?}",
+                    stringify!($type),
+                    s.what_type()
+                ),
             },
             None => panic!("Builtin was not resolved in global scope"),
         }
-    }};
+    };
 }
 
+macro_rules! should_be_free {
+    ($symbol_table:expr, $name:expr, $index:expr) => {{ should_be_type!($symbol_table, $name, $index, FREE) }};
+}
+
+macro_rules! should_be_function {
+    ($symbol_table:expr, $name:expr, $index:expr) => {{ should_be_type!($symbol_table, $name, $index, FUNCTION) }};
+}
 macro_rules! should_not_be_free {
     ($symbol_table:expr, $name:expr) => {{
         match SymbolTable::resolve(&$symbol_table, $name) {
@@ -380,6 +391,23 @@ fn test_free_variable() {
     should_not_be_free!(inner, "e");
 }
 
+#[test]
+fn function_resolve_its_name() {
+    let global = &SymbolTable::new_table();
+    SymbolTable::define_function_name(global, "fun");
+    should_be_function!(global, "fun", 0);
+}
+
+#[test]
+fn shadowing_function() {
+    let global = &SymbolTable::new_table();
+    SymbolTable::define_function_name(global, "fun");
+    SymbolTable::define(global, "fun");
+    #[rustfmt::skip]
+    find_in!(global,Expected {index: 0,identifier: "fun",level: 0});
+}
+
+#[derive(Debug)]
 struct Expected<'a> {
     index: u16,
     identifier: &'a str,

@@ -44,4 +44,17 @@ generate_vm_tests! {
     };
     factorial(4)
     "#, should_be_integer(2*3*4)),
+    recursive_in_function: (r#"
+    let wrapper = fn(){
+        let countDown = fn(x){ 
+            if (x == 0) {
+                0
+            } else {
+                countDown(x-1);
+            }
+        };
+        countDown(1)
+    };
+    wrapper();
+    "#, should_be_integer(0)),
 }

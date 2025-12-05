@@ -88,6 +88,7 @@ pub(super) fn evaluate_expression(
             token,
             parameters,
             body,
+            name: _,
         } => function_literal_evaluation(token, parameters, body, env.clone()),
         Expression::ArrayLiteral { token: _, elements } => {
             parse_array_literal(elements, env.clone())

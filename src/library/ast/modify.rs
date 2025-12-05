@@ -119,6 +119,7 @@ where
                 token,
                 parameters,
                 body,
+                name,
             } => {
                 let modified_parameter = parameters
                     .as_ref()
@@ -129,6 +130,7 @@ where
                     token: token.clone(),
                     parameters: modified_parameter.into(),
                     body: modify_box_statement!(body, fun.clone()),
+                    name: name.clone(),
                 })
             }
             Expression::ArrayLiteral { token, elements } => {

@@ -369,4 +369,67 @@ fn() {
         ]),
     ]
 ),
+recursive: (
+"
+let countDown = fn(x) { countDown(x-1); }
+countDown(1)
+",
+vec![
+    make(OpCodes::Closure.into(),&[1,0]),
+    make(OpCodes::SetGlobal.into(), &[0]),
+    make(OpCodes::GetGlobal.into(), &[0]),
+    make(OpCodes::Constant.into(), &[2]),
+    make(OpCodes::Call.into(), &[1]),
+    make(OpCodes::Pop.into(), &[]),
+],
+vec![
+    test_be_integer(1),
+    test_bytecode(vec![
+        make(OpCodes::CurrentClosure.into(),&[]),
+        make(OpCodes::GetLocal.into(),&[0]),
+        make(OpCodes::Constant.into(),&[0]),
+        make(OpCodes::Subtitute.into(),&[]),
+        make(OpCodes::Call.into(),&[1]),
+        make(OpCodes::ReturnValue.into(),&[]),
+    ]),
+    test_be_integer(1)
+]
+),
+
+recursive_wrapped: (
+"
+let wrapper = fn(){
+    let countDown = fn(x) { countDown(x-2); }
+    countDown(1)
+};
+wrapper()
+",
+vec![
+    make(OpCodes::Closure.into(),&[3,0]),
+    make(OpCodes::SetGlobal.into(), &[0]),
+    make(OpCodes::GetGlobal.into(), &[0]),
+    make(OpCodes::Call.into(), &[0]),
+    make(OpCodes::Pop.into(), &[]),
+],
+vec![
+    test_be_integer(2),
+    test_bytecode(vec![
+        make(OpCodes::CurrentClosure.into(),&[]),
+        make(OpCodes::GetLocal.into(),&[0]),
+        make(OpCodes::Constant.into(),&[0]),
+        make(OpCodes::Subtitute.into(),&[]),
+        make(OpCodes::Call.into(),&[1]),
+        make(OpCodes::ReturnValue.into(),&[]),
+    ]),
+    test_be_integer(1),
+    test_bytecode(vec![
+        make(OpCodes::Closure.into(),&[1,0]),
+        make(OpCodes::SetLocal.into(),&[0]),
+        make(OpCodes::GetLocal.into(),&[0]),
+        make(OpCodes::Constant.into(),&[2]),
+        make(OpCodes::Call.into(),&[1]),
+        make(OpCodes::ReturnValue.into(),&[]),
+    ]),
+]
+),
 }

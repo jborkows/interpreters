@@ -8,6 +8,7 @@ pub(crate) enum SymbolType {
     LOCAL,
     BUILTIN,
     FREE,
+    FUNCTION,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -183,5 +184,23 @@ impl SymbolTable {
             free_symbols: vec![],
         };
         Rc::new(RefCell::new(symbol))
+    }
+
+    pub(crate) fn define_function_name(
+        symbol_table: &RefCell<SymbolTable>,
+        name: &str,
+    ) -> Rc<Symbol> {
+        let symbol = Symbol {
+            name: name.to_string(),
+            index: 0,
+            level: 0,
+            symbol_type: SymbolType::FUNCTION,
+        };
+        let result = Rc::new(symbol);
+        symbol_table
+            .borrow_mut()
+            .store
+            .insert(name.to_string(), result.clone());
+        result
     }
 }

@@ -104,19 +104,38 @@ impl Parser {
         }
 
         let name = Expression::Identifier(self.current_token.clone());
+        let name_token = self.current_token.clone();
         if !self.expect_peek_and_move_into(&PureTokenKind::Assign) {
             return None;
         }
         self.save_next_token();
-        let value = self.parse_expression(Precedence::Lowest);
-        value.as_ref()?;
+        let value = self
+            .parse_expression(Precedence::Lowest)
+            .expect("Should find value");
+        let value = match value {
+            Expression::FunctionLiteral {
+                token,
+                parameters,
+                body,
+                name: _,
+            } => Expression::FunctionLiteral {
+                token: token.clone(),
+                parameters,
+                body,
+                name: match &name_token.kind {
+                    TokenKind::Identifier(name) => Some(name.to_string()),
+                    _ => None,
+                },
+            },
+            _ => value,
+        };
         if self.peek_token_is(&PureTokenKind::Semicolon) {
             self.save_next_token();
         }
         Some(Statement::Let {
             token: let_token,
             name,
-            value: value.unwrap(),
+            value: value.clone(),
         })
     }
 

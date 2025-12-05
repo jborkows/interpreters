@@ -189,11 +189,6 @@ impl VM {
                     let object = self.stack[index].clone();
                     self.push(object);
                 }
-                CALL => {
-                    let number_of_arguments = read_u_8(&bytes[instruction_pointer + 1..]) as usize;
-                    self.current_frame().instruction_pointer += 1;
-                    move_instruction_pointer = self.execute_call(number_of_arguments);
-                }
                 GET_BUILTIN => {
                     let builtin_index = read_u_8(&bytes[instruction_pointer + 1..]) as usize;
                     self.current_frame().instruction_pointer += 1;
@@ -218,6 +213,18 @@ impl VM {
                         ),
                     };
                     self.push(found)
+                }
+                CURRENT_CLOSURE => {
+                    let closure = self.current_frame().closure.clone();
+                    self.push(Object::Closure {
+                        function: closure.function,
+                        free: closure.free,
+                    });
+                }
+                CALL => {
+                    let number_of_arguments = read_u_8(&bytes[instruction_pointer + 1..]) as usize;
+                    self.current_frame().instruction_pointer += 1;
+                    move_instruction_pointer = self.execute_call(number_of_arguments);
                 }
                 _ => panic!("Don't know what to do with {instruction}"),
             }
@@ -530,3 +537,4 @@ const SET_LOCAL: u8 = OpCodes::SetLocal as u8;
 
 const CLOSURE: u8 = OpCodes::Closure as u8;
 const GET_FREE: u8 = OpCodes::GetFree as u8;
+const CURRENT_CLOSURE: u8 = OpCodes::CurrentClosure as u8;

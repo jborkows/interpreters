@@ -493,6 +493,7 @@ fn should_traverse_functional() {
                         }),
                     }]),
                 }),
+                name: None,
             },
         }],
     };
@@ -510,6 +511,7 @@ fn should_traverse_functional() {
                 token: _,
                 parameters: _,
                 body,
+                name: _,
             } => match *body {
                 Statement::Block {
                     token: _,
